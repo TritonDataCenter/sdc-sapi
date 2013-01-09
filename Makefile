@@ -22,15 +22,13 @@ NODEUNIT	:= ./node_modules/.bin/nodeunit
 #
 # Files
 #
-DOC_FILES	 = index.restdown boilerplateapi.restdown
+DOC_FILES	 = index.restdown
 JS_FILES	:= $(shell ls *.js) $(shell find lib test -name '*.js')
 JSL_CONF_NODE	 = tools/jsl.node.conf
 JSL_FILES_NODE   = $(JS_FILES)
 JSSTYLE_FILES	 = $(JS_FILES)
 JSSTYLE_FLAGS    = -o doxygen
-REPO_MODULES	 = src/node-dummy
 SMF_MANIFESTS_IN = smf/manifests/bapi.xml.in
-
 
 NODE_PREBUILT_VERSION=v0.8.14
 NODE_PREBUILT_TAG=zone
@@ -40,6 +38,7 @@ include ./tools/mk/Makefile.defs
 include ./tools/mk/Makefile.node_prebuilt.defs
 include ./tools/mk/Makefile.node_deps.defs
 include ./tools/mk/Makefile.smf.defs
+
 
 #
 # Repo-specific targets
@@ -56,6 +55,49 @@ CLEAN_FILES += $(NODEUNIT) ./node_modules/tap
 .PHONY: test
 test: $(NODEUNIT)
 	$(NODEUNIT) test/*.test.js
+
+
+#
+# Packaging targets
+#
+
+TOP             := $(shell pwd)
+RELEASE_TARBALL := sapi-pkg-$(STAMP).tar.bz2
+PKGDIR          := $(TOP)/$(BUILD)/pkg
+INSTDIR         := $(PKGDIR)/root/opt/smartdc/napi
+
+.PHONY: release
+release: $(RELEASE_TARBALL)
+
+.PHONY: pkg
+pkg: all $(SMF_MANIFESTS)
+	@echo "Building $(RELEASE_TARBALL)"
+	@rm -rf $(PKGDIR)
+	@mkdir -p $(PKGDIR)/site
+	@mkdir -p $(INSTDIR)/smf/manifests
+	@mkdir -p $(INSTDIR)/test
+	@touch $(PKGDIR)/site/.do-not-delete-me
+	cp -r $(TOP)/server.js \
+		$(TOP)/lib \
+		$(TOP)/node_modules \
+		$(INSTDIR)/
+	cp -P smf/manifests/*.xml $(INSTDIR)/smf/manifests
+	cp -r $(TOP)/test/ $(INSTDIR)/test/
+	cp -PR $(NODE_INSTALL) $(INSTDIR)/node
+
+$(RELEASE_TARBALL): pkg
+	(cd $(PKGDIR) && $(TAR) -jcf $(TOP)/$(RELEASE_TARBALL) root site)
+
+.PHONY: publish
+publish: release
+	@if [[ -z "$(BITS_DIR)" ]]; then \
+    echo "error: 'BITS_DIR' must be set for 'publish' target"; \
+    exit 1; \
+  fi
+	mkdir -p $(BITS_DIR)/napi
+	cp $(TOP)/$(RELEASE_TARBALL) $(BITS_DIR)/napi/$(RELEASE_TARBALL)
+
+
 
 include ./tools/mk/Makefile.deps
 include ./tools/mk/Makefile.node_prebuilt.targ

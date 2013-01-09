@@ -64,7 +64,7 @@ test: $(NODEUNIT)
 TOP             := $(shell pwd)
 RELEASE_TARBALL := sapi-pkg-$(STAMP).tar.bz2
 PKGDIR          := $(TOP)/$(BUILD)/pkg
-INSTDIR         := $(PKGDIR)/root/opt/smartdc/napi
+INSTDIR         := $(PKGDIR)/root/opt/smartdc/sapi
 
 .PHONY: release
 release: $(RELEASE_TARBALL)
@@ -94,8 +94,8 @@ publish: release
     echo "error: 'BITS_DIR' must be set for 'publish' target"; \
     exit 1; \
   fi
-	mkdir -p $(BITS_DIR)/napi
-	cp $(TOP)/$(RELEASE_TARBALL) $(BITS_DIR)/napi/$(RELEASE_TARBALL)
+	mkdir -p $(BITS_DIR)/sapi
+	cp $(TOP)/$(RELEASE_TARBALL) $(BITS_DIR)/sapi/$(RELEASE_TARBALL)
 
 
 

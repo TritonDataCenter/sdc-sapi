@@ -73,7 +73,7 @@ test('create w/o name', function (t) {
 
 test('create w/ invalid owner_uuid', function (t) {
 	var app = {
-		name: 'invalud owner_uuid',
+		name: 'invalid owner_uuid',
 		owner_uuid: uuid.v4()
 	};
 
@@ -135,7 +135,7 @@ test('delete application', function (t) {
 
 // -- Test put/get/del application with specifying UUID and parameters
 
-test('application with UUID and params', function (t) {
+test('put/get/del application', function (t) {
 	var self = this;
 
 	APP_UUID = uuid.v4();
@@ -213,9 +213,7 @@ test('application with UUID and params', function (t) {
 				t.equal(res.statusCode, 204);
 
 				cb(null);
-
 			});
-
 		},
 		function (cb) {
 			self.client.get(uri_app, function (err, _, res, obj) {

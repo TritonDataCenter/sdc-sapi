@@ -1,19 +1,28 @@
 {
-  "name": "boilerplateapi",
-  "description": "SmartDataCenter Boilerplate API",
-  "version": "1.0.0",
-  "author": "Joyent (joyent.com)",
-  "private": true,
-  "dependencies": {
-    "restify": "1.4.2",
-    "node-uuid": "1.3.3",
-    "filed": "0.0.5",
-    "bunyan": "0.8.0"
-  },
-  "devDependencies": {
-    "tap": "0.2"
-  },
-  "scripts": {
-    "start": "node ./server.js"
-  }
+	"name": "sapi",
+	"description": "Services and Configuration API",
+	"version": "0.0.1",
+	"author": "Joyent (joyent.com)",
+	"private": true,
+	"dependencies": {
+		"assert-plus": "0.1.2",
+		"async": "0.1.22",
+		"bunyan": "0.17.0",
+		"moray": "git+ssh://git@git.joyent.com:node-moray.git",
+		"node-uuid": "1.4.0",
+		"once": "1.1.1",
+		"restify": "2.0.4",
+		"sdc-clients": "git+ssh://git@git.joyent.com:node-sdc-clients.git",
+		"vasync": "1.3.3"
+	},
+	"devDependencies": {
+                "cover": "0.2.8",
+                "filed": "0.0.7",
+                "manta": "git+ssh://git@github.com:joyent/node-manta.git#master",
+                "memorystream": "git://github.com/mcavage/node-memorystream.git#5b914d6",
+		"nodeunit": "0.7.4"
+	},
+	"scripts": {
+		"start": "node ./server.js"
+	}
 }

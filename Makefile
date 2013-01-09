@@ -17,7 +17,7 @@
 #
 # Tools
 #
-TAP		:= ./node_modules/.bin/tap
+NODEUNIT	:= ./node_modules/.bin/nodeunit
 
 #
 # Files
@@ -27,8 +27,8 @@ JS_FILES	:= $(shell ls *.js) $(shell find lib test -name '*.js')
 JSL_CONF_NODE	 = tools/jsl.node.conf
 JSL_FILES_NODE   = $(JS_FILES)
 JSSTYLE_FILES	 = $(JS_FILES)
-JSSTYLE_FLAGS    = -o indent=4,doxygen,unparenthesized-return=0
-#REPO_MODULES	 = src/node-dummy
+JSSTYLE_FLAGS    = -o doxygen
+REPO_MODULES	 = src/node-dummy
 SMF_MANIFESTS_IN = smf/manifests/bapi.xml.in
 
 
@@ -45,17 +45,17 @@ include ./tools/mk/Makefile.smf.defs
 # Repo-specific targets
 #
 .PHONY: all
-all: $(SMF_MANIFESTS) | $(TAP) $(REPO_DEPS)
+all: $(SMF_MANIFESTS) | $(NODEUNIT) $(REPO_DEPS)
 	$(NPM) rebuild
 
-$(TAP): | $(NPM_EXEC)
+$(NODEUNIT): | $(NPM_EXEC)
 	$(NPM) install
 
-CLEAN_FILES += $(TAP) ./node_modules/tap
+CLEAN_FILES += $(NODEUNIT) ./node_modules/tap
 
 .PHONY: test
-test: $(TAP)
-	TAP=1 $(TAP) test/*.test.js
+test: $(NODEUNIT)
+	$(NODEUNIT) test/*.test.js
 
 include ./tools/mk/Makefile.deps
 include ./tools/mk/Makefile.node_prebuilt.targ

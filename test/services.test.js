@@ -5,6 +5,7 @@
  */
 
 var async = require('async');
+var jsprim = require('jsprim');
 var node_uuid = require('node-uuid');
 
 if (require.cache[__dirname + '/helper.js'])
@@ -18,12 +19,17 @@ var after = helper.after;
 var before = helper.before;
 var test = helper.test;
 
-var OWNER_UUID = '3476660a-fec6-11e1-bd6b-d3f99fb834c1';
+var SMARTOS_163_UUID = '01b2c898-945f-11e1-a523-af1afbe22822';
+
+var URI = '/services';
+
+
+// -- Helper functions
 
 function createApplication(name, uuid, cb) {
 	var app = {};
 	app.name = name;
-	app.owner_uuid = OWNER_UUID;
+	app.owner_uuid = '00000000-0000-0000-0000-000000000000';  // admin
 	app.uuid = uuid;
 
 	this.client.post('/applications', app, function (err) {
@@ -43,59 +49,112 @@ function delApplication(uuid, cb) {
 before(function (cb) {
 	this.client = helper.createJsonClient();
 
-	cb(null);
+	cb();
 });
 
 after(function (cb) {
-	cb(null);
+	cb();
 });
 
 
 // -- Test invalid inputs
 
-test('get nonexistent service', function (t) {
-	var uri = '/services/' + node_uuid.v4();
+test('create w/ missing inputs', function (t) {
+	var self = this;
 
-	this.client.get(uri, function (err, req, res, obj) {
-		t.ok(err);
-		t.equal(res.statusCode, 404);
-		t.end();
-	});
-});
+	var svc = {};
+	svc.name = 'application_uuid missing';
+	svc.application_uuid = node_uuid.v4();
+	svc.image_uuid = SMARTOS_163_UUID;
 
-test('create w/o application_uuid', function (t) {
-	var app = {
-		name: 'application_uuid missing'
-	};
-
-	this.client.post('/services', app, function (err, req, res, obj) {
+	function check409(err, res) {
 		t.ok(err);
 		t.equal(res.statusCode, 409);
-		t.end();
-	});
-});
+	}
 
-test('create w/o name', function (t) {
-	var app = {
-		application_uuid: node_uuid.v4()
-	};
+	async.waterfall([
+		function (cb) {
+			var badsvc = jsprim.deepCopy(svc);
+			delete badsvc.name;
 
-	this.client.post('/services', app, function (err, req, res, obj) {
-		t.ok(err);
-		t.equal(res.statusCode, 409);
+			self.client.post(URI, badsvc, function (err, _, res) {
+				check409(err, res);
+				cb();
+			});
+		},
+		function (cb) {
+			var badsvc = jsprim.deepCopy(svc);
+			delete badsvc.application_uuid;
+
+			self.client.post(URI, badsvc, function (err, _, res) {
+				check409(err, res);
+				cb();
+			});
+		},
+		function (cb) {
+			var badsvc = jsprim.deepCopy(svc);
+			delete badsvc.image_uuid;
+
+			self.client.post(URI, badsvc, function (err, _, res) {
+				check409(err, res);
+				cb();
+			});
+		}
+	], function (err) {
 		t.end();
 	});
 });
 
 test('create w/ invalid application_uuid', function (t) {
-	var app = {
-		name: 'invalid application_uuid',
-		application_uuid: node_uuid.v4()
-	};
+	var svc = {};
+	svc.name = 'invalid application_uuid';
+	svc.application_uuid = node_uuid.v4();  // invalid
+	svc.image_uuid = SMARTOS_163_UUID;
 
-	this.client.post('/services', app, function (err, req, res, obj) {
+	this.client.post('/services', svc, function (err, req, res, obj) {
 		t.ok(err);
 		t.equal(res.statusCode, 500);
+		t.end();
+	});
+});
+
+test('create w/ invalid image_uuid', function (t) {
+	var self = this;
+
+	var app = {};
+	app.name = 'mycoolapp';
+	app.uuid = node_uuid.v4();
+
+	var svc = {};
+	svc.name = 'invalid image_uuid';
+	svc.application_uuid = app.uuid;
+	svc.image_uuid = node_uuid.v4();  // invalid
+
+	async.waterfall([
+		function (cb) {
+			createApplication.call(self, app.name, app.uuid, cb);
+		},
+		function (cb) {
+			self.client.post(URI, svc, function (err, _, res) {
+				t.ok(err);
+				t.equal(res.statusCode, 500);
+				cb();
+			});
+		},
+		function (cb) {
+			delApplication.call(self, app.uuid, cb);
+		}
+	], function (err) {
+		t.end();
+	});
+});
+
+test('get nonexistent service', function (t) {
+	var uri_svc = '/services/' + node_uuid.v4();
+
+	this.client.get(uri_svc, function (err, req, res, obj) {
+		t.ok(err);
+		t.equal(res.statusCode, 404);
 		t.end();
 	});
 });
@@ -122,16 +181,17 @@ test('put/get/del service', function (t) {
 	svc.name = 'mycoolservice';
 	svc.uuid = node_uuid.v4();
 	svc.application_uuid = app.uuid;
+	svc.image_uuid = SMARTOS_163_UUID;
 	svc.params = params;
 
 	var checkService = function (obj) {
 		t.equal(obj.name, svc.name);
 		t.equal(obj.uuid, svc.uuid);
 		t.equal(obj.application_uuid, svc.application_uuid);
+		t.equal(obj.image_uuid, svc.image_uuid);
 		t.deepEqual(obj.params, svc.params);
 	};
 
-	var uri = '/services';
 	var uri_svc = '/services/' + svc.uuid;
 
 	async.waterfall([
@@ -142,17 +202,17 @@ test('put/get/del service', function (t) {
 			self.client.get(uri_svc, function (err, _, res, obj) {
 				t.ok(err);
 				t.equal(res.statusCode, 404);
-				cb(null);
+				cb();
 			});
 		},
 		function (cb) {
-			self.client.post(uri, svc, function (err, _, res, obj) {
+			self.client.post(URI, svc, function (err, _, res, obj) {
 				t.ifError(err);
 				t.equal(res.statusCode, 200);
 
 				checkService(obj);
 
-				cb(null);
+				cb();
 			});
 		},
 		function (cb) {
@@ -162,11 +222,11 @@ test('put/get/del service', function (t) {
 
 				checkService(obj);
 
-				cb(null);
+				cb();
 			});
 		},
 		function (cb) {
-			self.client.get(uri, function (err, _, res, obj) {
+			self.client.get(URI, function (err, _, res, obj) {
 				t.ifError(err);
 				t.equal(res.statusCode, 200);
 
@@ -183,21 +243,21 @@ test('put/get/del service', function (t) {
 
 				t.ok(found, 'found service' + svc.uuid);
 
-				cb(null);
+				cb();
 			});
 		},
 		function (cb) {
 			self.client.del(uri_svc, function (err, _, res, obj) {
 				t.ifError(err);
 				t.equal(res.statusCode, 204);
-				cb(null);
+				cb();
 			});
 		},
 		function (cb) {
 			self.client.get(uri_svc, function (err, _, res, obj) {
 				t.ok(err);
 				t.equal(res.statusCode, 404);
-				cb(null);
+				cb();
 			});
 		},
 		function (cb) {

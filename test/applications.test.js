@@ -19,7 +19,9 @@ var before = helper.before;
 var test = helper.test;
 
 var APP_UUID;
-var OWNER_UUID = '3476660a-fec6-11e1-bd6b-d3f99fb834c1';
+var ADMIN_UUID = '3476660a-fec6-11e1-bd6b-d3f99fb834c1';
+
+var URI = '/applications';
 
 
 // -- Tests
@@ -38,9 +40,9 @@ after(function (cb) {
 // -- Test invalid inputs
 
 test('get nonexistent application', function (t) {
-	var uri = '/applications/' + uuid.v4();
+	var uri_app = '/applications/' + uuid.v4();
 
-	this.client.get(uri, function (err, req, res, obj) {
+	this.client.get(uri_app, function (err, req, res, obj) {
 		t.ok(err);
 		t.equal(res.statusCode, 404);
 		t.end();
@@ -52,7 +54,7 @@ test('create w/o owner_uuid', function (t) {
 		name: 'owner_uuid missing'
 	};
 
-	this.client.post('/applications', app, function (err, req, res, obj) {
+	this.client.post(URI, app, function (err, req, res, obj) {
 		t.ok(err);
 		t.equal(res.statusCode, 409);
 		t.end();
@@ -61,10 +63,10 @@ test('create w/o owner_uuid', function (t) {
 
 test('create w/o name', function (t) {
 	var app = {
-		owner_uuid: OWNER_UUID
+		owner_uuid: ADMIN_UUID
 	};
 
-	this.client.post('/applications', app, function (err, req, res, obj) {
+	this.client.post(URI, app, function (err, req, res, obj) {
 		t.ok(err);
 		t.equal(res.statusCode, 409);
 		t.end();
@@ -77,39 +79,40 @@ test('create w/ invalid owner_uuid', function (t) {
 		owner_uuid: uuid.v4()
 	};
 
-	this.client.post('/applications', app, function (err, req, res, obj) {
+	this.client.post(URI, app, function (err, req, res, obj) {
 		t.ok(err);
 		t.equal(res.statusCode, 500);
 		t.end();
 	});
 });
 
+
 // -- Test put/get/del application without specifying UUID
 
 test('create application w/o UUID', function (t) {
 	var app = {
 		name: 'no uuid here',
-		owner_uuid: OWNER_UUID
+		owner_uuid: ADMIN_UUID
 	};
 
-	this.client.post('/applications', app, function (err, req, res, obj) {
+	this.client.post(URI, app, function (err, req, res, obj) {
 		t.ifError(err);
 		t.equal(res.statusCode, 200);
 		t.equal(obj.name, 'no uuid here');
-		t.equal(obj.owner_uuid, OWNER_UUID);
+		t.equal(obj.owner_uuid, ADMIN_UUID);
 		APP_UUID = obj.uuid;
 		t.end();
 	});
 });
 
 test('get application w/o UUID', function (t) {
-	var uri = '/applications/' + APP_UUID;
+	var uri_app = '/applications/' + APP_UUID;
 
-	this.client.get(uri, function (err, req, res, obj) {
+	this.client.get(uri_app, function (err, req, res, obj) {
 		t.ifError(err);
 		t.equal(res.statusCode, 200);
 		t.equal(obj.name, 'no uuid here');
-		t.equal(obj.owner_uuid, OWNER_UUID);
+		t.equal(obj.owner_uuid, ADMIN_UUID);
 		t.equal(obj.uuid, APP_UUID);
 		t.end();
 	});
@@ -118,13 +121,13 @@ test('get application w/o UUID', function (t) {
 test('delete application', function (t) {
 	var self = this;
 
-	var uri = '/applications/' + APP_UUID;
+	var uri_app = '/applications/' + APP_UUID;
 
-	this.client.del(uri, function (err, req, res, obj) {
+	this.client.del(uri_app, function (err, req, res, obj) {
 		t.ifError(err);
 		t.equal(res.statusCode, 204);
 
-		self.client.get(uri, function (suberr, _, subres) {
+		self.client.get(uri_app, function (suberr, _, subres) {
 			t.ok(suberr);
 			t.equal(suberr.statusCode, 404);
 			t.end();
@@ -151,7 +154,7 @@ test('put/get/del application', function (t) {
 	var app = {
 		name: 'mycoolapp',
 		uuid: APP_UUID,
-		owner_uuid: OWNER_UUID,
+		owner_uuid: ADMIN_UUID,
 		params: params
 	};
 
@@ -162,12 +165,11 @@ test('put/get/del application', function (t) {
 		t.deepEqual(obj.params, app.params);
 	};
 
-	var uri = '/applications';
 	var uri_app = '/applications/' + APP_UUID;
 
 	async.waterfall([
 		function (cb) {
-			self.client.post(uri, app, function (err, _, res, obj) {
+			self.client.post(URI, app, function (err, _, res, obj) {
 				t.ifError(err);
 				t.equal(res.statusCode, 200);
 
@@ -187,7 +189,7 @@ test('put/get/del application', function (t) {
 			});
 		},
 		function (cb) {
-			self.client.get(uri, function (err, _, res, obj) {
+			self.client.get(URI, function (err, _, res, obj) {
 				t.ifError(err);
 				t.equal(res.statusCode, 200);
 
@@ -234,27 +236,27 @@ test('reuse application UUID', function (t) {
 	var app = {
 		name: 'This application name has spaces.',
 		uuid: APP_UUID,
-		owner_uuid: OWNER_UUID
+		owner_uuid: ADMIN_UUID
 	};
 
-	this.client.post('/applications', app, function (err, req, res, obj) {
+	this.client.post(URI, app, function (err, req, res, obj) {
 		t.ifError(err);
 		t.equal(res.statusCode, 200);
 		t.equal(obj.name, 'This application name has spaces.');
-		t.equal(obj.owner_uuid, OWNER_UUID);
+		t.equal(obj.owner_uuid, ADMIN_UUID);
 		t.equal(obj.uuid, APP_UUID);
 		t.end();
 	});
 });
 
 test('get reused application', function (t) {
-	var uri = '/applications/' + APP_UUID;
+	var uri_app = '/applications/' + APP_UUID;
 
-	this.client.get(uri, function (err, req, res, obj) {
+	this.client.get(uri_app, function (err, req, res, obj) {
 		t.ifError(err);
 		t.equal(res.statusCode, 200);
 		t.equal(obj.name, 'This application name has spaces.');
-		t.equal(obj.owner_uuid, OWNER_UUID);
+		t.equal(obj.owner_uuid, ADMIN_UUID);
 		t.equal(obj.uuid, APP_UUID);
 		t.end();
 	});
@@ -263,13 +265,13 @@ test('get reused application', function (t) {
 test('delete reused application', function (t) {
 	var self = this;
 
-	var uri = '/applications/' + APP_UUID;
+	var uri_app = '/applications/' + APP_UUID;
 
-	this.client.del(uri, function (err, req, res, obj) {
+	this.client.del(uri_app, function (err, req, res, obj) {
 		t.ifError(err);
 		t.equal(res.statusCode, 204);
 
-		self.client.get(uri, function (suberr, _, subres) {
+		self.client.get(uri_app, function (suberr, _, subres) {
 			t.ok(suberr);
 			t.equal(suberr.statusCode, 404);
 			t.end();

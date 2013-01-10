@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2013, Joyent, Inc. All rights reserved.
  *
- * test/applications.js: test /applications endpoints
+ * test/services.js: test /services endpoints
  */
 
 var async = require('async');
@@ -68,7 +68,7 @@ test('create w/o application_uuid', function (t) {
 		name: 'application_uuid missing'
 	};
 
-	this.client.post('/applications', app, function (err, req, res, obj) {
+	this.client.post('/services', app, function (err, req, res, obj) {
 		t.ok(err);
 		t.equal(res.statusCode, 409);
 		t.end();
@@ -77,10 +77,10 @@ test('create w/o application_uuid', function (t) {
 
 test('create w/o name', function (t) {
 	var app = {
-		application_uuid: OWNER_UUID
+		application_uuid: node_uuid.v4()
 	};
 
-	this.client.post('/applications', app, function (err, req, res, obj) {
+	this.client.post('/services', app, function (err, req, res, obj) {
 		t.ok(err);
 		t.equal(res.statusCode, 409);
 		t.end();
@@ -93,9 +93,9 @@ test('create w/ invalid application_uuid', function (t) {
 		application_uuid: node_uuid.v4()
 	};
 
-	this.client.post('/applications', app, function (err, req, res, obj) {
+	this.client.post('/services', app, function (err, req, res, obj) {
 		t.ok(err);
-		t.equal(res.statusCode, 409);
+		t.equal(res.statusCode, 500);
 		t.end();
 	});
 });

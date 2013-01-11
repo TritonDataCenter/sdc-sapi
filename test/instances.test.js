@@ -40,13 +40,15 @@ function delApplication(uuid, cb) {
 }
 
 function createService(name, uuid, application_uuid, cb) {
-	var service = {};
-	service.name = name;
-	service.uuid = uuid;
-	service.image_uuid = SMARTOS_163_UUID;
-	service.application_uuid = application_uuid;
+	var svc = {};
+	svc.name = name;
+	svc.uuid = uuid;
+	svc.image_uuid = SMARTOS_163_UUID;
+	svc.application_uuid = application_uuid;
+	svc.ram = 256;
+	svc.networks = [ 'admin' ];
 
-	this.client.post('/services', service, function (err) {
+	this.client.post('/services', svc, function (err) {
 		cb(err);
 	});
 }

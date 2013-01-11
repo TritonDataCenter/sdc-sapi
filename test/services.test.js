@@ -66,6 +66,8 @@ test('create w/ missing inputs', function (t) {
 	svc.name = 'application_uuid missing';
 	svc.application_uuid = node_uuid.v4();
 	svc.image_uuid = SMARTOS_163_UUID;
+	svc.ram = 256;
+	svc.networks = [ 'admin' ];
 
 	function check409(err, res) {
 		t.ok(err);
@@ -99,6 +101,24 @@ test('create w/ missing inputs', function (t) {
 				check409(err, res);
 				cb();
 			});
+		},
+		function (cb) {
+			var badsvc = jsprim.deepCopy(svc);
+			delete badsvc.ram;
+
+			self.client.post(URI, badsvc, function (err, _, res) {
+				check409(err, res);
+				cb();
+			});
+		},
+		function (cb) {
+			var badsvc = jsprim.deepCopy(svc);
+			delete badsvc.networks;
+
+			self.client.post(URI, badsvc, function (err, _, res) {
+				check409(err, res);
+				cb();
+			});
 		}
 	], function (err) {
 		t.end();
@@ -110,6 +130,8 @@ test('create w/ invalid application_uuid', function (t) {
 	svc.name = 'invalid application_uuid';
 	svc.application_uuid = node_uuid.v4();  // invalid
 	svc.image_uuid = SMARTOS_163_UUID;
+	svc.ram = 256;
+	svc.networks = [ 'admin' ];
 
 	this.client.post('/services', svc, function (err, req, res, obj) {
 		t.ok(err);
@@ -129,6 +151,8 @@ test('create w/ invalid image_uuid', function (t) {
 	svc.name = 'invalid image_uuid';
 	svc.application_uuid = app.uuid;
 	svc.image_uuid = node_uuid.v4();  // invalid
+	svc.ram = 256;
+	svc.networks = [ 'admin' ];
 
 	async.waterfall([
 		function (cb) {
@@ -182,6 +206,9 @@ test('put/get/del service', function (t) {
 	svc.uuid = node_uuid.v4();
 	svc.application_uuid = app.uuid;
 	svc.image_uuid = SMARTOS_163_UUID;
+	svc.ram = 256;
+	svc.networks = [ 'admin' ];
+
 	svc.params = params;
 
 	var checkService = function (obj) {

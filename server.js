@@ -27,6 +27,9 @@ var config = {
 	},
 	imgapi: {
 		url: 'http://10.2.206.13'
+	},
+	napi: {
+		url: 'http://10.2.206.6'
 	}
 };
 

@@ -28,7 +28,7 @@ JSL_CONF_NODE	 = tools/jsl.node.conf
 JSL_FILES_NODE   = $(JS_FILES)
 JSSTYLE_FILES	 = $(JS_FILES)
 JSSTYLE_FLAGS    = -o doxygen
-SMF_MANIFESTS_IN = smf/manifests/bapi.xml.in
+SMF_MANIFESTS_IN = smf/manifests/sapi.xml.in
 
 NODE_PREBUILT_VERSION=v0.8.14
 NODE_PREBUILT_TAG=zone

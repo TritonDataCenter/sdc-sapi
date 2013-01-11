@@ -76,6 +76,7 @@ pkg: all $(SMF_MANIFESTS)
 	@mkdir -p $(PKGDIR)/site
 	@mkdir -p $(INSTDIR)/smf/manifests
 	@mkdir -p $(INSTDIR)/test
+	@mkdir -p $(INSTDIR)/build
 	@touch $(PKGDIR)/site/.do-not-delete-me
 	cp -r $(TOP)/server.js \
 		$(TOP)/lib \
@@ -83,7 +84,7 @@ pkg: all $(SMF_MANIFESTS)
 		$(INSTDIR)/
 	cp -P smf/manifests/*.xml $(INSTDIR)/smf/manifests
 	cp -r $(TOP)/test/ $(INSTDIR)/test/
-	cp -PR $(NODE_INSTALL) $(INSTDIR)/node
+	cp -PR $(NODE_INSTALL) $(INSTDIR)/build/node
 
 $(RELEASE_TARBALL): pkg
 	(cd $(PKGDIR) && $(TAR) -jcf $(TOP)/$(RELEASE_TARBALL) root site)

@@ -83,7 +83,7 @@ pkg: all $(SMF_MANIFESTS)
 		$(TOP)/node_modules \
 		$(INSTDIR)/
 	cp -P smf/manifests/*.xml $(INSTDIR)/smf/manifests
-	cp -r $(TOP)/test/ $(INSTDIR)/test/
+	cp -r $(TOP)/test $(INSTDIR)/
 	cp -PR $(NODE_INSTALL) $(INSTDIR)/build/node
 
 $(RELEASE_TARBALL): pkg

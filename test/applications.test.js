@@ -19,7 +19,7 @@ var before = helper.before;
 var test = helper.test;
 
 var APP_UUID;
-var ADMIN_UUID = '3476660a-fec6-11e1-bd6b-d3f99fb834c1';
+var ADMIN_UUID = '00000000-0000-0000-0000-000000000000';  // admin
 
 var URI = '/applications';
 

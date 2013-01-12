@@ -1,0 +1,32 @@
+{
+  "logLevel": "debug",
+  "datacenter_name": "coal",
+  "moray": {
+    "host": "10.99.99.13",
+    "port": 2020
+  },
+  "wfapi": {
+    "workflows": [ ],
+    "url": "http://10.99.99.15",
+    "username": "admin",
+    "password": "joypass123"
+  },
+  "vmapi": {
+    "url": "http://10.99.99.23"
+  },
+  "napi": {
+    "url": "http://10.99.99.10"
+  },
+  "imgapi": {
+    "url": "http://10.99.99.17"
+  },
+  "ufds": {
+    "url": "ldaps://10.99.99.14",
+    "bindDN": "cn=root",
+    "bindPassword": "secret",
+    "cache": {
+      "size": 1000,
+      "expiry": 300
+    }
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "logLevel": "debug",
+  "datacenter_name": "bh1-kvm6",
+  "moray": {
+    "host": "10.2.206.9",
+    "port": 2020
+  },
+  "wfapi": {
+    "workflows": [ ],
+    "url": "http://10.2.206.11",
+    "username": "admin",
+    "password": "joypass123"
+  },
+  "vmapi": {
+    "url": "http://10.2.206.19"
+  },
+  "napi": {
+    "url": "http://10.2.206.6"
+  },
+  "imgapi": {
+    "url": "http://10.2.206.13"
+  },
+  "ufds": {
+    "url": "ldaps://10.2.206.10",
+    "bindDN": "cn=root",
+    "bindPassword": "secret",
+    "cache": {
+      "size": 1000,
+      "expiry": 300
+    }
+  }
+}

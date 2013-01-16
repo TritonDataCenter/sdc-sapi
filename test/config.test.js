@@ -51,7 +51,6 @@ test('create w/ missing inputs', function (t) {
 	var self = this;
 
 	var cfg = {};
-	cfg.service = 'minnow';
 	cfg.type = 'json';
 	cfg.path = '/opt/smartdc/minnow/etc/config.json';
 	cfg.template = {
@@ -65,15 +64,6 @@ test('create w/ missing inputs', function (t) {
 	}
 
 	async.waterfall([
-		function (cb) {
-			var badcfg = jsprim.deepCopy(cfg);
-			delete badcfg.service;
-
-			self.client.post(URI, badcfg, function (err, _, res) {
-				check409(err, res);
-				cb();
-			});
-		},
 		function (cb) {
 			var badcfg = jsprim.deepCopy(cfg);
 			delete badcfg.type;

@@ -71,6 +71,7 @@ test('create w/ missing inputs', function (t) {
 
 	function check409(err, res) {
 		t.ok(err);
+		t.equal(err.name, 'MissingParameterError');
 		t.equal(res.statusCode, 409);
 	}
 

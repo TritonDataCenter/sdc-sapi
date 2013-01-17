@@ -56,6 +56,7 @@ test('create w/o owner_uuid', function (t) {
 
 	this.client.post(URI, app, function (err, req, res, obj) {
 		t.ok(err);
+		t.equal(err.name, 'MissingParameterError');
 		t.equal(res.statusCode, 409);
 		t.end();
 	});
@@ -68,6 +69,7 @@ test('create w/o name', function (t) {
 
 	this.client.post(URI, app, function (err, req, res, obj) {
 		t.ok(err);
+		t.equal(err.name, 'MissingParameterError');
 		t.equal(res.statusCode, 409);
 		t.end();
 	});

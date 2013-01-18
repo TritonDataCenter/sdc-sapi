@@ -38,10 +38,11 @@ function createService(app_uuid, uuid, cb) {
 
 function createConfig(cb) {
 	var type = 'json';
-	var path = '/opt/smartdc/SERVICE/etc/config.json';
-	var template = 'My service template goes here.';
+	var path = '/var/tmp/config.json';
+	var template = '{ logLevel: "debug" }';
+	var name = 'more_or_less_empty test config';
 
-	this.sapi.createConfig(template, path, type, function (err, cfg) {
+	this.sapi.createConfig(name, template, path, type, function (err, cfg) {
 		return (cb(err, cfg));
 	});
 }

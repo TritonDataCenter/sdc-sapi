@@ -44,6 +44,7 @@ test('create w/ missing inputs', function (t) {
 	var self = this;
 
 	var cfg = {};
+	cfg.name = 'my bad config';
 	cfg.type = 'json';
 	cfg.path = '/opt/smartdc/minnow/etc/config.json';
 	cfg.template = {
@@ -58,6 +59,15 @@ test('create w/ missing inputs', function (t) {
 	}
 
 	async.waterfall([
+		function (cb) {
+			var badcfg = jsprim.deepCopy(cfg);
+			delete badcfg.name;
+
+			self.client.post(URI, badcfg, function (err, _, res) {
+				check409(err, res);
+				cb();
+			});
+		},
 		function (cb) {
 			var badcfg = jsprim.deepCopy(cfg);
 			delete badcfg.type;
@@ -120,6 +130,7 @@ test('put/get/del config', function (t) {
 
 	var cfg = {};
 	cfg.uuid = node_uuid.v4();
+	cfg.name = 'mycoolconfig';
 	cfg.service = 'minnow';
 	cfg.type = 'text';
 	cfg.path = '/opt/smartdc/minnow/etc/config.json';
@@ -130,6 +141,7 @@ test('put/get/del config', function (t) {
 
 	var checkCfg = function (obj) {
 		t.equal(obj.uuid, cfg.uuid);
+		t.equal(obj.name, cfg.name);
 		t.equal(obj.service, cfg.service);
 		t.equal(obj.type, cfg.type);
 		t.equal(obj.path, cfg.path);

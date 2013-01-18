@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2013, Joyent, Inc. All rights reserved.
  *
- * test/config.js: test /config endpoints
+ * test/config.test.js: test /config endpoints
  */
 
 var async = require('async');
@@ -11,26 +11,19 @@ var node_uuid = require('node-uuid');
 if (require.cache[__dirname + '/helper.js'])
 	delete require.cache[__dirname + '/helper.js'];
 var helper = require('./helper.js');
-
-
-// -- Globals
-
-var after = helper.after;
-var before = helper.before;
 var test = helper.test;
+
 
 var URI = '/config';
 
 
-// -- Tests
-
-before(function (cb) {
+helper.before(function (cb) {
 	this.client = helper.createJsonClient();
 
 	cb(null);
 });
 
-after(function (cb) {
+helper.after(function (cb) {
 	cb(null);
 });
 

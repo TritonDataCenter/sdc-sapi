@@ -6,7 +6,9 @@
 
 var bunyan = require('bunyan');
 var once = require('once');
+var sdc = require('sdc-clients');
 var restify = require('restify');
+
 
 
 // -- Helpers
@@ -30,6 +32,18 @@ function createJsonClient() {
 		log: log,
 		retry: false,
 		type: 'http',
+		url: process.env.SAPI_URL || 'http://localhost:80'
+	});
+
+	return (client);
+}
+
+function createSapiClient() {
+	var log = createLogger();
+
+	var client = new sdc.SAPI({
+		agent: false,
+		log: log,
 		url: process.env.SAPI_URL || 'http://localhost:80'
 	});
 
@@ -103,6 +117,8 @@ module.exports = {
 		};
 	},
 
+	createLogger: createLogger,
+
 	createJsonClient: createJsonClient,
-	createLogger: createLogger
+	createSapiClient: createSapiClient
 };

@@ -1,10 +1,12 @@
 /*
  * Copyright (c) 2013, Joyent, Inc. All rights reserved.
  *
- * test/instances.js: test /instances endpoints
+ * test/instances.test.js: test /instances endpoints
  */
 
 var async = require('async');
+var common = require('./common');
+var jsprim = require('jsprim');
 var node_uuid = require('node-uuid');
 
 var sprintf = require('util').format;
@@ -12,67 +14,96 @@ var sprintf = require('util').format;
 if (require.cache[__dirname + '/helper.js'])
 	delete require.cache[__dirname + '/helper.js'];
 var helper = require('./helper.js');
-
-
-// -- Globals
-
-var after = helper.after;
-var before = helper.before;
 var test = helper.test;
 
-var SMARTOS_163_UUID = '01b2c898-945f-11e1-a523-af1afbe22822';
-
-function createApplication(name, uuid, cb) {
-	var app = {};
-	app.name = name;
-	app.owner_uuid = '00000000-0000-0000-0000-000000000000';  // admin
-	app.uuid = uuid;
-
-	this.client.post('/applications', app, function (err) {
-		cb(err);
-	});
-}
-
-function delApplication(uuid, cb) {
-	this.client.del('/applications/' + uuid, function (err) {
-		cb(err);
-	});
-}
-
-function createService(name, uuid, application_uuid, cb) {
-	var svc = {};
-	svc.name = name;
-	svc.uuid = uuid;
-	svc.image_uuid = SMARTOS_163_UUID;
-	svc.application_uuid = application_uuid;
-	svc.ram = 256;
-	svc.networks = [ 'admin' ];
-
-	this.client.post('/services', svc, function (err) {
-		cb(err);
-	});
-}
-
-function delService(uuid, cb) {
-	this.client.del('/services/' + uuid, function (err) {
-		cb(err);
-	});
-}
+var URI = '/instances';
 
 
 // -- Tests
 
-before(function (cb) {
+helper.before(function (cb) {
 	this.client = helper.createJsonClient();
+	this.sapi = helper.createSapiClient();
 
 	cb(null);
 });
 
-after(function (cb) {
+helper.after(function (cb) {
 	cb(null);
 });
 
-// XXX Tests for invalid inputs
+
+// -- Test missing/invalid inputs
+
+test('create w/ invalid inputs', function (t) {
+	var self = this;
+
+	var app_uuid = node_uuid.v4();
+	var svc_uuid = node_uuid.v4();
+
+	var inst = {};
+	inst.name = 'bad_instance';
+	inst.uuid = node_uuid.v4();
+	inst.service_uuid = svc_uuid;
+
+	function check409(err, res) {
+		t.ok(err);
+		t.equal(err.name, 'MissingParameterError');
+		t.equal(res.statusCode, 409);
+	}
+
+	async.waterfall([
+		function (cb) {
+			common.createApplication.call(self, app_uuid, cb);
+		},
+		function (cb) {
+			common.createService.call(self, app_uuid, svc_uuid, cb);
+		},
+		function (cb) {
+			// missing name
+			var badinst  = jsprim.deepCopy(inst);
+			delete badinst.name;
+
+			self.client.post(URI, badinst, function (err, _, res) {
+				check409(err, res);
+				cb();
+			});
+		},
+		function (cb) {
+			// missing service_uuid
+			var badinst  = jsprim.deepCopy(inst);
+			delete badinst.service_uuid;
+
+			self.client.post(URI, badinst, function (err, _, res) {
+				check409(err, res);
+				cb();
+			});
+		},
+		function (cb) {
+			// invalid service_uuid
+			var badinst  = jsprim.deepCopy(inst);
+			badinst.service_uuid = node_uuid.v4();
+
+			self.client.post(URI, badinst, function (err, _, res) {
+				t.ok(err);
+				t.equal(res.statusCode, 500);
+				cb();
+			});
+		},
+		function (cb) {
+			self.sapi.deleteService(svc_uuid, function (err) {
+				cb(err);
+			});
+		},
+		function (cb) {
+			self.sapi.deleteApplication(app_uuid, function (err) {
+				cb(err);
+			});
+		}
+	], function (err) {
+		t.end();
+	});
+});
 
 
 // -- Test a standard put/get/del instance
@@ -81,36 +112,41 @@ test('put/get/del instance', function (t) {
 	var self = this;
 	var client = this.client;
 
-	var app = {};
-	app.name = 'mycoolapp';
-	app.uuid = node_uuid.v4();
-
-	var svc = {};
-	svc.name = 'mycoolservice';
-	svc.uuid = node_uuid.v4();
-	svc.application_uuid = app.uuid;
+	var app_uuid = node_uuid.v4();
+	var svc_uuid = node_uuid.v4();
 
 	var inst = {};
 	inst.name = 'mycoolinstance';
 	inst.uuid = node_uuid.v4();
-	inst.service_uuid = svc.uuid;
+	inst.service_uuid = svc_uuid;
+
+	var cfg_uuid;
 
 	var check = function (obj) {
 		t.equal(obj.name, inst.name);
 		t.equal(obj.uuid, inst.uuid);
 		t.equal(obj.service_uuid, inst.service_uuid);
+		t.deepEqual(obj.configs, [ cfg_uuid ]);
 	};
 
-	var uri = '/instances';
 	var uri_inst = '/instances/' + inst.uuid;
 
 	async.waterfall([
 		function (cb) {
-			createApplication.call(self, app.name, app.uuid, cb);
+			common.createApplication.call(self, app_uuid, cb);
 		},
 		function (cb) {
-			createService.call(self, svc.name, svc.uuid,
-			    svc.application_uuid, cb);
+			common.createService.call(self, app_uuid, svc_uuid, cb);
+		},
+		function (cb) {
+			common.createConfig.call(self, function (err, cfg) {
+				if (cfg) {
+					cfg_uuid = cfg.uuid;
+					inst.configs = [ cfg_uuid ];
+				}
+
+				cb(err);
+			});
 		},
 		function (cb) {
 			client.get(uri_inst, function (err, _, res, obj) {
@@ -121,7 +157,19 @@ test('put/get/del instance', function (t) {
 			});
 		},
 		function (cb) {
-			client.post(uri, inst, function (err, _, res, obj) {
+			// test invalid config manifest
+			var badinst = jsprim.deepCopy(inst);
+			badinst.configs = [ node_uuid.v4() ];
+
+			client.post(URI, badinst, function (err, _, res, obj) {
+				t.ok(err);
+				t.equal(res.statusCode, 500);
+
+				cb(null);
+			});
+		},
+		function (cb) {
+			client.post(URI, inst, function (err, _, res, obj) {
 				t.ifError(err);
 				t.equal(res.statusCode, 200);
 
@@ -141,7 +189,7 @@ test('put/get/del instance', function (t) {
 			});
 		},
 		function (cb) {
-			client.get(uri, function (err, _, res, obj) {
+			client.get(URI, function (err, _, res, obj) {
 				t.ifError(err);
 				t.equal(res.statusCode, 200);
 
@@ -176,10 +224,19 @@ test('put/get/del instance', function (t) {
 			});
 		},
 		function (cb) {
-			delService.call(self, svc.uuid, cb);
+			self.sapi.deleteConfig(cfg_uuid, function (err) {
+				cb(err);
+			});
 		},
 		function (cb) {
-			delApplication.call(self, app.uuid, cb);
+			self.sapi.deleteService(svc_uuid, function (err) {
+				cb(err);
+			});
+		},
+		function (cb) {
+			self.sapi.deleteApplication(app_uuid, function (err) {
+				cb(err);
+			});
 		}
 	], function (err, results) {
 		t.end();

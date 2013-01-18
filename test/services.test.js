@@ -1,58 +1,33 @@
 /*
  * Copyright (c) 2013, Joyent, Inc. All rights reserved.
  *
- * test/services.js: test /services endpoints
+ * test/services.test.js: test /services endpoints
  */
 
 var async = require('async');
+var common = require('./common');
 var jsprim = require('jsprim');
 var node_uuid = require('node-uuid');
 
 if (require.cache[__dirname + '/helper.js'])
 	delete require.cache[__dirname + '/helper.js'];
 var helper = require('./helper.js');
-
-
-// -- Globals
-
-var after = helper.after;
-var before = helper.before;
 var test = helper.test;
 
-var SMARTOS_163_UUID = '01b2c898-945f-11e1-a523-af1afbe22822';
 
 var URI = '/services';
 
 
-// -- Helper functions
-
-function createApplication(name, uuid, cb) {
-	var app = {};
-	app.name = name;
-	app.owner_uuid = '00000000-0000-0000-0000-000000000000';  // admin
-	app.uuid = uuid;
-
-	this.client.post('/applications', app, function (err) {
-		cb(err);
-	});
-}
-
-function delApplication(uuid, cb) {
-	this.client.del('/applications/' + uuid, function (err) {
-		cb(err);
-	});
-}
-
-
 // -- Tests
 
-before(function (cb) {
+helper.before(function (cb) {
 	this.client = helper.createJsonClient();
+	this.sapi = helper.createSapiClient();
 
 	cb();
 });
 
-after(function (cb) {
+helper.after(function (cb) {
 	cb();
 });
 
@@ -65,9 +40,11 @@ test('create w/ missing inputs', function (t) {
 	var svc = {};
 	svc.name = 'application_uuid missing';
 	svc.application_uuid = node_uuid.v4();
-	svc.image_uuid = SMARTOS_163_UUID;
-	svc.ram = 256;
-	svc.networks = [ 'admin' ];
+
+	svc.params = {};
+	svc.params.image_uuid = common.SMARTOS_163_UUID;
+	svc.params.ram = 256;
+	svc.params.networks = [ 'admin' ];
 
 	function check409(err, res) {
 		t.ok(err);
@@ -93,33 +70,6 @@ test('create w/ missing inputs', function (t) {
 				check409(err, res);
 				cb();
 			});
-		},
-		function (cb) {
-			var badsvc = jsprim.deepCopy(svc);
-			delete badsvc.image_uuid;
-
-			self.client.post(URI, badsvc, function (err, _, res) {
-				check409(err, res);
-				cb();
-			});
-		},
-		function (cb) {
-			var badsvc = jsprim.deepCopy(svc);
-			delete badsvc.ram;
-
-			self.client.post(URI, badsvc, function (err, _, res) {
-				check409(err, res);
-				cb();
-			});
-		},
-		function (cb) {
-			var badsvc = jsprim.deepCopy(svc);
-			delete badsvc.networks;
-
-			self.client.post(URI, badsvc, function (err, _, res) {
-				check409(err, res);
-				cb();
-			});
 		}
 	], function (err) {
 		t.end();
@@ -130,9 +80,11 @@ test('create w/ invalid application_uuid', function (t) {
 	var svc = {};
 	svc.name = 'invalid application_uuid';
 	svc.application_uuid = node_uuid.v4();  // invalid
-	svc.image_uuid = SMARTOS_163_UUID;
-	svc.ram = 256;
-	svc.networks = [ 'admin' ];
+
+	svc.params = {};
+	svc.params.image_uuid = common.SMARTOS_163_UUID;
+	svc.params.ram = 256;
+	svc.params.networks = [ 'admin' ];
 
 	this.client.post('/services', svc, function (err, req, res, obj) {
 		t.ok(err);
@@ -141,33 +93,48 @@ test('create w/ invalid application_uuid', function (t) {
 	});
 });
 
-test('create w/ invalid image_uuid', function (t) {
+test('create w/ other invalid inputs', function (t) {
 	var self = this;
 
-	var app = {};
-	app.name = 'mycoolapp';
-	app.uuid = node_uuid.v4();
+	var app_uuid = node_uuid.v4();
 
 	var svc = {};
-	svc.name = 'invalid image_uuid';
-	svc.application_uuid = app.uuid;
-	svc.image_uuid = node_uuid.v4();  // invalid
-	svc.ram = 256;
-	svc.networks = [ 'admin' ];
+	svc.name = 'invalid inputs';
+	svc.application_uuid = app_uuid;
+
+	svc.params = {};
+	svc.params.image_uuid = common.SMARTOS_163_UUID;
+	svc.params.ram = 256;
+	svc.params.networks = [ 'admin' ];
 
 	async.waterfall([
 		function (cb) {
-			createApplication.call(self, app.name, app.uuid, cb);
+			common.createApplication.call(self, app_uuid, cb);
 		},
 		function (cb) {
-			self.client.post(URI, svc, function (err, _, res) {
+			// invalid image_uuid
+			var badsvc = jsprim.deepCopy(svc);
+			badsvc.params.image_uuid = node_uuid.v4();
+
+			self.client.post(URI, badsvc, function (err, _, res) {
 				t.ok(err);
 				t.equal(res.statusCode, 500);
 				cb();
 			});
 		},
 		function (cb) {
-			delApplication.call(self, app.uuid, cb);
+			// invalid config manifest
+			var badsvc = jsprim.deepCopy(svc);
+			badsvc.configs = [ node_uuid.v4() ];
+
+			self.client.post(URI, badsvc, function (err, _, res) {
+				t.ok(err);
+				t.equal(res.statusCode, 500);
+				cb();
+			});
+		},
+		function (cb) {
+			self.sapi.deleteApplication(app_uuid, cb);
 		}
 	], function (err) {
 		t.end();
@@ -190,7 +157,20 @@ test('get nonexistent service', function (t) {
 test('put/get/del service', function (t) {
 	var self = this;
 
-	var params = {
+
+	var app_uuid = node_uuid.v4();
+
+	var svc = {};
+	svc.name = 'mycoolservice';
+	svc.uuid = node_uuid.v4();
+	svc.application_uuid = app_uuid;
+
+	svc.params = {};
+	svc.params.image_uuid = common.SMARTOS_163_UUID;
+	svc.params.ram = 256;
+	svc.params.networks = [ 'admin' ];
+
+	svc.metadata = {
 		dns: '10.0.0.2',
 		domain: 'foo.co.us',
 		vmapi: {
@@ -198,33 +178,30 @@ test('put/get/del service', function (t) {
 		}
 	};
 
-	var app = {};
-	app.name = 'mycoolapp';
-	app.uuid = node_uuid.v4();
-
-	var svc = {};
-	svc.name = 'mycoolservice';
-	svc.uuid = node_uuid.v4();
-	svc.application_uuid = app.uuid;
-	svc.image_uuid = SMARTOS_163_UUID;
-	svc.ram = 256;
-	svc.networks = [ 'admin' ];
-
-	svc.params = params;
+	var cfg_uuid;
 
 	var checkService = function (obj) {
 		t.equal(obj.name, svc.name);
 		t.equal(obj.uuid, svc.uuid);
-		t.equal(obj.application_uuid, svc.application_uuid);
-		t.equal(obj.image_uuid, svc.image_uuid);
 		t.deepEqual(obj.params, svc.params);
+		t.deepEqual(obj.metadata, svc.metadata);
+		t.deepEqual(obj.configs, [ cfg_uuid ]);
 	};
 
 	var uri_svc = '/services/' + svc.uuid;
 
 	async.waterfall([
 		function (cb) {
-			createApplication.call(self, app.name, app.uuid, cb);
+			common.createApplication.call(self, app_uuid, cb);
+		},
+		function (cb) {
+			common.createConfig.call(self, function (err, cfg) {
+				if (cfg) {
+					cfg_uuid = cfg.uuid;
+					svc.configs = [ cfg_uuid ];
+				}
+				cb(err);
+			});
 		},
 		function (cb) {
 			self.client.get(uri_svc, function (err, _, res, obj) {
@@ -289,7 +266,14 @@ test('put/get/del service', function (t) {
 			});
 		},
 		function (cb) {
-			delApplication.call(self, app.uuid, cb);
+			self.sapi.deleteConfig(cfg_uuid, function (err) {
+				cb(err);
+			});
+		},
+		function (cb) {
+			self.sapi.deleteApplication(app_uuid, function (err) {
+				cb(err);
+			});
 		}
 	], function (err, results) {
 		t.end();

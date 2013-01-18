@@ -41,7 +41,7 @@ function createConfig(cb) {
 	var path = '/opt/smartdc/SERVICE/etc/config.json';
 	var template = 'My service template goes here.';
 
-	this.sapi.createConfig(type, path, template, function (err, cfg) {
+	this.sapi.createConfig(template, path, type, function (err, cfg) {
 		return (cb(err, cfg));
 	});
 }

@@ -196,6 +196,7 @@ test('put/get/del config', function (t) {
 			});
 		}
 	], function (err, results) {
+		t.ifError(err);
 		t.end();
 	});
 });

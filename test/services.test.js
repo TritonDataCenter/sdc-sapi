@@ -137,6 +137,7 @@ test('create w/ other invalid inputs', function (t) {
 			self.sapi.deleteApplication(app_uuid, cb);
 		}
 	], function (err) {
+		t.ifError(err);
 		t.end();
 	});
 });
@@ -276,6 +277,7 @@ test('put/get/del service', function (t) {
 			});
 		}
 	], function (err, results) {
+		t.ifError(err);
 		t.end();
 	});
 });

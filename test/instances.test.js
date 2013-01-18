@@ -101,6 +101,7 @@ test('create w/ invalid inputs', function (t) {
 			});
 		}
 	], function (err) {
+		t.ifError(err);
 		t.end();
 	});
 });
@@ -239,6 +240,7 @@ test('put/get/del instance', function (t) {
 			});
 		}
 	], function (err, results) {
+		t.ifError(err);
 		t.end();
 	});
 });

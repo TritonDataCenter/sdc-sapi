@@ -251,6 +251,7 @@ test('put/get/del application', function (t) {
 			self.sapi.deleteConfig(cfg_uuid, cb);
 		}
 	], function (err, results) {
+		t.ifError(err);
 		t.end();
 	});
 });

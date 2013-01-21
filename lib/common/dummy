@@ -1,0 +1,5 @@
+This file is only here to prevent:
+
+cp: cannot stat `/root/data/jenkins/workspace/sapi/MG/build/sapi/lib/common': No such file or directory
+gmake[1]: *** [service] Error 1
+gmake[1]: Leaving directory `/root/data/jenkins/workspace/sapi/MG/build/sapi'

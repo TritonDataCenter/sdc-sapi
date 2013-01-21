@@ -16,7 +16,7 @@ if (require.cache[__dirname + '/helper.js'])
 var helper = require('./helper.js');
 var test = helper.test;
 
-var mod_metadata = require('../lib/metadata');
+var mod_metadata = require('../lib/server/metadata');
 
 
 // XXX These key names should only be in one place

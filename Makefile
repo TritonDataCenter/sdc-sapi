@@ -1,17 +1,7 @@
 #
-# Copyright (c) 2012, Joyent, Inc. All rights reserved.
+# Copyright (c) 2013, Joyent, Inc. All rights reserved.
 #
-# Makefile: basic Makefile for template API service
-#
-# This Makefile is a template for new repos. It contains only repo-specific
-# logic and uses included makefiles to supply common targets (javascriptlint,
-# jsstyle, restdown, etc.), which are used by other repos as well. You may well
-# need to rewrite most of this file, but you shouldn't need to touch the
-# included makefiles.
-#
-# If you find yourself adding support for new targets that could be useful for
-# other projects too, you should add these to the original versions of the
-# included Makefiles (in eng.git) so that other teams can use them too.
+# Makefile: builds Services API and associated config-agent
 #
 
 #
@@ -28,9 +18,9 @@ JSL_CONF_NODE	 = tools/jsl.node.conf
 JSL_FILES_NODE   = $(JS_FILES)
 JSSTYLE_FILES	 = $(JS_FILES)
 JSSTYLE_FLAGS    = -o doxygen
-SMF_MANIFESTS_IN = smf/manifests/sapi.xml.in
+SMF_MANIFESTS_IN = smf/manifests/sapi.xml.in smf/manifests/config-agent.xml.in
 
-NODE_PREBUILT_VERSION=v0.8.14
+NODE_PREBUILT_VERSION=v0.8.17
 NODE_PREBUILT_TAG=zone
 
 
@@ -62,32 +52,64 @@ test: $(NODEUNIT)
 #
 
 TOP             := $(shell pwd)
-RELEASE_TARBALL := sapi-pkg-$(STAMP).tar.bz2
-PKGDIR          := $(TOP)/$(BUILD)/pkg
-INSTDIR         := $(PKGDIR)/root/opt/smartdc/sapi
+
+SVC_TARBALL 	:= sapi-pkg-$(STAMP).tar.bz2
+SVC_PKGDIR	:= $(TOP)/$(BUILD)/service
+SVC_INSTDIR	:= $(SVC_PKGDIR)/root/opt/smartdc/sapi
+
+AGENT_TARBALL 	:= config-agent-$(STAMP).tar.bz2
+AGENT_PKGDIR	:= $(TOP)/$(BUILD)/agent
+AGENT_INSTDIR	:= $(AGENT_PKGDIR)/root/opt/smartdc/config-agent
 
 .PHONY: release
-release: $(RELEASE_TARBALL)
+release: $(SVC_TARBALL) $(AGENT_TARBALL)
 
-.PHONY: pkg
-pkg: all $(SMF_MANIFESTS)
-	@echo "Building $(RELEASE_TARBALL)"
-	@rm -rf $(PKGDIR)
-	@mkdir -p $(PKGDIR)/site
-	@mkdir -p $(INSTDIR)/smf/manifests
-	@mkdir -p $(INSTDIR)/test
-	@mkdir -p $(INSTDIR)/build
-	@touch $(PKGDIR)/site/.do-not-delete-me
+.PHONY: service
+service: all $(SMF_MANIFESTS)
+	@echo "Building $(SVC_TARBALL)"
+	@rm -rf $(SVC_PKGDIR)
+	@mkdir -p $(SVC_PKGDIR)/site
+	@mkdir -p $(SVC_INSTDIR)/build
+	@mkdir -p $(SVC_INSTDIR)/lib
+	@mkdir -p $(SVC_INSTDIR)/smf/manifests
+	@mkdir -p $(SVC_INSTDIR)/test
+	@touch $(SVC_PKGDIR)/site/.do-not-delete-me
 	cp -r $(TOP)/server.js \
-		$(TOP)/lib \
 		$(TOP)/node_modules \
-		$(INSTDIR)/
-	cp -P smf/manifests/*.xml $(INSTDIR)/smf/manifests
-	cp -r $(TOP)/test $(INSTDIR)/
-	cp -PR $(NODE_INSTALL) $(INSTDIR)/build/node
+		$(SVC_INSTDIR)/
+	cp -r $(TOP)/lib/common \
+		$(TOP)/lib/server \
+		$(SVC_INSTDIR)/lib
+	cp -P smf/manifests/sapi.xml $(SVC_INSTDIR)/smf/manifests
+	cp -r $(TOP)/test $(SVC_INSTDIR)/
+	cp -PR $(NODE_INSTALL) $(SVC_INSTDIR)/build/node
 
-$(RELEASE_TARBALL): pkg
-	(cd $(PKGDIR) && $(TAR) -jcf $(TOP)/$(RELEASE_TARBALL) root site)
+$(SVC_TARBALL): service
+	(cd $(SVC_PKGDIR) && $(TAR) -jcf $(TOP)/$(SVC_TARBALL) root site)
+
+.PHONY: agent
+agent: all $(SMF_MANIFESTS)
+	@echo "Building $(AGENT_TARBALL)"
+	@rm -rf $(AGENT_PKGDIR)
+	@mkdir -p $(AGENT_PKGDIR)/site
+	@mkdir -p $(AGENT_INSTDIR)/build
+	@mkdir -p $(AGENT_INSTDIR)/lib
+	@mkdir -p $(AGENT_INSTDIR)/smf/manifests
+	@mkdir -p $(AGENT_INSTDIR)/test
+	@touch $(AGENT_PKGDIR)/site/.do-not-delete-me
+	cp -r $(TOP)/agent.js \
+		$(TOP)/node_modules \
+		$(AGENT_INSTDIR)
+	cp -r $(TOP)/lib/common \
+		$(TOP)/lib/agent \
+		$(AGENT_INSTDIR)/lib
+	cp -P smf/manifests/config-agent.xml $(AGENT_INSTDIR)/smf/manifests
+	cp -r $(TOP)/test $(AGENT_INSTDIR)/
+	cp -PR $(NODE_INSTALL) $(AGENT_INSTDIR)/build/node
+
+$(AGENT_TARBALL): agent
+	(cd $(AGENT_PKGDIR) && $(TAR) -jcf $(TOP)/$(AGENT_TARBALL) root site)
+
 
 .PHONY: publish
 publish: release
@@ -96,7 +118,9 @@ publish: release
     exit 1; \
   fi
 	mkdir -p $(BITS_DIR)/sapi
+	mkdir -p $(BITS_DIR)/config-agent
 	cp $(TOP)/$(RELEASE_TARBALL) $(BITS_DIR)/sapi/$(RELEASE_TARBALL)
+	cp $(TOP)/$(AGENT_TARBALL) $(BITS_DIR)/config-agent/$(AGENT_TARBALL)
 
 
 

@@ -6,6 +6,7 @@ docs/*.html
 cscope.in.out
 cscope.po.out
 cscope.out
-smf/manifests/sapi.xml
+smf/manifests/*.xml
 *.swp
 sapi-pkg-master-*.tar.bz2
+config-agent-*.tar.bz2

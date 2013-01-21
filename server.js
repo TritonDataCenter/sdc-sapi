@@ -7,14 +7,14 @@
 var fs = require('fs');
 var optimist = require('optimist');
 
-var SAPI = require('./lib/sapi');
+var SAPI = require('./lib/server/sapi');
 
 
 optimist.usage('Usage:\t node server.js [ -f <config file> ]');
 var ARGV = optimist.options({
 	'f': {
 		'alias': 'file',
-		'describe': 'SAPI configuration file'
+		'describe': 'location of configuration file'
 	}
 }).argv;
 

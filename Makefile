@@ -119,7 +119,7 @@ publish: release
   fi
 	mkdir -p $(BITS_DIR)/sapi
 	mkdir -p $(BITS_DIR)/config-agent
-	cp $(TOP)/$(RELEASE_TARBALL) $(BITS_DIR)/sapi/$(RELEASE_TARBALL)
+	cp $(TOP)/$(SVC_TARBALL) $(BITS_DIR)/sapi/$(SVC_TARBALL)
 	cp $(TOP)/$(AGENT_TARBALL) $(BITS_DIR)/config-agent/$(AGENT_TARBALL)
 
 

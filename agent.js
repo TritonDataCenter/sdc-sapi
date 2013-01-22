@@ -27,8 +27,8 @@ var ARGV = optimist.options({
 }).argv;
 
 
-var file = ARGV.f ? ARGV.f : './etc/agentconfig.json';
-var contents = fs.readFileSync(ARGV.f);
+var file = ARGV.f ? ARGV.f : '/opt/smartdc/config-agent/etc/config.json';
+var contents = fs.readFileSync(file);
 var config = JSON.parse(contents);
 
 assert.object(config, 'config');

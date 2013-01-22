@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2013, Joyent, Inc. All rights reserved.
  *
- * test/instances.test.js: test /instances endpoints
+ * test/metadata.test.js: test serialization of metadata
  */
 
 var async = require('async');
@@ -16,12 +16,7 @@ if (require.cache[__dirname + '/helper.js'])
 var helper = require('./helper.js');
 var test = helper.test;
 
-var mod_metadata = require('../lib/server/metadata');
-
-
-// XXX These key names should only be in one place
-var MANIFESTS = 'config_manifests';
-var MDATA_KEYS = 'metadata_keys';
+var mod_manifests = require('../lib/common/manifests');
 
 
 // -- Tests
@@ -37,17 +32,17 @@ helper.after(function (cb) {
 
 // -- Test metadata and configuration serialization
 
-test('test w/ empty args', function (t) {
-	var kvpairs = mod_metadata.generateZoneMetadata({}, []);
+test('test serialize() w/ empty args', function (t) {
+	var kvpairs = mod_manifests.serialize([], {});
 
-	t.equal(kvpairs[MANIFESTS], JSON.stringify([]));
-	t.equal(kvpairs[MDATA_KEYS], JSON.stringify([]));
+	t.equal(kvpairs[mod_manifests.MANIFESTS], JSON.stringify([]));
+	t.equal(kvpairs[mod_manifests.MDATA_KEYS], JSON.stringify([]));
 
 	t.end();
 });
 
 
-test('test metadata serialization', function (t) {
+test('test serialize()', function (t) {
 	var metadata = {
 		FOO: 'BAR',
 		BAZ: 123,
@@ -56,22 +51,22 @@ test('test metadata serialization', function (t) {
 		}
 	};
 
-	var config = {
-		name: 'my_config',
+	var manifest = {
+		name: 'my_manifest',
 		type: 'json',
 		path: '/opt/smartdc/etc/config.json',
 		template: 'Service template here'
 	};
-	var configs = [ config ];
+	var manifests = [ manifest ];
 
-	var kvpairs = mod_metadata.generateZoneMetadata(metadata, configs);
+	var kvpairs = mod_manifests.serialize(manifests, metadata);
 
-	t.deepEqual(kvpairs[MANIFESTS],
-	    JSON.stringify([ 'my_config_manifest' ]));
-	t.deepEqual(kvpairs[MDATA_KEYS],
+	t.deepEqual(kvpairs[mod_manifests.MANIFESTS],
+	    JSON.stringify([ 'my_manifest_manifest' ]));
+	t.deepEqual(kvpairs[mod_manifests.MDATA_KEYS],
 	    JSON.stringify([ 'FOO', 'BAZ', 'OBJ' ]));
 
-	t.deepEqual(kvpairs['my_config_manifest'], JSON.stringify(config));
+	t.deepEqual(kvpairs['my_manifest_manifest'], JSON.stringify(manifest));
 
 	t.deepEqual(kvpairs['FOO'], JSON.stringify(metadata.FOO));
 	t.deepEqual(kvpairs['BAZ'], JSON.stringify(metadata.BAZ));

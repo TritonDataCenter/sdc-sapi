@@ -47,42 +47,21 @@ config.mdata = require('./lib/agent/mdata');
 var agent = new Agent(config);
 
 if (ARGV.s) {
-	// XXX Maybe I can just be done with the sentinel file?
 	/*
 	 * Synchronous mode is used as part of a zone's first boot and initial
-	 * setup. Every time the configuration is written (or rewritten) in this
-	 * zone, a sentinel file is touched.
-	 *
-	 * If the sentinel isn't present, then the configuration has never been
-	 * written. If that's the case when started in synchronous mode, write
-	 * the configuration and exit.
-	 *
-	 * If the sentinel is present, then just exit without writing the
-	 * configuration.
+	 * setup.  Instead of polling at some interval, immediately write out
+	 * the configuration files and exit.
 	 */
-	agent.alreadyWritten(function (err, written) {
-		assert.ifError(err);
-
-		if (written) {
-			log.info('configuration already updated at least ' +
-			    'once; exiting');
-			process.exit(0);
+	agent.checkAndRefresh(function (err) {
+		if (err) {
+			log.error(err, 'failed to write ' +
+			    'configuration');
+		} else {
+			log.info('wrote configuration synchronously');
 		}
 
-		agent.checkAndRefresh(function (suberr) {
-			if (suberr) {
-				log.error(suberr, 'failed to write ' +
-				    'configuration');
-			} else {
-				log.info('wrote configuration synchronously');
-			}
-			process.exit(suberr ? 1 : 0);
-		});
+		process.exit(err ? 1 : 0);
 	});
 } else {
-	setInterval(refresh, config.pollInterval);
-}
-
-function refresh() {
-	agent.checkAndRefresh.call(agent);
+	setInterval(agent.checkAndRefresh.bind(agent), config.pollInterval);
 }

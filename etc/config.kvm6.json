@@ -20,6 +20,9 @@
   "imgapi": {
     "url": "http://10.2.206.13"
   },
+  "remote_imgapi": {
+    "url": "https://10.2.172.75"
+  },
   "ufds": {
     "url": "ldaps://10.2.206.10",
     "bindDN": "cn=root",

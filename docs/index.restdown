@@ -1,32 +1,31 @@
 ---
 title: Services API
-apisections: Applications, Services, Service Configuration, Amon Configuration, Endpoints 
+apisections: Applications, Services, Service Configuration, Amon Configuration, Endpoints
 markdown2extras: wiki-tables, code-friendly
 ---
 
 # Services API
 
-The services API allows operators to configure, deploy, and upgrade SDC and
-manta services.  This API supports upgrades of individual services in a rolling
-fashion.
+This API allows operators to configure, deploy, and upgrade software using a
+set of loosely-coupled federated services.
 
-This API is the next iteration of the manta.git deployment tools.  In short,
-it's trying to bring to SDC some of the deployment software already developed
-for manta.  It has several goals:
+SAPI is the next iteration of the manta.git deployment tools.  In short, it's
+trying to bring to SDC some of the deployment software already developed for
+manta.  It has several goals:
 
 * Provide cleaner, more unified deployment semantics
 * Expose an API for an operator portal
 * Enable auto-discovery of SDC and manta services
 * Enable dynamic configuration of SDC and manta services
 
-This document is currently light on details so some familiarity with the
-manta.git tools, especially manta-deploy, may help explain certain sections.
-
 
 # Terminology
 
 There are three main objects: applications, services, and instances.  An
 application has one or more services, and a service has one or more instances.
+Instances are actual zones which inherit their zone parameters from the
+associated applications and services.
+
 
 ## Applications
 
@@ -35,14 +34,23 @@ as a separate application; additional applications may be supported in the
 future.
 
     {
-      "name": "sdc",
       "uuid": "14160e92-5533-11e2-86a2-9f78cf99260d",
+      "name": "sdc",
       "owner_uuid": "1959d690-5533-11e2-8bee-1b98757172d1",
+
       "params": {
+        "ram": 1024
+        "quota": 100
+        ...
+      },
+
+      "metadata": {
         "nameservers": "10.99.99.20 10.99.99.21",
         "region": "sf"
         ...
-      }
+      },
+
+      "configs": []
     }
 
 
@@ -54,75 +62,28 @@ instances.
 Here's a sample service object:
 
     {
+      "uuid": "5081a5d6-6bd0-11e2-bafb-a735b6c6ccb6",
+      "name": "mako",
       "application": "14160e92-5533-11e2-86a2-9f78cf99260d",  // "sdc"
-      "name": "moray",
-      "image_uuid": "7e607924-5513-11e2-861a-2314f719391d",
-      "params": {
-        "service_name": "$SHARD.moray.$REGION.$DNS_DOMAIN",
-        "alias": "$SHARD.moray.$DATACENTER.$DNS_DOMAIN-$UUID8",
-        ...
-      },
-      "shard": true,
-      "networks": [ "admin" ],
-      "ram": 2048
-      "quota": 100
+
       "servers": [ "mantastorage" ],
       "policy": "round-robin"
-    
-      "user-script": <user script>
-    
-      "configuration": [
-        {
-          "service": "minnow",
-          "type": "json",
-          "path": "/opt/smartdc/minnow/etc/config.json"
-          "template": {
-            "moray": {
-              "bucket": {
-                "name": "manta_storage",
-                "index": {
-                  "hostname": { "type": "string" },
-                  "availableMB": { "type": "number" },
-                  "percentUsed": { "type": "number" },
-                  "server_uuid": { "type": "string" },
-                  "timestamp": { "type": "number" },
-                  "zone_uuid": { "type": "string" }
-                }
-              },
-              "connectTimeout": 200,
-              "retry": {
-                "retries": 2,
-                "minTimeout": 500
-              },
-              "host": "1.moray.{{REGION}}.{{DNS_DOMAIN}}",
-              "port": 2020
-            },
-            "datacenter": "{{DATACENTER}}",
-            "domain": "{{SERVICE_NAME}}",
-            "objectRoot": "/manta",
-            "zone_uuid": "{{ZONE_UUID}}",
-            "interval": 5000
-          }
-        }
-      ],
-    
-      "amon": [ <amon configuration > ]
-    }
 
-The response object from the /services endpoints include the above plus:
+      "params": {
+        "image_uuid": "7e607924-5513-11e2-861a-2314f719391d",
+        "networks": [ "admin" ],
+        "ram": 2048
+        "quota": 500
+        ...
+      },
 
-    {
-      "instances": [
-         {
-           "uuid": "05257f58-5515-11e2-8253-37b3af590817",
-           "server_uuid": "0c601f08-5515-11e2-a94b-bf8394c87583",
-         },
-         {
-           "uuid": "05257f58-5515-11e2-8253-37b3af590817",
-           "server_uuid": "0c601f08-5515-11e2-a94b-bf8394c87583",
-           "ram": 4096   // Override from service default
-         }
-      ],
+      "metadata": {
+        "shard": true,
+        "nginx_workers": 32
+        ...
+      },
+
+      "configs": [ "3edcac40-6bd0-11e2-bc62-635be2e7aa93" ]
     }
 
 
@@ -133,23 +94,36 @@ properties and configuration from both the service and application.  Instances
 may override certain properties or configuration from either its containing
 service or application.
 
+Here's a sample instance object:
 
-# Service Configuration
+    {
+      "uuid": "b63c3b56-6bd1-11e2-af0a-836066bbb42e",
+      "service": "5081a5d6-6bd0-11e2-bafb-a735b6c6ccb6",  // "mako"
+
+      "params": {
+        ram: 4096
+      },
+
+      "metadata": {
+        moray: "1.moray.manta.joyent.us"
+      },
+
+      "configs": [ ]
+    }
+
+
+
+# Configuration
 
 Each zone has an agent inside that zone which is responsible for maintaining
-that service's configuration.  The configuration object above specifies the SMF
+that zone's configuration.  The configuration manifest below specifies the SMF
 service to which this configuration applies, the type of configuration file
 (either text or JSON), the path into which to write the file, and the file's
 template.  The template will be rendered with keys retrieved from the metadata
 API.  That rendering uses the hogan.js module, as is used by the manta.git tools
 today.
 
-If the metadata API can't provide an interface for providing JSON objects, then
-the agent could poll moray for a similar interface.  It'd be nice to use the
-metadata API, though, as it's more integrated with VMAPI and the other SDC
-services.
-
-Here's what one of those configuration templates looks like:
+Here's what one of those configuration manifests looks like:
 
     {
       "service": "minnow",
@@ -183,32 +157,27 @@ Here's what one of those configuration templates looks like:
         "interval": 5000
       }
     }
-    
-Note that configurator is currently using a custom config library backed by
-UFDS.  That's working OK, but I'm taking this oportunity to partially rewrite
-configurator to use either the metadata API or UFDS.  I'm doing this since the
-string-oriented nature of LDAP object has resulted in some very ugly code to
-handle nested JSON objects, and that architecture will make it very difficult to
-support tagging or nested configuration.  In addition, the config library
-duplicates some functionality already present in the metadata API.
 
 
 # Amon Configuration
 
-The 'amon' field in the service object above contains two items: the definitions
-for that service's probes as well as the probe group in which to place those
-probes.  This is how things are currently working with manta.git, and the
-services API will use the same model.
+I haven't started SAPI-10 yet, but the plan there is similar to that for
+configuration manifests.
 
 
 # Endpoints
 
+In addition to these endpoints, there's an SDC client for these endpoints which
+is shipped in the node-sdc-clients.git repository.
+
+Note: most of the API documentation below doesn't have the appropriate
+parameters or return values yet.  If you find yourself needing that information
+now, bug wdp so he finishes this document more quickly.
+
+
 ## CreateApplication (POST /applications)
 
-Initialize an application.  An application is a group of related services.
-Example applications include SDC and manta.  Each application has an associated
-owner_uuid which is the owner for all the instances which comprise the
-application.
+Initialize an application.
 
 
 ## ListApplications (GET /applications)
@@ -216,9 +185,9 @@ application.
 Returns the list of applications.
 
 
-## UpdateApplication (PUT /application/:uuid)
+## GetApplication (GET /applications/:uuid)
 
-Updates an application's parameters.
+Returns the list of applications.
 
 
 ## DeleteApplication (DELETE /application/:uuid)
@@ -226,28 +195,10 @@ Updates an application's parameters.
 Deletes an application.
 
 
+
 ## CreateService (POST /services)
 
-Create should take:
-
-XXX Need more formal argument list
-
-- application
-- service name
-- Image UUID
-- List of machines on which to provision service (alternately a tag)
-- Algorithm of allocating instances across machines
-    Default: round-robin
-- Service name
-- VMAPI alias
-- Other VMAPI properties
-- Whether this service is separated into shards
-- Networks
-- RAM
-- Disk quota
-- Configuration
-- Amon probe group
-- Amon probes
+Create a service.
 
 
 ## ListServices (GET /services)
@@ -257,40 +208,64 @@ Returns the list of all services.
 
 ## GetService (GET /services/:uuid)
 
-Return a service with the specified name or UUID.
-
-
-## UpdateService (PUT /services/:uuid)
-
-Update this service with new parameters
+Return a particular service.
 
 
 ## DeleteService (DELETE /services/:uuid)
 
-Delete a particular service
+Delete a particular service.
 
 
-## DeployInstance (POST /services/:uuid/instances)
 
-Deploy an instance of a service
+## CreateInstance (POST /instances)
 
-
-## ListInstances (GET /services/:uuid/instances)
-
-Get the instances for a specified service
+Create and deploy an instance.
 
 
-## GetInstance (GET /services/:uuid/instances/:instance_uuid)
+## ListInstances (GET /instances)
 
-Get a particular instance
-
-
-## RemoveInstance (DELETE /services/:uuid/instances/:instance_uuid)
-
-Remove this instance from the service
+Get all instances.
 
 
-## UpdateInstance (PUT /services/:uuid/instances/:instance_uuid)
+## GetInstance (GET /instances/:instance_uuid)
 
-Update this instance with new parameters.
+Get a particular instance.
 
+
+## DeleteInstance (DELETE /instances/:instance_uuid)
+
+Delete this instance.
+
+
+
+## CreateConfig (POST /configs)
+
+Create a configuration manifest.
+
+
+## ListConfigs (GET /configs)
+
+Get all configuration manifests.
+
+
+## GetConfig (GET /configs/:uuid)
+
+Get a particular configuration manifest.
+
+
+## DeleteConfig (DELETE /configs/:uuid)
+
+Delete this configuration manifest.
+
+
+
+## SearchImage (GET /images?name=<search term>)
+
+Queries the updates.joyent.us IMGAPI for images which match the "name" search
+parameter.
+
+
+## DownloadImage (POST /images/:uuid)
+
+Downloads an image from the updates.joyent.us IMGAPI repo and installs it into
+the local datacenter.

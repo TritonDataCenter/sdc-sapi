@@ -74,3 +74,33 @@ test('test serialize()', function (t) {
 
 	t.end();
 });
+
+test('test excluded keys', function (t) {
+	var script = 'my script here';
+
+	var metadata = {
+		FOO: 'BAR',
+		'user-script': script
+	};
+
+	var manifest = {
+		name: 'my_manifest',
+		type: 'json',
+		path: '/opt/smartdc/etc/config.json',
+		template: 'Service template here'
+	};
+	var manifests = [ manifest ];
+
+	var kvpairs = mod_manifests.serialize(manifests, metadata);
+
+	t.deepEqual(kvpairs[mod_manifests.MANIFESTS],
+	    JSON.stringify([ 'my_manifest_manifest' ]));
+	t.deepEqual(kvpairs[mod_manifests.MDATA_KEYS],
+	    JSON.stringify([ 'FOO' ]));
+
+	t.deepEqual(kvpairs['my_manifest_manifest'], JSON.stringify(manifest));
+	t.deepEqual(kvpairs['FOO'], JSON.stringify(metadata.FOO));
+	t.equal(kvpairs['user-script'], script);
+
+	t.end();
+});

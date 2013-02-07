@@ -233,6 +233,9 @@ test('put/get/del application', function (t) {
 			});
 		},
 		function (cb) {
+			common.testUpdates.call(self, t, uri_app, cb);
+		},
+		function (cb) {
 			self.client.del(uri_app, function (err, _, res, obj) {
 				t.ifError(err);
 				t.equal(res.statusCode, 204);

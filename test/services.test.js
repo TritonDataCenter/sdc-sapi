@@ -253,6 +253,9 @@ test('put/get/del service', function (t) {
 			});
 		},
 		function (cb) {
+			common.testUpdates.call(self, t, uri_svc, cb);
+		},
+		function (cb) {
 			self.client.del(uri_svc, function (err, _, res, obj) {
 				t.ifError(err);
 				t.equal(res.statusCode, 204);

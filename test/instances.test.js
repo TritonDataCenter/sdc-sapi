@@ -211,6 +211,9 @@ test('put/get/del instance', function (t) {
 			});
 		},
 		function (cb) {
+			common.testUpdates.call(self, t, uri_inst, cb);
+		},
+		function (cb) {
 			self.client.del(uri_inst, function (err, _, res, obj) {
 				t.ifError(err);
 				t.equal(res.statusCode, 204);

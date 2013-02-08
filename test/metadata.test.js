@@ -4,7 +4,7 @@
  * test/metadata.test.js: test serialization of metadata
  */
 
-var async = require('async');
+var assert = require('assert-plus');
 var common = require('./common');
 var jsprim = require('jsprim');
 var node_uuid = require('node-uuid');
@@ -33,14 +33,14 @@ helper.after(function (cb) {
 // -- Test metadata and configuration serialization
 
 test('test serialize() w/ empty args', function (t) {
-	var kvpairs = mod_manifests.serialize([], {});
+	var config = JSON.parse(mod_manifests.serialize([], {}));
 
-	t.equal(kvpairs[mod_manifests.MANIFESTS], JSON.stringify([]));
-	t.equal(kvpairs[mod_manifests.MDATA_KEYS], JSON.stringify([]));
+	t.deepEqual(config[mod_manifests.METADATA], {});
+	t.deepEqual(config[mod_manifests.MANIFESTS], []);
+	t.deepEqual(config[mod_manifests.VERSION], '1.0.0');
 
 	t.end();
 });
-
 
 test('test serialize()', function (t) {
 	var metadata = {
@@ -60,48 +60,14 @@ test('test serialize()', function (t) {
 	};
 	var manifests = [ manifest ];
 
-	var kvpairs = mod_manifests.serialize(manifests, metadata);
+	var serialized = mod_manifests.serialize(manifests, metadata);
+	assert.string(serialized, 'serialized');
 
-	t.deepEqual(kvpairs[mod_manifests.MANIFESTS],
-	    JSON.stringify([ manifest.uuid ]));
-	t.deepEqual(kvpairs[mod_manifests.MDATA_KEYS],
-	    JSON.stringify([ 'FOO', 'BAZ', 'OBJ' ]));
+	var config = JSON.parse(serialized);
+	assert.object(config, 'config');
 
-	t.deepEqual(kvpairs[manifest.uuid], JSON.stringify(manifest));
-
-	t.deepEqual(kvpairs['FOO'], JSON.stringify(metadata.FOO));
-	t.deepEqual(kvpairs['BAZ'], JSON.stringify(metadata.BAZ));
-	t.deepEqual(kvpairs['OBJ'], JSON.stringify(metadata.OBJ));
-
-	t.end();
-});
-
-test('test excluded keys', function (t) {
-	var script = 'my script here';
-
-	var metadata = {
-		FOO: 'BAR',
-		'user-script': script
-	};
-
-	var manifest = {
-		uuid: node_uuid.v4(),
-		type: 'json',
-		path: '/opt/smartdc/etc/config.json',
-		template: 'Service template here'
-	};
-	var manifests = [ manifest ];
-
-	var kvpairs = mod_manifests.serialize(manifests, metadata);
-
-	t.deepEqual(kvpairs[mod_manifests.MANIFESTS],
-	    JSON.stringify([ manifest.uuid ]));
-	t.deepEqual(kvpairs[mod_manifests.MDATA_KEYS],
-	    JSON.stringify([ 'FOO' ]));
-
-	t.deepEqual(kvpairs[manifest.uuid], JSON.stringify(manifest));
-	t.deepEqual(kvpairs['FOO'], JSON.stringify(metadata.FOO));
-	t.equal(kvpairs['user-script'], script);
+	t.deepEqual(config[mod_manifests.METADATA], metadata);
+	t.deepEqual(config[mod_manifests.MANIFESTS], manifests);
 
 	t.end();
 });

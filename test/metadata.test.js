@@ -52,6 +52,7 @@ test('test serialize()', function (t) {
 	};
 
 	var manifest = {
+		uuid: node_uuid.v4(),
 		name: 'my_manifest',
 		type: 'json',
 		path: '/opt/smartdc/etc/config.json',
@@ -62,11 +63,11 @@ test('test serialize()', function (t) {
 	var kvpairs = mod_manifests.serialize(manifests, metadata);
 
 	t.deepEqual(kvpairs[mod_manifests.MANIFESTS],
-	    JSON.stringify([ 'my_manifest_manifest' ]));
+	    JSON.stringify([ manifest.uuid ]));
 	t.deepEqual(kvpairs[mod_manifests.MDATA_KEYS],
 	    JSON.stringify([ 'FOO', 'BAZ', 'OBJ' ]));
 
-	t.deepEqual(kvpairs['my_manifest_manifest'], JSON.stringify(manifest));
+	t.deepEqual(kvpairs[manifest.uuid], JSON.stringify(manifest));
 
 	t.deepEqual(kvpairs['FOO'], JSON.stringify(metadata.FOO));
 	t.deepEqual(kvpairs['BAZ'], JSON.stringify(metadata.BAZ));
@@ -84,7 +85,7 @@ test('test excluded keys', function (t) {
 	};
 
 	var manifest = {
-		name: 'my_manifest',
+		uuid: node_uuid.v4(),
 		type: 'json',
 		path: '/opt/smartdc/etc/config.json',
 		template: 'Service template here'
@@ -94,11 +95,11 @@ test('test excluded keys', function (t) {
 	var kvpairs = mod_manifests.serialize(manifests, metadata);
 
 	t.deepEqual(kvpairs[mod_manifests.MANIFESTS],
-	    JSON.stringify([ 'my_manifest_manifest' ]));
+	    JSON.stringify([ manifest.uuid ]));
 	t.deepEqual(kvpairs[mod_manifests.MDATA_KEYS],
 	    JSON.stringify([ 'FOO' ]));
 
-	t.deepEqual(kvpairs['my_manifest_manifest'], JSON.stringify(manifest));
+	t.deepEqual(kvpairs[manifest.uuid], JSON.stringify(manifest));
 	t.deepEqual(kvpairs['FOO'], JSON.stringify(metadata.FOO));
 	t.equal(kvpairs['user-script'], script);
 

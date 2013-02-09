@@ -162,7 +162,7 @@ test('put/get/del service', function (t) {
 	var app_uuid = node_uuid.v4();
 
 	var svc = {};
-	svc.name = 'mycoolservice';
+	svc.name = 'mycoolservice_' + node_uuid.v4().substr(0, 8);
 	svc.uuid = node_uuid.v4();
 	svc.application_uuid = app_uuid;
 
@@ -187,6 +187,21 @@ test('put/get/del service', function (t) {
 		t.deepEqual(obj.params, svc.params);
 		t.deepEqual(obj.metadata, svc.metadata);
 		t.deepEqual(obj.configs, [ cfg_uuid ]);
+	};
+
+	var checkServiceInArray = function (obj) {
+		t.ok(obj.length > 0);
+
+		var found = false;
+
+		for (var ii = 0; ii < obj.length; ii++) {
+			if (obj[ii].uuid === svc.uuid) {
+				checkService(obj[ii]);
+				found = true;
+			}
+		}
+
+		t.ok(found, 'found service' + svc.uuid);
 	};
 
 	var uri_svc = '/services/' + svc.uuid;
@@ -232,22 +247,36 @@ test('put/get/del service', function (t) {
 			});
 		},
 		function (cb) {
+			var uri = '/services?name=' + svc.name;
+
+			self.client.get(uri, function (err, _, res, obj) {
+				t.ifError(err);
+				t.equal(res.statusCode, 200);
+
+				checkService(obj[0]);
+
+				cb();
+			});
+		},
+		function (cb) {
+			var uri = '/services?application_uuid=' +
+			    svc.application_uuid;
+
+			self.client.get(uri, function (err, _, res, obj) {
+				t.ifError(err);
+				t.equal(res.statusCode, 200);
+
+				checkServiceInArray(obj);
+
+				cb();
+			});
+		},
+		function (cb) {
 			self.client.get(URI, function (err, _, res, obj) {
 				t.ifError(err);
 				t.equal(res.statusCode, 200);
 
-				t.ok(obj.length > 0);
-
-				var found = false;
-
-				for (var ii = 0; ii < obj.length; ii++) {
-					if (obj[ii].uuid === svc.uuid) {
-						checkService(obj[ii]);
-						found = true;
-					}
-				}
-
-				t.ok(found, 'found service' + svc.uuid);
+				checkServiceInArray(obj);
 
 				cb();
 			});

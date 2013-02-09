@@ -6,7 +6,7 @@
 
 var async = require('async');
 var common = require('./common');
-var uuid = require('node-uuid');
+var node_uuid = require('node-uuid');
 
 if (require.cache[__dirname + '/helper.js'])
 	delete require.cache[__dirname + '/helper.js'];
@@ -35,7 +35,7 @@ helper.after(function (cb) {
 // -- Test invalid inputs
 
 test('get nonexistent application', function (t) {
-	var uri_app = '/applications/' + uuid.v4();
+	var uri_app = '/applications/' + node_uuid.v4();
 
 	this.client.get(uri_app, function (err, req, res, obj) {
 		t.ok(err);
@@ -73,7 +73,7 @@ test('create w/o name', function (t) {
 test('create w/ invalid owner_uuid', function (t) {
 	var app = {
 		name: 'invalid owner_uuid',
-		owner_uuid: uuid.v4()
+		owner_uuid: node_uuid.v4()
 	};
 
 	this.client.post(URI, app, function (err, req, res, obj) {
@@ -87,7 +87,7 @@ test('create w/ invalid config', function (t) {
 	var app = {
 		name: 'invalid owner_uuid',
 		owner_uuid: common.ADMIN_UUID,
-		configs: [ uuid.v4() ]
+		configs: [ node_uuid.v4() ]
 	};
 
 	this.client.post(URI, app, function (err, req, res, obj) {
@@ -151,7 +151,7 @@ test('delete application', function (t) {
 test('put/get/del application', function (t) {
 	var self = this;
 
-	APP_UUID = uuid.v4();
+	APP_UUID = node_uuid.v4();
 
 	var params = {
 		dns: '10.0.0.2',
@@ -162,7 +162,7 @@ test('put/get/del application', function (t) {
 	};
 
 	var app = {
-		name: 'mycoolapp',
+		name: 'mycoolapp_' + node_uuid.v4().substr(0, 8),
 		uuid: APP_UUID,
 		owner_uuid: common.ADMIN_UUID,
 		params: params
@@ -176,6 +176,21 @@ test('put/get/del application', function (t) {
 		t.equal(obj.owner_uuid, app.owner_uuid);
 		t.deepEqual(obj.params, app.params);
 		t.deepEqual(obj.configs, [ cfg_uuid ]);
+	};
+
+	var checkAppInArray = function (obj) {
+		t.ok(obj.length > 0);
+
+		var found = false;
+
+		for (var ii = 0; ii < obj.length; ii++) {
+			if (obj[ii].uuid === APP_UUID) {
+				checkApp(obj[ii]);
+				found = true;
+			}
+		}
+
+		t.ok(found, 'found application ' + APP_UUID);
 	};
 
 	var uri_app = '/applications/' + APP_UUID;
@@ -212,22 +227,35 @@ test('put/get/del application', function (t) {
 			});
 		},
 		function (cb) {
+			var uri = '/applications?name=' + app.name;
+
+			self.client.get(uri, function (err, _, res, obj) {
+				t.ifError(err);
+				t.equal(res.statusCode, 200);
+
+				checkApp(obj[0]);
+
+				cb(null);
+			});
+		},
+		function (cb) {
+			var uri = '/applications?owner_uuid=' + app.owner_uuid;
+
+			self.client.get(uri, function (err, _, res, obj) {
+				t.ifError(err);
+				t.equal(res.statusCode, 200);
+
+				checkApp(obj[0]);
+
+				cb(null);
+			});
+		},
+		function (cb) {
 			self.client.get(URI, function (err, _, res, obj) {
 				t.ifError(err);
 				t.equal(res.statusCode, 200);
 
-				t.ok(obj.length > 0);
-
-				var found = false;
-
-				for (var ii = 0; ii < obj.length; ii++) {
-					if (obj[ii].uuid === APP_UUID) {
-						checkApp(obj[ii]);
-						found = true;
-					}
-				}
-
-				t.ok(found, 'found application ' + APP_UUID);
+				checkAppInArray(obj);
 
 				cb(null);
 			});

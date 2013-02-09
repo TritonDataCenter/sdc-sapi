@@ -42,7 +42,6 @@ test('create w/ invalid inputs', function (t) {
 	var svc_uuid = node_uuid.v4();
 
 	var inst = {};
-	inst.name = 'bad_instance';
 	inst.uuid = node_uuid.v4();
 	inst.service_uuid = svc_uuid;
 
@@ -58,16 +57,6 @@ test('create w/ invalid inputs', function (t) {
 		},
 		function (cb) {
 			common.createService.call(self, app_uuid, svc_uuid, cb);
-		},
-		function (cb) {
-			// missing name
-			var badinst  = jsprim.deepCopy(inst);
-			delete badinst.name;
-
-			self.client.post(URI, badinst, function (err, _, res) {
-				check409(err, res);
-				cb();
-			});
 		},
 		function (cb) {
 			// missing service_uuid
@@ -117,17 +106,30 @@ test('put/get/del instance', function (t) {
 	var svc_uuid = node_uuid.v4();
 
 	var inst = {};
-	inst.name = 'mycoolinstance';
 	inst.uuid = node_uuid.v4();
 	inst.service_uuid = svc_uuid;
 
 	var cfg_uuid;
 
 	var check = function (obj) {
-		t.equal(obj.name, inst.name);
 		t.equal(obj.uuid, inst.uuid);
 		t.equal(obj.service_uuid, inst.service_uuid);
 		t.deepEqual(obj.configs, [ cfg_uuid ]);
+	};
+
+	var checkInstanceInArray = function (obj) {
+		t.ok(obj.length > 0);
+
+		var found = false;
+
+		for (var ii = 0; ii < obj.length; ii++) {
+			if (obj[ii].uuid === inst.uuid) {
+				check(obj[ii]);
+				found = true;
+			}
+		}
+
+		t.ok(found, 'found service' + inst.uuid);
 	};
 
 	var uri_inst = '/instances/' + inst.uuid;
@@ -190,22 +192,24 @@ test('put/get/del instance', function (t) {
 			});
 		},
 		function (cb) {
+			var uri = '/instances?service_uuid=' +
+			    inst.service_uuid;
+
+			client.get(uri, function (err, _, res, obj) {
+				t.ifError(err);
+				t.equal(res.statusCode, 200);
+
+				checkInstanceInArray(obj);
+
+				cb(null);
+			});
+		},
+		function (cb) {
 			client.get(URI, function (err, _, res, obj) {
 				t.ifError(err);
 				t.equal(res.statusCode, 200);
 
-				t.ok(obj.length > 0);
-
-				var found = false;
-
-				for (var ii = 0; ii < obj.length; ii++) {
-					if (obj[ii].uuid === inst.uuid) {
-						check(obj[ii]);
-						found = true;
-					}
-				}
-
-				t.ok(found, 'found service' + inst.uuid);
+				checkInstanceInArray(obj);
 
 				cb(null);
 			});

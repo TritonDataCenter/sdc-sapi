@@ -114,7 +114,7 @@ test('put/get/del instance', function (t) {
 	var check = function (obj) {
 		t.equal(obj.uuid, inst.uuid);
 		t.equal(obj.service_uuid, inst.service_uuid);
-		t.deepEqual(obj.configs, [ cfg_uuid ]);
+		t.deepEqual(obj.configs, { my_service: cfg_uuid });
 	};
 
 	var checkInstanceInArray = function (obj) {
@@ -145,7 +145,7 @@ test('put/get/del instance', function (t) {
 			common.createConfig.call(self, function (err, cfg) {
 				if (cfg) {
 					cfg_uuid = cfg.uuid;
-					inst.configs = [ cfg_uuid ];
+					inst.configs = { my_service: cfg_uuid };
 				}
 
 				cb(err);
@@ -162,7 +162,7 @@ test('put/get/del instance', function (t) {
 		function (cb) {
 			// test invalid config manifest
 			var badinst = jsprim.deepCopy(inst);
-			badinst.configs = [ node_uuid.v4() ];
+			badinst.configs = { my_service: node_uuid.v4() };
 
 			client.post(URI, badinst, function (err, _, res, obj) {
 				t.ok(err);

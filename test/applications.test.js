@@ -87,7 +87,7 @@ test('create w/ invalid config', function (t) {
 	var app = {
 		name: 'invalid owner_uuid',
 		owner_uuid: common.ADMIN_UUID,
-		configs: [ node_uuid.v4() ]
+		configs: { my_service: node_uuid.v4() }
 	};
 
 	this.client.post(URI, app, function (err, req, res, obj) {
@@ -175,7 +175,7 @@ test('put/get/del application', function (t) {
 		t.equal(obj.uuid, app.uuid);
 		t.equal(obj.owner_uuid, app.owner_uuid);
 		t.deepEqual(obj.params, app.params);
-		t.deepEqual(obj.configs, [ cfg_uuid ]);
+		t.deepEqual(obj.configs, { my_service: cfg_uuid });
 	};
 
 	var checkAppInArray = function (obj) {
@@ -200,7 +200,7 @@ test('put/get/del application', function (t) {
 			common.createConfig.call(self, function (err, cfg) {
 				if (cfg) {
 					cfg_uuid = cfg.uuid;
-					app.configs = [ cfg_uuid ];
+					app.configs = { my_service: cfg_uuid };
 				}
 
 				cb(err);
@@ -245,7 +245,7 @@ test('put/get/del application', function (t) {
 				t.ifError(err);
 				t.equal(res.statusCode, 200);
 
-				checkApp(obj[0]);
+				checkAppInArray(obj);
 
 				cb(null);
 			});

@@ -108,12 +108,20 @@ test('put/get/del instance', function (t) {
 	var inst = {};
 	inst.uuid = node_uuid.v4();
 	inst.service_uuid = svc_uuid;
+	inst.metadata = {
+		string_val: 'my string',
+		num_val: 123,
+		bool_val: true,
+		array_val: [ 1, 2, 3 ],
+		obj_val: { foo: 'baz' }
+	};
 
 	var cfg_uuid;
 
 	var check = function (obj) {
 		t.equal(obj.uuid, inst.uuid);
 		t.equal(obj.service_uuid, inst.service_uuid);
+		t.deepEqual(obj.metadata, inst.metadata);
 		t.deepEqual(obj.configs, { my_service: cfg_uuid });
 	};
 

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2013, Joyent, Inc. All rights reserved.
  *
- * test/config.test.js: test /config endpoints
+ * test/manifests.test.js: test /manifests endpoints
  */
 
 var async = require('async');
@@ -14,7 +14,7 @@ var helper = require('./helper.js');
 var test = helper.test;
 
 
-var URI = '/config';
+var URI = '/manifests';
 
 
 helper.before(function (cb) {
@@ -30,8 +30,8 @@ helper.after(function (cb) {
 
 // -- Test invalid inputs
 
-test('get nonexistent config', function (t) {
-	var uri_cfg = '/config/' + node_uuid.v4();
+test('get nonexistent manifest', function (t) {
+	var uri_cfg = '/manifests/' + node_uuid.v4();
 
 	this.client.get(uri_cfg, function (err, req, res, obj) {
 		t.ok(err);
@@ -44,7 +44,7 @@ test('create w/ missing inputs', function (t) {
 	var self = this;
 
 	var cfg = {};
-	cfg.name = 'my bad config';
+	cfg.name = 'my bad manifest';
 	cfg.type = 'json';
 	cfg.path = '/opt/smartdc/minnow/etc/config.json';
 	cfg.template = {
@@ -123,14 +123,14 @@ test('create w/ invalid type', function (t) {
 });
 
 
-// -- Test put/get/del config object
+// -- Test put/get/del manifest
 
-test('put/get/del config', function (t) {
+test('put/get/del manifest', function (t) {
 	var self = this;
 
 	var cfg = {};
 	cfg.uuid = node_uuid.v4();
-	cfg.name = 'mycoolconfig';
+	cfg.name = 'mycoolmanifest';
 	cfg.service = 'minnow';
 	cfg.type = 'text';
 	cfg.path = '/opt/smartdc/minnow/etc/config.json';
@@ -148,7 +148,7 @@ test('put/get/del config', function (t) {
 		t.deepEqual(obj.template, cfg.template);
 	};
 
-	var uri_cfg = '/config/' + cfg.uuid;
+	var uri_cfg = '/manifests/' + cfg.uuid;
 
 	async.waterfall([
 		function (cb) {
@@ -187,7 +187,7 @@ test('put/get/del config', function (t) {
 					}
 				}
 
-				t.ok(found, 'found config ' + cfg.uuid);
+				t.ok(found, 'found manifest ' + cfg.uuid);
 
 				cb(null);
 			});

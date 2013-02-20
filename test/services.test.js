@@ -125,7 +125,7 @@ test('create w/ other invalid inputs', function (t) {
 		function (cb) {
 			// invalid config manifest
 			var badsvc = jsprim.deepCopy(svc);
-			badsvc.configs = { my_service: node_uuid.v4() };
+			badsvc.manifests = { my_service: node_uuid.v4() };
 
 			self.client.post(URI, badsvc, function (err, _, res) {
 				t.ok(err);
@@ -186,7 +186,7 @@ test('put/get/del service', function (t) {
 		t.equal(obj.uuid, svc.uuid);
 		t.deepEqual(obj.params, svc.params);
 		t.deepEqual(obj.metadata, svc.metadata);
-		t.deepEqual(obj.configs, { my_service: cfg_uuid });
+		t.deepEqual(obj.manifests, { my_service: cfg_uuid });
 	};
 
 	var checkServiceInArray = function (obj) {
@@ -211,10 +211,11 @@ test('put/get/del service', function (t) {
 			common.createApplication.call(self, app_uuid, cb);
 		},
 		function (cb) {
-			common.createConfig.call(self, function (err, cfg) {
+			common.createManifest.call(self, function (err, cfg) {
 				if (cfg) {
 					cfg_uuid = cfg.uuid;
-					svc.configs = { my_service: cfg_uuid };
+					svc.manifests =
+					    { my_service: cfg_uuid };
 				}
 				cb(err);
 			});
@@ -299,7 +300,7 @@ test('put/get/del service', function (t) {
 			});
 		},
 		function (cb) {
-			self.sapi.deleteConfig(cfg_uuid, function (err) {
+			self.sapi.deleteManifest(cfg_uuid, function (err) {
 				cb(err);
 			});
 		},

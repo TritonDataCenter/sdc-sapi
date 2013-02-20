@@ -122,7 +122,7 @@ test('put/get/del instance', function (t) {
 		t.equal(obj.uuid, inst.uuid);
 		t.equal(obj.service_uuid, inst.service_uuid);
 		t.deepEqual(obj.metadata, inst.metadata);
-		t.deepEqual(obj.configs, { my_service: cfg_uuid });
+		t.deepEqual(obj.manifests, { my_service: cfg_uuid });
 	};
 
 	var checkInstanceInArray = function (obj) {
@@ -150,10 +150,11 @@ test('put/get/del instance', function (t) {
 			common.createService.call(self, app_uuid, svc_uuid, cb);
 		},
 		function (cb) {
-			common.createConfig.call(self, function (err, cfg) {
+			common.createManifest.call(self, function (err, cfg) {
 				if (cfg) {
 					cfg_uuid = cfg.uuid;
-					inst.configs = { my_service: cfg_uuid };
+					inst.manifests =
+					    { my_service: cfg_uuid };
 				}
 
 				cb(err);
@@ -170,7 +171,7 @@ test('put/get/del instance', function (t) {
 		function (cb) {
 			// test invalid config manifest
 			var badinst = jsprim.deepCopy(inst);
-			badinst.configs = { my_service: node_uuid.v4() };
+			badinst.manifests = { my_service: node_uuid.v4() };
 
 			client.post(URI, badinst, function (err, _, res, obj) {
 				t.ok(err);
@@ -240,7 +241,7 @@ test('put/get/del instance', function (t) {
 			});
 		},
 		function (cb) {
-			self.sapi.deleteConfig(cfg_uuid, function (err) {
+			self.sapi.deleteManifest(cfg_uuid, function (err) {
 				cb(err);
 			});
 		},

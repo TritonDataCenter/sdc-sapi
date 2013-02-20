@@ -10,6 +10,7 @@
 var assert = require('assert-plus');
 var fs = require('fs');
 var optimist = require('optimist');
+var util = require('./lib/common/util');
 
 var Agent = require('./lib/agent/agent');
 var Logger = require('bunyan');
@@ -34,6 +35,8 @@ var config = JSON.parse(contents);
 assert.object(config, 'config');
 assert.string(config.logLevel, 'config.logLevel');
 assert.number(config.pollInterval, 'config.pollInterval');
+assert.object(config.sapi, 'config.sapi');
+assert.string(config.sapi.url, 'config.sapi.url');
 
 var log = new Logger({
 	name: 'config-agent',
@@ -42,26 +45,33 @@ var log = new Logger({
 });
 
 config.log = log;
-config.mdata = require('./lib/agent/mdata');
 
-var agent = new Agent(config);
+util.zonename(function (err, zonename) {
+	if (err) {
+		log.error(err, 'failed to determine zone name');
+		process.exit(1);
+	}
 
-if (ARGV.s) {
-	/*
-	 * Synchronous mode is used as part of a zone's first boot and initial
-	 * setup.  Instead of polling at some interval, immediately write out
-	 * the configuration files and exit.
-	 */
-	agent.checkAndRefresh(function (err) {
-		if (err) {
-			log.error(err, 'failed to write ' +
-			    'configuration');
-		} else {
-			log.info('wrote configuration synchronously');
-		}
+	config.zonename = zonename;
 
-		process.exit(err ? 1 : 0);
-	});
-} else {
-	setInterval(agent.checkAndRefresh.bind(agent), config.pollInterval);
-}
+	var agent = new Agent(config);
+
+	if (ARGV.s) {
+		/*
+		 * Synchronous mode is used as part of a zone's first boot and
+		 * initial setup.  Instead of polling at some interval,
+		 * immediately write out the configuration files and exit.
+		 */
+		agent.checkAndRefresh(function (suberr) {
+			if (suberr)
+				log.error(suberr, 'failed to write config');
+			else
+				log.info('wrote configuration synchronously');
+
+			process.exit(suberr ? 1 : 0);
+		});
+	} else {
+		setInterval(agent.checkAndRefresh.bind(agent),
+		    config.pollInterval);
+	}
+});

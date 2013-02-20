@@ -11,13 +11,14 @@
 		"hogan.js": "2.0.0",
 		"jsprim": "0.3.1",
 		"ldapjs": "0.6.2",
+		"lru-cache": "2.2.2",
 		"mkdirp": "0.3.4",
 		"moray": "git+ssh://git@git.joyent.com:node-moray.git#084f97d169d01ee8bdf764d3e56eece3b2f0db41",
 		"node-uuid": "1.4.0",
 		"once": "1.1.1",
 		"optimist": "0.3.5",
 		"restify": "2.0.4",
-		"sdc-clients": "git+ssh://git@git.joyent.com:node-sdc-clients.git",
+		"sdc-clients": "git+ssh://git@git.joyent.com:node-sdc-clients.git#28993a31bc93a56eba751b57fdeee88b8b574a4f",
 		"vasync": "1.3.3"
 	},
 	"devDependencies": {

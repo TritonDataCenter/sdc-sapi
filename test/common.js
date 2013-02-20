@@ -39,15 +39,13 @@ function createService(app_uuid, uuid, cb) {
 	});
 }
 
-function createConfig(cb) {
+function createManifest(cb) {
 	var type = 'json';
 	var path = '/var/tmp/config.json';
 	var template = '{ logLevel: "debug" }';
 	var name = 'more_or_less_empty test config';
 
-	this.sapi.createConfig(name, template, path, type, function (err, cfg) {
-		return (cb(err, cfg));
-	});
+	this.sapi.createManifest(name, template, path, type, cb);
 }
 
 function testUpdates(t, uri, cb) {
@@ -141,6 +139,6 @@ exports.SMARTOS_163_UUID = SMARTOS_163_UUID;
 
 exports.createApplication = createApplication;
 exports.createService = createService;
-exports.createConfig = createConfig;
+exports.createManifest = createManifest;
 
 exports.testUpdates = testUpdates;

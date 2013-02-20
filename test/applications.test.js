@@ -83,11 +83,11 @@ test('create w/ invalid owner_uuid', function (t) {
 	});
 });
 
-test('create w/ invalid config', function (t) {
+test('create w/ invalid manifest', function (t) {
 	var app = {
 		name: 'invalid owner_uuid',
 		owner_uuid: common.ADMIN_UUID,
-		configs: { my_service: node_uuid.v4() }
+		manifests: { my_service: node_uuid.v4() }
 	};
 
 	this.client.post(URI, app, function (err, req, res, obj) {
@@ -175,7 +175,7 @@ test('put/get/del application', function (t) {
 		t.equal(obj.uuid, app.uuid);
 		t.equal(obj.owner_uuid, app.owner_uuid);
 		t.deepEqual(obj.params, app.params);
-		t.deepEqual(obj.configs, { my_service: cfg_uuid });
+		t.deepEqual(obj.manifests, { my_service: cfg_uuid });
 	};
 
 	var checkAppInArray = function (obj) {
@@ -197,10 +197,11 @@ test('put/get/del application', function (t) {
 
 	async.waterfall([
 		function (cb) {
-			common.createConfig.call(self, function (err, cfg) {
+			common.createManifest.call(self, function (err, cfg) {
 				if (cfg) {
 					cfg_uuid = cfg.uuid;
-					app.configs = { my_service: cfg_uuid };
+					app.manifests =
+					    { my_service: cfg_uuid };
 				}
 
 				cb(err);
@@ -279,7 +280,7 @@ test('put/get/del application', function (t) {
 			});
 		},
 		function (cb) {
-			self.sapi.deleteConfig(cfg_uuid, cb);
+			self.sapi.deleteManifest(cfg_uuid, cb);
 		}
 	], function (err, results) {
 		t.ifError(err);

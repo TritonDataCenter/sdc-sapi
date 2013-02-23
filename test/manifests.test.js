@@ -102,13 +102,13 @@ test('create w/ missing inputs', function (t) {
 
 test('create w/ invalid type', function (t) {
 	var cfg = {};
-	cfg.service = 'minnow';
 	cfg.type = 'notjson';  // invalid
 	cfg.path = '/opt/smartdc/minnow/etc/config.json';
 	cfg.template = {
 		logLevel: 'debug',
 		datacenter: 'bh1-kvm6'
 	};
+	cfg.post_cmd = '/bin/true';
 
 	function check409(err, res) {
 		t.ok(err);
@@ -131,21 +131,21 @@ test('put/get/del manifest', function (t) {
 	var cfg = {};
 	cfg.uuid = node_uuid.v4();
 	cfg.name = 'mycoolmanifest';
-	cfg.service = 'minnow';
 	cfg.type = 'text';
 	cfg.path = '/opt/smartdc/minnow/etc/config.json';
 	cfg.template = {
 		logLevel: 'debug',
 		datacenter: 'bh1-kvm6'
 	};
+	cfg.post_cmd = '/bin/true';
 
 	var checkCfg = function (obj) {
 		t.equal(obj.uuid, cfg.uuid);
 		t.equal(obj.name, cfg.name);
-		t.equal(obj.service, cfg.service);
 		t.equal(obj.type, cfg.type);
 		t.equal(obj.path, cfg.path);
 		t.deepEqual(obj.template, cfg.template);
+		t.equal(obj.post_cmd, cfg.post_cmd);
 	};
 
 	var uri_cfg = '/manifests/' + cfg.uuid;

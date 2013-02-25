@@ -40,12 +40,11 @@ function createService(app_uuid, uuid, cb) {
 }
 
 function createManifest(cb) {
-	var type = 'json';
 	var path = '/var/tmp/config.json';
 	var template = '{ logLevel: "debug" }';
 	var name = 'more_or_less_empty test config';
 
-	this.sapi.createManifest(name, template, path, type, cb);
+	this.sapi.createManifest(name, template, path, cb);
 }
 
 function testUpdates(t, uri, cb) {

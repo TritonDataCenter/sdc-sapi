@@ -20,7 +20,7 @@ JSSTYLE_FILES	 = $(JS_FILES)
 JSSTYLE_FLAGS    = -o doxygen
 SMF_MANIFESTS_IN = smf/manifests/sapi.xml.in smf/manifests/config-agent.xml.in
 
-NODE_PREBUILT_VERSION=v0.8.20
+NODE_PREBUILT_VERSION=v0.8.21
 NODE_PREBUILT_TAG=zone
 
 

@@ -5,12 +5,6 @@
     "host": "10.2.206.9",
     "port": 2020
   },
-  "wfapi": {
-    "workflows": [ ],
-    "url": "http://10.2.206.11",
-    "username": "admin",
-    "password": "joypass123"
-  },
   "vmapi": {
     "url": "http://10.2.206.19"
   },

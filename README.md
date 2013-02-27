@@ -1,21 +1,15 @@
-# Joyent Engineering Guide
+# Services API (SAPI)
 
-Repository: <git@git.joyent.com:eng.git>
-Browsing: <https://mo.joyent.com/eng>
-Who: Trent Mick, Dave Pacheco
-Docs: <https://mo.joyent.com/docs/eng>
-Tickets/bugs: <https://devhub.joyent.com/jira/browse/TOOLS>
+Repository: <git@git.joyent.com:sapi.git>
+Browsing: <https://mo.joyent.com/sapi>
+Who: Bill Pijewski
+Docs: <https://mo.joyent.com/docs/sapi/master>
+Tickets/bugs: <https://devhub.joyent.com/jira/browse/SAPI>
 
 
 # Overview
 
-This repo serves two purposes: (1) It defines the guidelines and best
-practices for Joyent engineering work (this is the primary goal), and (2) it
-also provides boilerplate for an SDC project repo, giving you a starting
-point for many of the suggestion practices defined in the guidelines. This is
-especially true for node.js-based REST API projects.
-
-Start with the guidelines: <https://mo.joyent.com/docs/eng>
+See <https://mo.joyent.com/docs/sapi/master/#overview>.
 
 
 # Repository
@@ -23,13 +17,12 @@ Start with the guidelines: <https://mo.joyent.com/docs/eng>
     deps/           Git submodules and/or commited 3rd-party deps should go
                     here. See "node_modules/" for node.js deps.
     docs/           Project docs (restdown)
+    etc/            Test configuration files for running SAPI locally
     lib/            Source files.
-    node_modules/   Node.js deps, either populated at build time or commited.
-                    See Managing Dependencies.
-    pkg/            Package lifecycle scripts
+    node_modules/   Node.js dependencies
     smf/manifests   SMF manifests
     smf/methods     SMF method scripts
-    test/           Test suite (using node-tap)
+    test/           Test suite (using nodeunit)
     tools/          Miscellaneous dev/upgrade/deployment tools and data.
     Makefile
     package.json    npm module info (holds the project version)
@@ -38,42 +31,23 @@ Start with the guidelines: <https://mo.joyent.com/docs/eng>
 
 # Development
 
-To run the boilerplate API server:
+To run a SAPI server locally:
 
-    git clone git@git.joyent.com:eng.git
-    cd eng
+    git clone git@git.joyent.com:sapi.git
+    cd sapi
     git submodule update --init
     make all
     node server.js
-
-To update the guidelines, edit "docs/index.restdown" and run `make docs`
-to update "docs/index.html".
 
 Before commiting/pushing run `make prepush` and, if possible, get a code
 review.
 
 
-
 # Testing
 
-    make test
+The etc/config.json defaults to VMAPI and NAPI endpoints on bh1-kvm6.  If you're
+testing SAPI against a different machine, modify those parameters or use
+etc/config.coal.json.
 
-If you project has setup steps necessary for testing, then describe those
-here.
-
-
-# Starting a Repo Based on eng.git
-
-Create a new repo called "some-cool-fish" in your "~/work" dir based on "eng.git":
-Note: run this inside the eng dir.
-
-    ./tools/mkrepo $HOME/work/some-cool-fish
-
-
-# Your Other Sections Here
-
-Add other sections to your README as necessary. E.g. Running a demo, adding
-development data.
-
-
-
+    $ node server.js -f etc/config.json > sapi.out &
+    $ make test

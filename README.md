@@ -45,9 +45,9 @@ review.
 
 # Testing
 
-The etc/config.json defaults to VMAPI and NAPI endpoints on bh1-kvm6.  If you're
-testing SAPI against a different machine, modify those parameters or use
+The etc/config.json defaults to SDC endpoints on bh1-kvm6.  If you're testing
+SAPI against a different machine, modify those parameters or use
 etc/config.coal.json.
 
-    $ node server.js -f etc/config.json > sapi.out &
-    $ make test
+    $ npm start
+    $ (in a different shell) make test

@@ -116,6 +116,8 @@ test('put/get/del instance', function (t) {
 		obj_val: { foo: 'baz' }
 	};
 
+	inst.wait = true;
+
 	var cfg_uuid;
 
 	var check = function (obj) {

@@ -1,6 +1,6 @@
 ---
 title: Services API
-apisections: Applications, Services, Service Configuration, Amon Configuration, Endpoints
+apisections: Service Configuration, Amon Configuration, Applications, Services, Instances, Manifests, Images
 markdown2extras: wiki-tables, code-friendly
 ---
 
@@ -13,122 +13,143 @@ SAPI is the next iteration of the manta.git deployment tools.  In short, it's
 trying to bring to SDC some of the deployment software already developed for
 manta.  It has several goals:
 
-* Provide cleaner, more unified deployment semantics
-* Expose an API for an operator portal
+* Provide clean, unified deployment semantics
 * Enable auto-discovery of SDC and manta services
 * Enable dynamic configuration of SDC and manta services
+* Provide an API for an operator portal
 
 
-# Terminology
+# Overview
 
-There are three main objects: applications, services, and instances.  An
-application has one or more services, and a service has one or more instances.
-Instances are actual zones which inherit their zone parameters from the
-associated applications and services.
+SAPI has two main components: the API itself and the associated config-agent.
+There's also a SAPI client delivered with the rest of the SDC clients.
 
 
-## Applications
+## SAPI
 
-Applications are groups of related services.  SDC and manta are each represented
-as a separate application; additional applications may be supported in the
-future.
+Each datacenter has a single SAPI zone.  That zone is stateless and writes
+objects into its datacenter's moray database.  In addition to storing its
+objects in moray, it also communicates with VMAPI to provision zones and NAPI
+to reserve NICs and lookup network UUIDs.
+
+SAPI contains three main object types: applications, services, and instances.
+An application has one or more services and a service has one or more instances.
+Instances represent actual zones, and those zones inherit their zone parameters
+and metadata from the associated applications and services.
+
+Every application, service, and instance has three sets of properties:
+
+* `params` - Zone parameters like a zone's RAM size, disk quota, image_uuid,
+  etc.  These parameters are evaluated when a zone is provisioned.  If they're
+  updated after a zone has been created, a zone will not receive the updated
+  params.
+
+* `metadata` - Zone metadata made available to the config-agent.  These metadata
+  keys and values form the input to the hogan.js template in the configuration
+  manifest (described below).  As these values are updated, the config-agent 
+  will rewrite any configuration will make reference to changed metadata
+  values.
+
+* `manifests` - A set of configuration manifests (see the Configuration Agent
+  section for description of what's in each manifest).  These manifests are
+  indexed by name to faciliate inheriting manifest from parent objects.
+
+Creating applications and service have no effect on running zones.  When an
+instance is created, a zone is provisioned using the above information from its
+associated application, service, and instance.
+
+
+## Example Usage
+
+For example, given this application (some fields omitted for clarity):
 
     {
-      "uuid": "14160e92-5533-11e2-86a2-9f78cf99260d",
-      "name": "sdc",
-      "owner_uuid": "1959d690-5533-11e2-8bee-1b98757172d1",
-
       "params": {
-        "ram": 1024
-        "quota": 100
-        ...
+        "ram": 256,
+        "quota": 10
       },
-
       "metadata": {
-        "nameservers": "10.99.99.20 10.99.99.21",
-        "region": "sf"
-        ...
+         "MORAY": "1.moray.manta.joyent.us"
       },
-
-      "configs": []
+      "manifests": {
+        "registrar": "76e51922-808b-11e2-af4e-bb62bca39c7f"
+      }
     }
 
-
-## Services
-
-A service is a single logical set of endpoints implemented by one or more
-instances.
-
-Here's a sample service object:
+this service:
 
     {
-      "uuid": "5081a5d6-6bd0-11e2-bafb-a735b6c6ccb6",
-      "name": "mako",
-      "application": "14160e92-5533-11e2-86a2-9f78cf99260d",  // "sdc"
-
-      "servers": [ "mantastorage" ],
-      "policy": "round-robin"
-
       "params": {
-        "image_uuid": "7e607924-5513-11e2-861a-2314f719391d",
-        "networks": [ "admin" ],
-        "ram": 2048
-        "quota": 500
-        ...
+        "quota": 0  // no quota
       },
-
       "metadata": {
-        "shard": true,
-        "nginx_workers": 32
-        ...
+         "NGINX_WORKERS": 8
       },
-
-      "configs": [ "3edcac40-6bd0-11e2-bc62-635be2e7aa93" ]
+      "manifests": {
+        "mako": "9968efc8-808b-11e2-ae99-9fb2d8f3fdff"
+      }
     }
 
-
-## Instances
-
-One or more instances implement each service.  Each instance inherits its
-properties and configuration from both the service and application.  Instances
-may override certain properties or configuration from either its containing
-service or application.
-
-Here's a sample instance object:
+and this instance:
 
     {
-      "uuid": "b63c3b56-6bd1-11e2-af0a-836066bbb42e",
-      "service": "5081a5d6-6bd0-11e2-bafb-a735b6c6ccb6",  // "mako"
-
       "params": {
-        ram: 4096
+        "delegate_dataset": true
       },
-
       "metadata": {
-        moray: "1.moray.manta.joyent.us"
+         "DATA_DIR": "/manta",
+         "MORAY": "2.moray.manta.joyent.us"
       },
-
-      "configs": [ ]
+      "manifests": {
+        "mako": "cc3f2584-808b-11e2-85de-1796a075e6f7",
+        "minnow": "c58f9dda-808c-11e2-b818-6ba0930bad61"
+      }
     }
 
-
-
-# Configuration
-
-Each zone has an agent inside that zone which is responsible for maintaining
-that zone's configuration.  The configuration manifest below specifies the SMF
-service to which this configuration applies, the type of configuration file
-(either text or JSON), the path into which to write the file, and the file's
-template.  The template will be rendered with keys retrieved from the metadata
-API.  That rendering uses the hogan.js module, as is used by the manta.git tools
-today.
-
-Here's what one of those configuration manifests looks like:
+The resulting zone would have the following zone parameters passed to
+VMAPI.createVm():
 
     {
-      "service": "minnow",
-      "type": "json",
+      "ram": 256,
+      "quota": 0,
+      "delegate_dataset": true
+    }
+
+That zone would have the following metadata:
+
+    {
+      "NGINX_WORKERS": 8,
+      "DATA_DIR": "/manta",
+      "MORAY": "2.moray.manta.joyent.us"
+    }
+
+Finally, that zone would use the following configuration manifests:
+
+    {
+      "registrar": "76e51922-808b-11e2-af4e-bb62bca39c7f",
+      "mako": cc3f2584-808b-11e2-85de-1796a075e6f7",
+      "minnow": "c58f9dda-808c-11e2-b818-6ba0930bad61"
+    }
+
+The configuration manifests would be processed by the config-agent, as described
+below.
+
+
+## Configuration Agent
+
+Each zone deployed with SAPI contains an agent which is responsible for
+maintaining configuration inside that zone.  The config-agent queries SAPI
+directly to determine which files to write and where to write them.  The agent
+uses objects called configuration manifests; those objects describe the
+contents, location, and semantics of configuration files for a zone.
+
+Those manifests contain a hogan.js template which is rendered using the metadata
+from the associated application, service, and instance.  Here's an example
+configuration manifest:
+
+    {
       "path": "/opt/smartdc/minnow/etc/config.json"
+      "post_cmd": "svcadm refresh minnow",
       "template": {
         "moray": {
           "bucket": {
@@ -147,79 +168,333 @@ Here's what one of those configuration manifests looks like:
             "retries": 2,
             "minTimeout": 500
           },
-          "host": "1.moray.{{REGION}}.{{DNS_DOMAIN}}",
+          "host": "{{MORAY}}",
           "port": 2020
         },
-        "datacenter": "{{DATACENTER}}",
-        "domain": "{{SERVICE_NAME}}",
-        "objectRoot": "/manta",
+        "objectRoot": "{{DATA_DIR}}",
         "zone_uuid": "{{ZONE_UUID}}",
         "interval": 5000
       }
     }
 
+Combined with the metadata from the above example, the config-agent would write
+this file into /opt/smartdc/minnow/etc/config.json and then refresh the minnow
+SMF service.
 
-# Amon Configuration
+    {
+      "moray" {
+        "bucket": {
+          "name": "manta_storage",
+          "index": {
+            "hostname": { "type": "string" },
+            "availableMB": { "type": "number" },
+            "percentUsed": { "type": "number" },
+            "server_uuid": { "type": "string" },
+            "timestamp": { "type": "number" },
+            "zone_uuid": { "type": "string" }
+          }
+        },
+        "connectTimeout": 200,
+        "retry": {
+          "retries": 2,
+          "minTimeout": 500
+        },
+        "host": "2.moray.manta.joyent.us",
+        "port": 2020
+      },
+      "objectRoot": "/manta",
+      "zone_uuid": "ed23ee9a-808d-11e2-9046-db0663155996",
+      "interval": 5000
+    }
 
-I haven't started SAPI-10 yet, but the plan there is similar to that for
-configuration manifests.
+The `{{ZONE_UUID}}` variable was rendered with the zone's UUID; SAPI provides
+certain variables like ZONE_UUID, SERVER_UUID, etc. based on the zone's
+attributes.
 
 
-# Endpoints
-
-In addition to these endpoints, there's an SDC client for these endpoints which
-is shipped in the node-sdc-clients.git repository.
-
-Note: most of the API documentation below doesn't have the appropriate
-parameters or return values yet.  If you find yourself needing that information
-now, bug wdp so he finishes this document more quickly.
-
+# Applications
 
 ## CreateApplication (POST /applications)
 
-Initialize an application.
+Creates a new application.  An application must have a name and an owner_uuid.
+
+### Inputs
+
+||**Param**||**Type**||**Description**||**Required?**||
+|| name || string || Name of application || yes ||
+|| owner_uuid || UUID || Owner's UUID || yes ||
+|| params || object || zone parameters || no ||
+|| metadata || object || zone metadata || no ||
+|| manifests || array of UUIDs || configuration manifests || no ||
+
+### Responses
+
+||**Code**||**Description**||**Response**||
+|| 204 || Application sucessfully created || Application object ||
+
+### Example
+
+    POST /applications -d '{
+      "name": "sdc",
+      "owner_uuid": "930896af-bf8c-48d4-885c-6573a94b1853",
+      "params" {
+        "delegate_dataset": true
+      }
+    }'
 
 
 ## ListApplications (GET /applications)
 
-Returns the list of applications.
+Returns a list of all applications.
+
+### Inputs
+
+||**Param**||**Type**||**Description**||**Required?**||
+|| name || string || Name of application || no ||
+|| owner_uuid || UUID || Owner's UUID || no ||
+
+### Responses
+
+||**Code**||**Description**||**Response**||
+|| 200 || Found one or more applications || List of application objects ||
+|| 404 || No applications found || none ||
+
+### Example
+
+    GET /applications?name=manta
+    [
+      {
+        "uuid": "14160e92-5533-11e2-86a2-9f78cf99260d",
+        "name": "sdc",
+        "owner_uuid": "1959d690-5533-11e2-8bee-1b98757172d1",
+        "params": {
+          "ram": 1024,
+          "quota": 100
+        },
+        "metadata": {
+          "NAMESERVERS": [ "10.99.99.20", "10.99.99.21" ],
+          "REGION": "sf"
+        },
+        "manifests": {
+          "dns_client": "e0ebe2ac-8a30-49e2-b1a6-4cc9d763f3e1"
+        }
+      }
+    ]
 
 
 ## GetApplication (GET /applications/:uuid)
 
-Returns the list of applications.
+Get an application by UUID.
 
+### Inputs
+
+||**Param**||**Type**||**Description**||**Required?**||
+|| uuid || UUID || UUID of application || yes||
+
+### Responses
+
+||**Code**||**Description**||**Response**||
+|| 200 || Application found || Application object ||
+|| 404 || No applications found || none ||
+
+### Example
+
+See the example for ListApplications above.
+
+
+## UpdateApplication (PUT /applications/:uuid)
+
+Updates an application.
+
+### Inputs
+
+||**Param**||**Type**||**Description**||**Required?**||
+|| uuid || UUID || UUID of application || yes ||
+|| action || string || One of 'update', 'replace', 'delete'. Default is update. || no ||
+|| params || object || zone parameters || no ||
+|| metadata || object || zone metadata || no ||
+|| manifests || array of UUIDs || configuration manifests || no ||
+
+### Responses
+
+||**Code**||**Description**||**Response**||
+|| 200 || Updates completed || Updated application object ||
+|| 404 || No application found || none ||
+
+### Example
+
+    PUT /applications/b0d2f944-7fa3-11e2-a53c-3f3c7a8e7341 -d '{
+      "action": "update",
+      "metadata" {
+        "domain": "lab.joyent.dev"
+      }
+    }'
+ 
 
 ## DeleteApplication (DELETE /application/:uuid)
 
 Deletes an application.
 
+### Inputs
 
+||**Param**||**Type**||**Description**||**Required?**||
+|| uuid || UUID || UUID of application || yes||
+
+### Responses
+
+||**Code**||**Description**||**Response**||
+|| 204 || Application was deleted || none  ||
+
+
+
+# Services
 
 ## CreateService (POST /services)
 
 Create a service.
+
+### Inputs
+
+||**Param**||**Type**||**Description**||**Required?**||
+|| name || string || Name of service || yes ||
+|| application_uuid || UUID || Application's UUID || yes ||
+|| params || object || zone parameters || no ||
+|| metadata || object || zone metadata || no ||
+|| manifests || array of UUIDs || configuration manifests || no ||
 
 
 ## ListServices (GET /services)
 
 Returns the list of all services.
 
+||**Param**||**Type**||**Description**||**Required?**||
+|| name || string || Name of service || no ||
+|| application_uuid || UUID || Application's UUID || no ||
+
+### Responses
+
+||**Code**||**Description**||**Response**||
+|| 200 || Found one or more services || List of service objects ||
+|| 404 || No services found || none ||
+
+### Example
+
+
+    GET /services?name=storage
+    [
+      {
+        "uuid": "09a5da9f-db2a-42d8-99ac-1263cc5751b2",
+        "name": "storage",
+        "application_uuid": "df065006-2d4c-422d-92f0-091b9f9e443a",
+        "params": {
+          "image_uuid": "cbd1b029-54ab-4864-b792-9c6fe615dcd6"
+        },
+        "metadata": {
+          "NGINX_WORKERS": 8
+        }
+        "manifests": {
+          "mako": "b9cb33dd-6610-44c9-9c7d-9e4ce8dd8af3",
+          "minnow": "ed29bb94-34bd-410a-97cc-a750bce147cd"
+        }
+      } 
+    ]
+
 
 ## GetService (GET /services/:uuid)
 
 Return a particular service.
+
+### Inputs
+
+||**Param**||**Type**||**Description**||**Required?**||
+|| uuid || UUID || UUID of service || yes||
+
+### Responses
+
+||**Code**||**Description**||**Response**||
+|| 200 || Service found || Service object ||
+|| 404 || No service found || none ||
+
+### Example
+
+See the example for ListServices above.
+
+
+## UpdateService (PUT /services/:uuid)
+
+Updates an service.
+
+### Inputs
+
+||**Param**||**Type**||**Description**||**Required?**||
+|| uuid || UUID || UUID of service || yes ||
+|| action || string || One of 'update', 'replace', 'delete'. Default is update. || no ||
+|| params || object || zone parameters || no ||
+|| metadata || object || zone metadata || no ||
+|| manifests || array of UUIDs || configuration manifests || no ||
+
+### Responses
+
+||**Code**||**Description**||**Response**||
+|| 200 || Updates completed || Updated service object ||
+|| 404 || No service found || none ||
+
+### Example
+
+    PUT /services/09a5da9f-db2a-42d8-99ac-1263cc5751b2 -d '{
+      "action": "update",
+      "metadata" {
+        "NGINX_WORKERS": 32
+      }
+    }'
 
 
 ## DeleteService (DELETE /services/:uuid)
 
 Delete a particular service.
 
+### Inputs
 
+||**Param**||**Type**||**Description**||**Required?**||
+|| uuid || UUID || UUID of service || yes||
+
+### Responses
+
+||**Code**||**Description**||**Response**||
+|| 204 || Service was deleted || none  ||
+
+
+
+# Instances
 
 ## CreateInstance (POST /instances)
 
 Create and deploy an instance.
+
+### Inputs
+
+||**Param**||**Type**||**Description**||**Required?**||
+|| name || string || Name of instance || yes ||
+|| service_uuid || UUID || Service's UUID || yes ||
+|| params || object || zone parameters || no ||
+|| metadata || object || zone metadata || no ||
+|| manifests || array of UUIDs || configuration manifests || no ||
+
+### Responses
+
+||**Code**||**Description**||**Response**||
+|| 204 || Instance sucessfully created || Instance object ||
+
+### Example
+
+    POST /instances -d '{
+      "name": "sdc",
+      "owner_uuid": "930896af-bf8c-48d4-885c-6573a94b1853",
+      "params" {
+        "delegate_dataset": true
+      }
+    }'
+
 
 
 ## ListInstances (GET /instances)
@@ -231,33 +506,87 @@ Get all instances.
 
 Get a particular instance.
 
+    {
+      "uuid": "b63c3b56-6bd1-11e2-af0a-836066bbb42e",
+      "service": "5081a5d6-6bd0-11e2-bafb-a735b6c6ccb6",  // "mako"
+      "params": {
+        ram: 4096
+      },
+      "metadata": {
+        "MORAY": "1.moray.manta.joyent.us"
+      },
+      "manifests": [ ]
+    }
+
+
+## UpdateInstance (PUT /instances/:uuid)
+
+Updates an instance.
+
+### Inputs
+
+||**Param**||**Type**||**Description**||**Required?**||
+|| uuid || UUID || UUID of instance || yes ||
+|| action || string || One of 'update', 'replace', 'delete'. Default is update. || no ||
+|| params || object || zone parameters || no ||
+|| metadata || object || zone metadata || no ||
+|| manifests || array of UUIDs || configuration manifests || no ||
+
+### Responses
+
+||**Code**||**Description**||**Response**||
+|| 200 || Updates completed || Updated instance object ||
+|| 404 || No instance found || none ||
+
+### Example
+
+    PUT /instances/b0d2f944-7fa3-11e2-a53c-3f3c7a8e7341 -d '{
+      "action": "update",
+      "metadata" {
+        "MORAY": "3.moray.manta.joyent.us"
+      }
+    }'
+
 
 ## DeleteInstance (DELETE /instances/:instance_uuid)
 
-Delete this instance.
+### Inputs
+
+||**Param**||**Type**||**Description**||**Required?**||
+|| uuid || UUID || UUID of instance || yes||
+
+### Responses
+
+||**Code**||**Description**||**Response**||
+|| 204 || Instance was deleted || none  ||
 
 
 
-## CreateConfig (POST /configs)
+# Manifests
+
+## CreateManifest (POST /manifests)
 
 Create a configuration manifest.
 
 
-## ListConfigs (GET /configs)
+## ListManifests (GET /manifests)
 
 Get all configuration manifests.
 
 
-## GetConfig (GET /configs/:uuid)
+## GetManifest (GET /manifests/:uuid)
 
 Get a particular configuration manifest.
 
 
-## DeleteConfig (DELETE /configs/:uuid)
+## DeleteManifest (DELETE /manifests/:uuid)
 
 Delete this configuration manifest.
 
 
+# Images
+
+These endpoints will be moved into IMGAPI.  See IMGAPI-80 for details.
 
 ## SearchImage (GET /images?name=<search term>)
 

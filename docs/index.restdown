@@ -531,7 +531,7 @@ Get the actual payload passed to VMAPI.createVm() for this instance.
 ### Responses
 
 ||**Code**||**Description**||**Response**||
-|| 200 || Instance was deleted || Payload provided to VMAPI.createVm() ||
+|| 200 || Payload provided to VMAPI.createVm() || Payload object ||
 
 ### Example
 

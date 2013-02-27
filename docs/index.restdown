@@ -46,7 +46,7 @@ Every application, service, and instance has three sets of properties:
 
 * `metadata` - Zone metadata made available to the config-agent.  These metadata
   keys and values form the input to the hogan.js template in the configuration
-  manifest (described below).  As these values are updated, the config-agent 
+  manifest (described below).  As these values are updated, the config-agent
   will rewrite any configuration will make reference to changed metadata
   values.
 
@@ -329,7 +329,7 @@ Updates an application.
         "domain": "lab.joyent.dev"
       }
     }'
- 
+
 
 ## DeleteApplication (DELETE /application/:uuid)
 
@@ -396,7 +396,7 @@ Returns the list of all services.
           "mako": "b9cb33dd-6610-44c9-9c7d-9e4ce8dd8af3",
           "minnow": "ed29bb94-34bd-410a-97cc-a750bce147cd"
         }
-      } 
+      }
     ]
 
 
@@ -516,6 +516,40 @@ Get a particular instance.
         "MORAY": "1.moray.manta.joyent.us"
       },
       "manifests": [ ]
+    }
+
+
+## GetInstancePayload (GET /instances/:instance_uuid/payload)
+
+Get the actual payload passed to VMAPI.createVm() for this instance.
+
+### Inputs
+
+||**Param**||**Type**||**Description**||**Required?**||
+|| uuid || UUID || UUID of instance || yes||
+
+### Responses
+
+||**Code**||**Description**||**Response**||
+|| 200 || Instance was deleted || Payload provided to VMAPI.createVm() ||
+
+### Example
+
+    GET instances/18e7dbc9-0f2b-421b-ba39-d1701c55a1f5/payload
+    {
+      "delegate_dataset": true,
+      "image_uuid": "e32e839b-4955-4332-b489-65d70debfaa4",
+      "ram": 2048,
+      "owner_uuid": "a6ef45d3-580d-49a2-adfa-0abb20579574",
+      "uuid": "18e7dbc9-0f2b-421b-ba39-d1701c55a1f5",
+      "brand": "joyent-minimal",
+      "server_uuid": "44454c4c-4800-1034-804a-b2c04f354d31",
+      "customer_metadata": {
+        "ufds_admin_ip": "ldaps://10.2.206.10",
+        "ufds_url": "ldaps://10.2.206.10",
+        "service_port": 80,
+        ....
+      }
     }
 
 

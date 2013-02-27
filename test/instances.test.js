@@ -226,6 +226,18 @@ test('put/get/del instance', function (t) {
 			});
 		},
 		function (cb) {
+			var uri = sprintf('/instances/%s/payload', inst.uuid);
+
+			client.get(uri, function (err, _, res, obj) {
+				t.ifError(err);
+				t.equal(res.statusCode, 200);
+
+				t.ok(obj);
+
+				cb(null);
+			});
+		},
+		function (cb) {
 			common.testUpdates.call(self, t, uri_inst, cb);
 		},
 		function (cb) {

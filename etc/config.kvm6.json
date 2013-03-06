@@ -2,23 +2,23 @@
   "logLevel": "debug",
   "datacenter_name": "bh1-kvm6",
   "moray": {
-    "host": "10.2.206.9",
+    "host": "10.2.206.13",
     "port": 2020
   },
   "vmapi": {
-    "url": "http://10.2.206.19"
+    "url": "http://10.2.206.23"
   },
   "napi": {
     "url": "http://10.2.206.6"
   },
   "imgapi": {
-    "url": "http://10.2.206.13"
+    "url": "http://10.2.206.17"
   },
   "remote_imgapi": {
     "url": "https://10.2.172.75"
   },
   "ufds": {
-    "url": "ldaps://10.2.206.10",
+    "url": "ldaps://10.2.206.14",
     "bindDN": "cn=root",
     "bindPassword": "secret",
     "cache": {

@@ -8,6 +8,9 @@ var async = require('async');
 var common = require('./common');
 var jsprim = require('jsprim');
 var node_uuid = require('node-uuid');
+var sdc = require('sdc-clients');
+
+var VMAPIPlus = require('../lib/server/vmapiplus');
 
 var sprintf = require('util').format;
 
@@ -257,6 +260,102 @@ test('put/get/del instance', function (t) {
 		function (cb) {
 			self.sapi.deleteManifest(cfg_uuid, function (err) {
 				cb(err);
+			});
+		},
+		function (cb) {
+			self.sapi.deleteService(svc_uuid, function (err) {
+				cb(err);
+			});
+		},
+		function (cb) {
+			self.sapi.deleteApplication(app_uuid, function (err) {
+				cb(err);
+			});
+		}
+	], function (err, results) {
+		t.ifError(err);
+		t.end();
+	});
+});
+
+
+// -- Test deleting an instance with no corresponding zone
+
+test('delete instance with no VM', function (t) {
+	var self = this;
+	var client = this.client;
+
+	var app_uuid = node_uuid.v4();
+	var svc_uuid = node_uuid.v4();
+
+	var inst = {};
+	inst.uuid = node_uuid.v4();
+	inst.service_uuid = svc_uuid;
+
+	inst.wait = true;
+
+	var check = function (obj) {
+		t.equal(obj.uuid, inst.uuid);
+		t.equal(obj.service_uuid, inst.service_uuid);
+	};
+
+	var uri_inst = '/instances/' + inst.uuid;
+
+	async.waterfall([
+		function (cb) {
+			common.createApplication.call(self, app_uuid, cb);
+		},
+		function (cb) {
+			common.createService.call(self, app_uuid, svc_uuid, cb);
+		},
+		function (cb) {
+			client.post(URI, inst, function (err, _, res, obj) {
+				t.ifError(err);
+				t.equal(res.statusCode, 200);
+
+				check(obj);
+
+				cb(null);
+			});
+		},
+		function (cb) {
+			client.get(uri_inst, function (err, _, res, obj) {
+				t.ifError(err);
+				t.equal(res.statusCode, 200);
+
+				check(obj);
+
+				cb(null);
+			});
+		},
+		function (cb) {
+			var url = process.env.VMAPI_URL || 'http://10.2.206.23';
+
+			var vmapi = new sdc.VMAPI({
+				url: url,
+				agent: false
+			});
+
+			var vmapiplus = new VMAPIPlus({
+				log: self.client.log,
+				vmapi: vmapi
+			});
+
+			/*
+			 * Here, delete the VM without deleting the
+			 * corresponding SAPI instance.  Deleting the SAPI
+			 * instance in the next callback should still succeed.
+			 */
+			vmapiplus.deleteVm(inst.uuid, function (err) {
+				t.ifError(err);
+				cb();
+			});
+		},
+		function (cb) {
+			self.client.del(uri_inst, function (err, _, res, obj) {
+				t.ifError(err);
+				t.equal(res.statusCode, 204);
+				cb(null);
 			});
 		},
 		function (cb) {

@@ -355,7 +355,67 @@ test('delete instance with no VM', function (t) {
 			self.client.del(uri_inst, function (err, _, res, obj) {
 				t.ifError(err);
 				t.equal(res.statusCode, 204);
-				cb(null);
+				cb();
+			});
+		},
+		function (cb) {
+			self.sapi.deleteService(svc_uuid, function (err) {
+				cb(err);
+			});
+		},
+		function (cb) {
+			self.sapi.deleteApplication(app_uuid, function (err) {
+				cb(err);
+			});
+		}
+	], function (err, results) {
+		t.ifError(err);
+		t.end();
+	});
+});
+
+
+// -- Test invalid zone parameters
+
+test('invalid zone parameters', function (t) {
+	var self = this;
+	var client = this.client;
+
+	var app_uuid = node_uuid.v4();
+	var svc_uuid = node_uuid.v4();
+
+	var inst = {};
+	inst.uuid = node_uuid.v4();
+	inst.service_uuid = svc_uuid;
+	inst.params = {};
+
+	/*
+	 * This setting for the instance's RAM will pass initial VMAPI
+	 * validation but ultimately cause VMAPI.createVm() to fail.
+	 */
+	inst.params.ram = 10 * 1024 * 1024 * 1024 * 1024;  // 10 TB
+
+	inst.wait = true;
+
+	var uri_inst = '/instances/' + inst.uuid;
+
+	async.waterfall([
+		function (cb) {
+			common.createApplication.call(self, app_uuid, cb);
+		},
+		function (cb) {
+			common.createService.call(self, app_uuid, svc_uuid, cb);
+		},
+		function (cb) {
+			client.post(URI, inst, function (err, _, res, obj) {
+				t.equal(res.statusCode, 500);
+				cb();
+			});
+		},
+		function (cb) {
+			client.get(uri_inst, function (err, _, res, obj) {
+				t.equal(res.statusCode, 404);
+				cb();
 			});
 		},
 		function (cb) {

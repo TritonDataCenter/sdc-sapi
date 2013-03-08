@@ -119,8 +119,6 @@ test('put/get/del instance', function (t) {
 		obj_val: { foo: 'baz' }
 	};
 
-	inst.wait = true;
-
 	var cfg_uuid;
 
 	var check = function (obj) {
@@ -292,8 +290,6 @@ test('delete instance with no VM', function (t) {
 	inst.uuid = node_uuid.v4();
 	inst.service_uuid = svc_uuid;
 
-	inst.wait = true;
-
 	var check = function (obj) {
 		t.equal(obj.uuid, inst.uuid);
 		t.equal(obj.service_uuid, inst.service_uuid);
@@ -394,8 +390,6 @@ test('invalid zone parameters', function (t) {
 	 * validation but ultimately cause VMAPI.createVm() to fail.
 	 */
 	inst.params.ram = 10 * 1024 * 1024 * 1024 * 1024;  // 10 TB
-
-	inst.wait = true;
 
 	var uri_inst = '/instances/' + inst.uuid;
 

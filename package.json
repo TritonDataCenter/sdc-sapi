@@ -18,7 +18,7 @@
 		"once": "1.1.1",
 		"optimist": "0.3.5",
 		"restify": "2.3.2",
-		"sdc-clients": "git+ssh://git@git.joyent.com:node-sdc-clients.git#cadc2ae",
+		"sdc-clients": "git+ssh://git@git.joyent.com:node-sdc-clients.git#fe76c2f",
 		"vasync": "1.3.3"
 	},
 	"devDependencies": {

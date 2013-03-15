@@ -7,7 +7,7 @@
 	"dependencies": {
 		"assert-plus": "0.1.2",
 		"async": "0.1.22",
-		"bunyan": "0.18.3",
+		"bunyan": "0.20.0",
 		"hogan.js": "2.0.0",
 		"jsprim": "0.3.1",
 		"ldapjs": "0.6.2",

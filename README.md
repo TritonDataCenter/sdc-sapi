@@ -39,15 +39,16 @@ To run a SAPI server locally:
     make all
     node server.js
 
-Before commiting/pushing run `make prepush` and, if possible, get a code
+Before commiting/pushing run `make prepush` and, if warranted, get a code
 review.
 
 
 # Testing
 
+To test:
+
+    make prepush
+
 The etc/config.json defaults to SDC endpoints on bh1-kvm6.  If you're testing
 SAPI against a different machine, modify those parameters or use
 etc/config.coal.json.
-
-    $ npm start
-    $ (in a different shell) make test

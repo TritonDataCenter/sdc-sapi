@@ -18,17 +18,30 @@ var test = helper.test;
 var URI = '/services';
 
 
-// -- Tests
+// -- Boilerplate
+
+var server;
+var tests_run = 0;
 
 helper.before(function (cb) {
 	this.client = helper.createJsonClient();
 	this.sapi = helper.createSapiClient();
 
-	cb();
+	if (server)
+		return (cb(null));
+
+	helper.startSapiServer(function (err, res) {
+		server = res;
+		cb(err);
+	});
 });
 
 helper.after(function (cb) {
-	cb();
+	if (++tests_run === helper.getNumTests()) {
+		helper.shutdownSapiServer(server, cb);
+	} else {
+		cb();
+	}
 });
 
 
@@ -117,8 +130,18 @@ test('create w/ other invalid inputs', function (t) {
 			badsvc.params.image_uuid = node_uuid.v4();
 
 			self.client.post(URI, badsvc, function (err, _, res) {
-				t.ok(err);
-				t.equal(res.statusCode, 500);
+				/*
+				 * There's no connection to IMGAPI in proto
+				 * mode, so there's no validation of the
+				 * image_uuid.
+				 */
+				if (process.env.MODE === 'proto') {
+					t.ifError(err);
+					t.equal(res.statusCode, 200);
+				} else {
+					t.ok(err);
+					t.equal(res.statusCode, 500);
+				}
 				cb();
 			});
 		},

@@ -4,6 +4,7 @@
  * test/common.js: common routines for all tests
  */
 
+var assert = require('assert-plus');
 var async = require('async');
 
 
@@ -28,22 +29,35 @@ function createService(app_uuid, uuid, cb) {
 	opts.params.networks = [ 'admin' ];
 	opts.params.image_uuid = SMARTOS_163_UUID;
 
-	if (arguments.length === 2) {
+	if (arguments.length === 2)
 		cb = uuid;
-	} else {
+	else
 		opts.uuid = uuid;
-	}
 
 	this.sapi.createService(name, app_uuid, opts, function (err, svc) {
 		return (cb(err));
 	});
 }
 
+function createInstance(svc_uuid, uuid, cb) {
+	var opts = {};
+
+	if (arguments.length === 2)
+		cb = uuid;
+	else
+		opts.uuid = uuid;
+
+	this.sapi.createInstance(svc_uuid, opts, cb);
+}
+
 function createManifest(cb) {
+	assert.func(cb, 'cb');
+
 	var path = '/var/tmp/config.json';
 	var template = '{ logLevel: "debug" }';
 	var name = 'more_or_less_empty test config';
 
+	// XXX need to fix up SAPI client with post_cmd
 	this.sapi.createManifest(name, template, path, cb);
 }
 
@@ -138,6 +152,7 @@ exports.SMARTOS_163_UUID = SMARTOS_163_UUID;
 
 exports.createApplication = createApplication;
 exports.createService = createService;
+exports.createInstance = createInstance;
 exports.createManifest = createManifest;
 
 exports.testUpdates = testUpdates;

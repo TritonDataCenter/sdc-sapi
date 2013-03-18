@@ -3,26 +3,26 @@
 		"name": "sapi",
 		"level": "debug"
 	},
-	"mode": "proto",
-	"datacenter_name": "coal",
+	"mode": "full",
+	"datacenter_name": "bh1-kvm6",
 	"moray": {
-		"host": "10.99.99.13",
+		"host": "10.2.206.13",
 		"port": 2020
 	},
 	"vmapi": {
-		"url": "http://10.99.99.23"
+		"url": "http://10.2.206.23"
 	},
 	"napi": {
-		"url": "http://10.99.99.10"
+		"url": "http://10.2.206.6"
 	},
 	"imgapi": {
-		"url": "http://10.99.99.17"
+		"url": "http://10.2.206.17"
 	},
 	"remote_imgapi": {
 		"url": "https://10.2.172.75"
 	},
 	"ufds": {
-		"url": "ldaps://10.99.99.14",
+		"url": "ldaps://10.2.206.14",
 		"bindDN": "cn=root",
 		"bindPassword": "secret",
 		"cache": {

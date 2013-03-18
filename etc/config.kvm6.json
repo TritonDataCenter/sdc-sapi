@@ -1,29 +1,33 @@
 {
-  "logLevel": "debug",
-  "datacenter_name": "bh1-kvm6",
-  "moray": {
-    "host": "10.2.206.13",
-    "port": 2020
-  },
-  "vmapi": {
-    "url": "http://10.2.206.23"
-  },
-  "napi": {
-    "url": "http://10.2.206.6"
-  },
-  "imgapi": {
-    "url": "http://10.2.206.17"
-  },
-  "remote_imgapi": {
-    "url": "https://10.2.172.75"
-  },
-  "ufds": {
-    "url": "ldaps://10.2.206.14",
-    "bindDN": "cn=root",
-    "bindPassword": "secret",
-    "cache": {
-      "size": 1000,
-      "expiry": 300
-    }
-  }
+	"log_options": {
+		"name": "sapi",
+		"level": "debug"
+	},
+	"mode": "proto",
+	"datacenter_name": "bh1-kvm6",
+	"moray": {
+		"host": "10.2.206.13",
+		"port": 2020
+	},
+	"vmapi": {
+		"url": "http://10.2.206.23"
+	},
+	"napi": {
+		"url": "http://10.2.206.6"
+	},
+	"imgapi": {
+		"url": "http://10.2.206.17"
+	},
+	"remote_imgapi": {
+		"url": "https://10.2.172.75"
+	},
+	"ufds": {
+		"url": "ldaps://10.2.206.14",
+		"bindDN": "cn=root",
+		"bindPassword": "secret",
+		"cache": {
+			"size": 1000,
+			"expiry": 300
+		}
+	}
 }

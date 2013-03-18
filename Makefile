@@ -42,9 +42,13 @@ $(NODEUNIT): | $(NPM_EXEC)
 
 CLEAN_FILES += $(NODEUNIT) ./node_modules/tap
 
+#
+# Test SAPI in both modes: proto and full
+#
 .PHONY: test
 test: $(NODEUNIT)
-	$(NODEUNIT) test/*.test.js
+	MODE=proto $(NODEUNIT) test/*.test.js
+	MODE=full $(NODEUNIT) test/*.test.js
 
 
 #

@@ -4,11 +4,16 @@
  * test/helper.js: setup test environment
  */
 
+var assert = require('assert-plus');
 var bunyan = require('bunyan');
+var fs = require('fs');
 var once = require('once');
+var path = require('path');
 var sdc = require('sdc-clients');
 var restify = require('restify');
 
+var SAPI = require('../lib/server/sapi');
+var VMAPIPlus = require('../lib/server/vmapiplus');
 
 
 // -- Helpers
@@ -50,31 +55,91 @@ function createSapiClient() {
 	return (client);
 }
 
-function checkResponse(t, res, code) {
-	t.ok(res, 'null response');
-	if (!res)
-		return;
-	t.equal(res.statusCode, code, 'HTTP status code mismatch');
-	t.ok(res.headers);
-	t.ok(res.headers.date);
-	t.equal(res.headers.server, 'Manta');
-	t.ok(res.headers['x-request-id']);
-	t.ok(res.headers['x-server-name']);
+function createVmapiPlusClient() {
+	var log = createLogger();
 
-	if (code === 200 || code === 201 || code === 202) {
-		t.ok(res.headers['content-type']);
-		var ct = res.headers['content-type'];
-		/* JSSTYLED */
-		if (!/application\/x-json-stream.*/.test(ct)) {
-			t.ok(res.headers['content-length'] !== undefined);
-			if (res.headers['content-length'] > 0)
-				t.ok(res.headers['content-md5']);
-		}
+	var vmapi = new sdc.VMAPI({
+		agent: false,
+		log: log,
+		url: process.env.VMAPI_URL || 'http://10.2.206.23'
+	});
+
+	var client = new VMAPIPlus({
+		log: log,
+		vmapi: vmapi
+	});
+
+	return (client);
+}
+
+function createNapiClient() {
+	var log = createLogger();
+
+	var client = new sdc.NAPI({
+		agent: false,
+		log: log,
+		url: process.env.NAPI_URL || 'http://10.2.206.6'
+	});
+
+	return (client);
+}
+
+function startSapiServer(mode, cb) {
+	if (arguments.length === 1) {
+		cb = mode;
+		mode = null;
 	}
+
+	assert.func(cb, 'cb');
+
+	var file = path.join(__dirname, 'etc/config.kvm6.json');
+	var config = JSON.parse(fs.readFileSync(file));
+
+	config.vmapi.agent = false;
+	config.napi.agent = false;
+	config.imgapi.agent = false;
+	config.remote_imgapi.agent = false;
+
+	/*
+	 * First, check the mode argument to this function.  If that's not
+	 * specified, check the environment variables MODE.  Lastly, fallback on
+	 * the mode from the configuration file.
+	 */
+	if (mode)
+		config.mode = mode;
+	else if (process.env.MODE)
+		config.mode = process.env.MODE;
+
+	config.log_options.streams = [
+		{
+			level: 'debug',
+			path: path.join(__dirname, 'tests.log')
+		}
+	];
+
+	var sapi = new SAPI(config);
+
+	// Some of the tests use VMAPI and NAPI, so load those URLs into
+	// environment variables.
+	process.env.VMAPI_URL = config.vmapi.url;
+	process.env.NAPI_URL = config.napi.url;
+
+	sapi.start(function () {
+		cb(null, sapi);
+	});
+}
+
+function shutdownSapiServer(sapi, cb) {
+	assert.object(sapi, 'sapi');
+	assert.func(cb, 'cb');
+
+	sapi.shutdown(cb);
 }
 
 
 // -- Exports
+
+var num_tests = 0;
 
 module.exports = {
 	after: function after(teardown) {
@@ -100,6 +165,8 @@ module.exports = {
 	},
 
 	test: function test(name, tester) {
+		num_tests++;
+
 		module.parent.exports[name] = function _(t) {
 			var _done = false;
 			t.end = once(function end() {
@@ -108,10 +175,10 @@ module.exports = {
 					t.done();
 				}
 			});
+
 			t.notOk = function notOk(ok, message) {
 				return (t.ok(!ok, message));
 			};
-			t.checkResponse = checkResponse.bind(this, t);
 
 			tester.call(this, t);
 		};
@@ -120,5 +187,14 @@ module.exports = {
 	createLogger: createLogger,
 
 	createJsonClient: createJsonClient,
-	createSapiClient: createSapiClient
+	createSapiClient: createSapiClient,
+	createVmapiPlusClient: createVmapiPlusClient,
+	createNapiClient: createNapiClient,
+
+	startSapiServer: startSapiServer,
+	shutdownSapiServer: shutdownSapiServer,
+
+	getNumTests: function () {
+		return (num_tests);
+	}
 };

@@ -18,17 +18,30 @@ var URI = '/applications';
 var APP_UUID;
 
 
-// -- Tests
+// -- Boilerplate
+
+var server;
+var tests_run = 0;
 
 helper.before(function (cb) {
 	this.client = helper.createJsonClient();
 	this.sapi = helper.createSapiClient();
 
-	cb(null);
+	if (server)
+		return (cb(null));
+
+	helper.startSapiServer(function (err, res) {
+		server = res;
+		cb(err);
+	});
 });
 
 helper.after(function (cb) {
-	cb(null);
+	if (++tests_run === helper.getNumTests()) {
+		helper.shutdownSapiServer(server, cb);
+	} else {
+		cb();
+	}
 });
 
 
@@ -77,8 +90,13 @@ test('create w/ invalid owner_uuid', function (t) {
 	};
 
 	this.client.post(URI, app, function (err, req, res, obj) {
-		t.ok(err);
-		t.equal(res.statusCode, 500);
+		if (process.env.MODE === 'proto') {
+			t.ifError(err);
+			t.equal(res.statusCode, 200);
+		} else {
+			t.ok(err);
+			t.equal(res.statusCode, 500);
+		}
 		t.end();
 	});
 });

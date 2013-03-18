@@ -17,14 +17,30 @@ var test = helper.test;
 var URI = '/manifests';
 
 
+// -- Boilerplate
+
+var server;
+var tests_run = 0;
+
 helper.before(function (cb) {
 	this.client = helper.createJsonClient();
+	this.sapi = helper.createSapiClient();
 
-	cb(null);
+	if (server)
+		return (cb(null));
+
+	helper.startSapiServer(function (err, res) {
+		server = res;
+		cb(err);
+	});
 });
 
 helper.after(function (cb) {
-	cb(null);
+	if (++tests_run === helper.getNumTests()) {
+		helper.shutdownSapiServer(server, cb);
+	} else {
+		cb();
+	}
 });
 
 

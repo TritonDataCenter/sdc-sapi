@@ -22,17 +22,30 @@ var test = helper.test;
 var URI = '/instances';
 
 
-// -- Tests
+// -- Boilerplate
+
+var server;
+var tests_run = 0;
 
 helper.before(function (cb) {
 	this.client = helper.createJsonClient();
 	this.sapi = helper.createSapiClient();
 
-	cb(null);
+	if (server)
+		return (cb(null));
+
+	helper.startSapiServer(function (err, res) {
+		server = res;
+		cb(err);
+	});
 });
 
 helper.after(function (cb) {
-	cb(null);
+	if (++tests_run === helper.getNumTests()) {
+		helper.shutdownSapiServer(server, cb);
+	} else {
+		cb();
+	}
 });
 
 
@@ -325,6 +338,14 @@ test('delete instance with no VM', function (t) {
 			});
 		},
 		function (cb) {
+
+			/*
+			 * This check doesn't apply to proto mode.
+			 */
+			if (process.env.MODE === 'proto') {
+				return (cb(null));
+			}
+
 			var url = process.env.VMAPI_URL || 'http://10.2.206.23';
 
 			var vmapi = new sdc.VMAPI({
@@ -402,13 +423,19 @@ test('invalid zone parameters', function (t) {
 		},
 		function (cb) {
 			client.post(URI, inst, function (err, _, res, obj) {
-				t.equal(res.statusCode, 500);
+				if (process.env.MODE === 'proto')
+					t.equal(res.statusCode, 200);
+				else
+					t.equal(res.statusCode, 500);
 				cb();
 			});
 		},
 		function (cb) {
 			client.get(uri_inst, function (err, _, res, obj) {
-				t.equal(res.statusCode, 404);
+				if (process.env.MODE === 'proto')
+					t.equal(res.statusCode, 200);
+				else
+					t.equal(res.statusCode, 404);
 				cb();
 			});
 		},

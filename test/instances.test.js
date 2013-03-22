@@ -290,6 +290,125 @@ test('put/get/del instance', function (t) {
 });
 
 
+function createVm(uuid, cb) {
+	var params = {};
+	params.brand = 'joyent-minimal';
+	params.image_uuid = common.SMARTOS_163_UUID;
+	params.owner_uuid = common.ADMIN_UUID;
+	params.ram = 256;
+
+	var vmapiplus = helper.createVmapiPlusClient();
+	var cnapi = helper.createCnapiClient();
+	var napi = helper.createNapiClient();
+
+	async.waterfall([
+		function (subcb) {
+			cnapi.listServers(function (err, servers) {
+				if (err)
+					return (subcb(err));
+				params.server_uuid = servers[0].uuid;
+				subcb();
+			});
+		},
+		function (subcb) {
+			napi.listNetworks({ name: 'admin' },
+			    function (err, networks) {
+				if (err)
+					return (subcb(err));
+				params.networks = [ networks[0].uuid ];
+				subcb();
+			});
+		},
+		function (subcb) {
+			vmapiplus.createVm(params, function (err) {
+				subcb(err);
+			});
+		}
+	], cb);
+}
+
+
+// -- Test creating an instance with VM already existing
+
+test('create instance with VM aleady existing', function (t) {
+	var self = this;
+	var client = this.client;
+
+	var app_uuid = node_uuid.v4();
+	var svc_uuid = node_uuid.v4();
+
+	var inst = {};
+	inst.uuid = node_uuid.v4();
+	inst.service_uuid = svc_uuid;
+
+	var check = function (obj) {
+		t.equal(obj.uuid, inst.uuid);
+		t.equal(obj.service_uuid, inst.service_uuid);
+	};
+
+	var uri_inst = '/instances/' + inst.uuid;
+
+	async.waterfall([
+		function (cb) {
+			common.createApplication.call(self, app_uuid, cb);
+		},
+		function (cb) {
+			common.createService.call(self, app_uuid, svc_uuid, cb);
+		},
+		function (cb) {
+			/*
+			 * This check doesn't apply to proto mode.
+			 */
+			if (process.env.MODE === 'proto')
+				return (cb(null));
+
+			createVm(inst.uuid, cb);
+		},
+		function (cb) {
+			client.post(URI, inst, function (err, _, res, obj) {
+				t.ifError(err);
+				t.equal(res.statusCode, 200);
+
+				check(obj);
+
+				cb(null);
+			});
+		},
+		function (cb) {
+			client.get(uri_inst, function (err, _, res, obj) {
+				t.ifError(err);
+				t.equal(res.statusCode, 200);
+
+				check(obj);
+
+				cb(null);
+			});
+		},
+		function (cb) {
+			self.client.del(uri_inst, function (err, _, res, obj) {
+				t.ifError(err);
+				t.equal(res.statusCode, 204);
+				cb();
+			});
+		},
+		function (cb) {
+			self.sapi.deleteService(svc_uuid, function (err) {
+				cb(err);
+			});
+		},
+		function (cb) {
+			self.sapi.deleteApplication(app_uuid, function (err) {
+				cb(err);
+			});
+		}
+	], function (err, results) {
+		t.ifError(err);
+		t.end();
+	});
+});
+
+
+
 // -- Test deleting an instance with no corresponding zone
 
 test('delete instance with no VM', function (t) {
@@ -338,7 +457,6 @@ test('delete instance with no VM', function (t) {
 			});
 		},
 		function (cb) {
-
 			/*
 			 * This check doesn't apply to proto mode.
 			 */

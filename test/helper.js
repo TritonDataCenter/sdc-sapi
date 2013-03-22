@@ -84,6 +84,18 @@ function createNapiClient() {
 	return (client);
 }
 
+function createCnapiClient() {
+	var log = createLogger();
+
+	var client = new sdc.CNAPI({
+		agent: false,
+		log: log,
+		url: process.env.CNAPI_URL || 'http://10.2.206.18'
+	});
+
+	return (client);
+}
+
 function startSapiServer(mode, cb) {
 	if (arguments.length === 1) {
 		cb = mode;
@@ -123,6 +135,7 @@ function startSapiServer(mode, cb) {
 	// environment variables.
 	process.env.VMAPI_URL = config.vmapi.url;
 	process.env.NAPI_URL = config.napi.url;
+	process.env.CNAPI_URL = config.cnapi.url;
 
 	sapi.start(function () {
 		cb(null, sapi);
@@ -190,6 +203,7 @@ module.exports = {
 	createSapiClient: createSapiClient,
 	createVmapiPlusClient: createVmapiPlusClient,
 	createNapiClient: createNapiClient,
+	createCnapiClient: createCnapiClient,
 
 	startSapiServer: startSapiServer,
 	shutdownSapiServer: shutdownSapiServer,

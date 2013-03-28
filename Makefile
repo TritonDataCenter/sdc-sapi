@@ -13,7 +13,7 @@ NODEUNIT	:= ./node_modules/.bin/nodeunit
 # Files
 #
 DOC_FILES	 = index.restdown
-JS_FILES	:= $(shell ls *.js) $(shell find lib test -name '*.js')
+JS_FILES	:= $(shell ls *.js) $(shell find cmd lib test -name '*.js')
 JSL_CONF_NODE	 = tools/jsl.node.conf
 JSL_FILES_NODE   = $(JS_FILES)
 JSSTYLE_FILES	 = $(JS_FILES)
@@ -108,6 +108,8 @@ agent: all $(SMF_MANIFESTS)
 		$(TOP)/lib/agent \
 		$(AGENT_INSTDIR)/lib
 	cp -P smf/manifests/config-agent.xml $(AGENT_INSTDIR)/smf/manifests
+	cp -r $(TOP)/bin $(AGENT_INSTDIR)/
+	cp -r $(TOP)/cmd $(AGENT_INSTDIR)/
 	cp -r $(TOP)/test $(AGENT_INSTDIR)/
 	cp -PR $(NODE_INSTALL) $(AGENT_INSTDIR)/build/node
 

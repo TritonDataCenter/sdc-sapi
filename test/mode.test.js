@@ -188,7 +188,7 @@ test('upgrade to full mode', function (t) {
 
 			var params = {};
 			params.uuid = inst_uuid;
-			params.owner_uuid = common.ADMIN_UUID;
+			params.owner_uuid = process.env.ADMIN_UUID;
 			params.image_uuid = common.SMARTOS_163_UUID;
 			params.brand = 'joyent-minimal';
 			params.ram = 256;

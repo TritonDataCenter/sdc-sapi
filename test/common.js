@@ -8,13 +8,13 @@ var assert = require('assert-plus');
 var async = require('async');
 
 
-var ADMIN_UUID = '00000000-0000-0000-0000-000000000000';
 var SMARTOS_163_UUID = '01b2c898-945f-11e1-a523-af1afbe22822';
 
 function createApplication(uuid, cb) {
 	var name = 'empty_test_application';
 
-	this.sapi.createApplication(name, ADMIN_UUID, { uuid: uuid },
+	this.sapi.createApplication(name, process.env.ADMIN_UUID,
+	    { uuid: uuid },
 	    function (err, app) {
 		return (cb(err));
 	});
@@ -147,7 +147,6 @@ function testUpdates(t, uri, cb) {
 }
 
 
-exports.ADMIN_UUID = ADMIN_UUID;
 exports.SMARTOS_163_UUID = SMARTOS_163_UUID;
 
 exports.createApplication = createApplication;

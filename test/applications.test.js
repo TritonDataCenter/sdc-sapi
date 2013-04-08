@@ -72,7 +72,7 @@ test('create w/o owner_uuid', function (t) {
 
 test('create w/o name', function (t) {
 	var app = {
-		owner_uuid: common.ADMIN_UUID
+		owner_uuid: process.env.ADMIN_UUID
 	};
 
 	this.client.post(URI, app, function (err, req, res, obj) {
@@ -104,7 +104,7 @@ test('create w/ invalid owner_uuid', function (t) {
 test('create w/ invalid manifest', function (t) {
 	var app = {
 		name: 'invalid owner_uuid',
-		owner_uuid: common.ADMIN_UUID,
+		owner_uuid: process.env.ADMIN_UUID,
 		manifests: { my_service: node_uuid.v4() }
 	};
 
@@ -120,14 +120,14 @@ test('create w/ invalid manifest', function (t) {
 test('create application w/o UUID', function (t) {
 	var app = {
 		name: 'no uuid here',
-		owner_uuid: common.ADMIN_UUID
+		owner_uuid: process.env.ADMIN_UUID
 	};
 
 	this.client.post(URI, app, function (err, req, res, obj) {
 		t.ifError(err);
 		t.equal(res.statusCode, 200);
 		t.equal(obj.name, 'no uuid here');
-		t.equal(obj.owner_uuid, common.ADMIN_UUID);
+		t.equal(obj.owner_uuid, process.env.ADMIN_UUID);
 		APP_UUID = obj.uuid;
 		t.end();
 	});
@@ -140,7 +140,7 @@ test('get application w/o UUID', function (t) {
 		t.ifError(err);
 		t.equal(res.statusCode, 200);
 		t.equal(obj.name, 'no uuid here');
-		t.equal(obj.owner_uuid, common.ADMIN_UUID);
+		t.equal(obj.owner_uuid, process.env.ADMIN_UUID);
 		t.equal(obj.uuid, APP_UUID);
 		t.end();
 	});
@@ -182,7 +182,7 @@ test('put/get/del application', function (t) {
 	var app = {
 		name: 'mycoolapp_' + node_uuid.v4().substr(0, 8),
 		uuid: APP_UUID,
-		owner_uuid: common.ADMIN_UUID,
+		owner_uuid: process.env.ADMIN_UUID,
 		params: params
 	};
 
@@ -313,14 +313,14 @@ test('reuse application UUID', function (t) {
 	var app = {
 		name: 'This application name has spaces.',
 		uuid: APP_UUID,
-		owner_uuid: common.ADMIN_UUID
+		owner_uuid: process.env.ADMIN_UUID
 	};
 
 	this.client.post(URI, app, function (err, req, res, obj) {
 		t.ifError(err);
 		t.equal(res.statusCode, 200);
 		t.equal(obj.name, 'This application name has spaces.');
-		t.equal(obj.owner_uuid, common.ADMIN_UUID);
+		t.equal(obj.owner_uuid, process.env.ADMIN_UUID);
 		t.equal(obj.uuid, APP_UUID);
 		t.end();
 	});
@@ -333,7 +333,7 @@ test('get reused application', function (t) {
 		t.ifError(err);
 		t.equal(res.statusCode, 200);
 		t.equal(obj.name, 'This application name has spaces.');
-		t.equal(obj.owner_uuid, common.ADMIN_UUID);
+		t.equal(obj.owner_uuid, process.env.ADMIN_UUID);
 		t.equal(obj.uuid, APP_UUID);
 		t.end();
 	});

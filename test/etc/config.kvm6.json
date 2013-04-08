@@ -5,6 +5,7 @@
 	},
 	"mode": "full",
 	"datacenter_name": "bh1-kvm6",
+	"adminUuid": "930896af-bf8c-48d4-885c-6573a94b1853",
 	"moray": {
 		"host": "10.2.206.13",
 		"port": 2020

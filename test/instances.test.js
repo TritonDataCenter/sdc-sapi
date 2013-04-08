@@ -294,7 +294,7 @@ function createVm(uuid, cb) {
 	var params = {};
 	params.brand = 'joyent-minimal';
 	params.image_uuid = common.SMARTOS_163_UUID;
-	params.owner_uuid = common.ADMIN_UUID;
+	params.owner_uuid = process.env.ADMIN_UUID;
 	params.ram = 256;
 
 	var vmapiplus = helper.createVmapiPlusClient();

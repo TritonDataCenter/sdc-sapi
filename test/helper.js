@@ -137,6 +137,7 @@ function startSapiServer(mode, cb) {
 	process.env.NAPI_URL = config.napi.url;
 	process.env.CNAPI_URL = config.cnapi.url;
 	process.env.ADMIN_UUID = config.adminUuid;
+	process.env.SERVER_UUID = config.server_uuid;
 
 	sapi.start(function () {
 		cb(null, sapi);

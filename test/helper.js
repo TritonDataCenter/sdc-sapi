@@ -12,6 +12,7 @@ var path = require('path');
 var sdc = require('sdc-clients');
 var restify = require('restify');
 
+var Logger = require('bunyan');
 var SAPI = require('../lib/server/sapi');
 var VMAPIPlus = require('../lib/server/vmapiplus');
 
@@ -122,12 +123,16 @@ function startSapiServer(mode, cb) {
 	else if (process.env.MODE)
 		config.mode = process.env.MODE;
 
-	config.log_options.streams = [
+	var log_options = config.log_options;
+	log_options.streams = [
 		{
 			level: 'debug',
 			path: path.join(__dirname, 'tests.log')
 		}
 	];
+
+	var log = new Logger(log_options);
+	config.log = log;
 
 	var sapi = new SAPI(config);
 

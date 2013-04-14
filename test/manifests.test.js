@@ -106,6 +106,96 @@ test('create w/ missing inputs', function (t) {
 	});
 });
 
+test('create w/ invalid versions', function (t) {
+	var self = this;
+
+	var cfg = {};
+	cfg.name = 'my misversioned manifest';
+	cfg.path = '/opt/smartdc/sapi/etc/config.json';
+	cfg.template = {
+		logLevel: 'debug',
+		mode: 'proto'
+	};
+
+	function check409(err, res) {
+		t.ok(err);
+		if (err)
+			t.equal(err.name, 'InvalidArgumentError');
+		t.equal(res.statusCode, 409);
+	}
+
+	var BAD_VERSIONS = [ 1, { major: '1', minor: '0' }, true ];
+
+	async.forEach(BAD_VERSIONS, function (version, cb) {
+		cfg.version = version;
+
+		self.client.post(URI, cfg, function (err, _, res) {
+			check409(err, res);
+			cb();
+		});
+	}, function (_) {
+		t.end();
+	});
+});
+
+test('create w/o version should add one', function (t) {
+	var self = this;
+
+	var cfg = {};
+	cfg.uuid = node_uuid.v4();
+	cfg.name = 'auto-versioned manifest';
+	cfg.path = '/opt/smartdc/moray/etc/config.json';
+	cfg.template = {
+		logLevel: 'debug'
+	};
+	cfg.post_cmd = '/bin/true';
+
+	var checkCfg = function (obj) {
+		t.equal(obj.uuid, cfg.uuid);
+		t.equal(obj.name, cfg.name);
+		t.equal(obj.path, cfg.path);
+		t.deepEqual(obj.template, cfg.template);
+		t.equal(obj.post_cmd, cfg.post_cmd);
+		t.equal(obj.version, '1.0.0');
+	};
+
+	var uri_cfg = '/manifests/' + cfg.uuid;
+
+	async.waterfall([
+		function (cb) {
+			self.client.post(URI, cfg, function (err, _, res, obj) {
+				t.ifError(err);
+				t.equal(res.statusCode, 200);
+
+				checkCfg(obj);
+
+				cb(null);
+			});
+		},
+		function (cb) {
+			self.client.get(uri_cfg, function (err, _, res, obj) {
+				t.ifError(err);
+				t.equal(res.statusCode, 200);
+
+				checkCfg(obj);
+
+				cb(null);
+			});
+		},
+		function (cb) {
+			self.client.del(uri_cfg, function (err, _, res, obj) {
+				t.ifError(err);
+				t.equal(res.statusCode, 204);
+
+				cb(null);
+			});
+		}
+	], function (err) {
+		t.ifError(err);
+		t.end();
+	});
+});
+
 
 // -- Test put/get/del manifest
 
@@ -121,6 +211,7 @@ test('put/get/del manifest', function (t) {
 		datacenter: 'bh1-kvm6'
 	};
 	cfg.post_cmd = '/bin/true';
+	cfg.version = '1.20.3';
 
 	var checkCfg = function (obj) {
 		t.equal(obj.uuid, cfg.uuid);
@@ -128,6 +219,7 @@ test('put/get/del manifest', function (t) {
 		t.equal(obj.path, cfg.path);
 		t.deepEqual(obj.template, cfg.template);
 		t.equal(obj.post_cmd, cfg.post_cmd);
+		t.equal(obj.version, cfg.version);
 	};
 
 	var uri_cfg = '/manifests/' + cfg.uuid;

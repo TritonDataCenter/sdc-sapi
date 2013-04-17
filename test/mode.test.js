@@ -8,6 +8,7 @@ var async = require('async');
 var common = require('./common');
 var mkdirp = require('mkdirp');
 var node_uuid = require('node-uuid');
+var path = require('path');
 var rimraf = require('rimraf');
 
 if (require.cache[__dirname + '/helper.js'])
@@ -42,10 +43,12 @@ helper.before(function (cb) {
 		},
 		function (subcb) {
 			/*
-			 * Start SAPI three times.  The first and third should
-			 * be in proto mode; the second in full mode.
+			 * Start SAPI four times.  All but the second should be
+			 * in proto mode; the second in full mode.
 			 */
-			if (tests_run === 0 || tests_run === 2)
+			if (tests_run === 0 ||
+			    tests_run === 2 ||
+			    tests_run === 3)
 				mode = 'proto';
 			else if (tests_run === 1)
 				mode = 'full';
@@ -63,7 +66,7 @@ helper.before(function (cb) {
 });
 
 helper.after(function (cb) {
-	if (++tests_run < 3 ||
+	if (++tests_run < 4 ||
 	    tests_run === helper.getNumTests()) {
 		helper.shutdownSapiServer(server, cb);
 	} else {
@@ -137,7 +140,142 @@ test('in full mode', function (t) {
 	});
 });
 
+// -- Test failed upgrade
 
+test('failed upgrade to full mode', function (t) {
+	var self = this;
+
+	var man_uuid = node_uuid.v4();
+	var app_uuid = node_uuid.v4();
+	var svc_uuid = node_uuid.v4();
+	var inst_uuid = node_uuid.v4();
+
+	async.waterfall([
+		function (cb) {
+			// Should start in proto mode
+			self.client.get(URI, function (err, req, res, obj) {
+				t.ifError(err);
+				t.equal(res.statusCode, 200);
+				t.equal(obj, 'proto');
+				cb();
+			});
+		},
+		function (cb) {
+			// Create an application, service, instance, and
+			// manifest.
+			common.createManifest.call(self, man_uuid,
+			    function (err) {
+				cb(err);
+			});
+		},
+		function (cb) {
+			/*
+			 * This UUID is a known bogus user, so the
+			 * SAPI.setMode() call later will fail.
+			 */
+			var admin_uuid = process.env['ADMIN_UUID'];
+			process.env['ADMIN_UUID'] =
+			    'dcb91b8c-a781-11e2-9b10-e3356d873457';
+
+			common.createApplication.call(self, app_uuid,
+			    function (err) {
+				process.env['ADMIN_UUID'] = admin_uuid;
+				cb(err);
+			});
+		},
+		function (cb) {
+			common.createService.call(self, app_uuid, svc_uuid,
+			    function (err) {
+				cb(err);
+			});
+		},
+		function (cb) {
+			common.createInstance.call(self, svc_uuid, inst_uuid,
+			    function (err) {
+				cb(err);
+			});
+		},
+		function (cb) {
+			// Create an actual zone
+
+			var params = {};
+			params.uuid = inst_uuid;
+			params.owner_uuid = process.env.ADMIN_UUID;
+			params.image_uuid = common.SMARTOS_163_UUID;
+			params.brand = 'joyent-minimal';
+			params.ram = 256;
+
+			// XXX shouldn't need to do this
+			params.server_uuid =
+			    '44454c4c-4800-1034-804a-b2c04f354d31';
+
+			var napi = helper.createNapiClient();
+			var vmapiplus = helper.createVmapiPlusClient();
+
+			napi.listNetworks({ name: 'admin' },
+			    function (err, networks) {
+				if (err)
+					return (cb(err));
+
+				if (!networks && networks.length === 0) {
+					t.ok(false, 'no admin network');
+					return (cb(null));
+				}
+
+				var admin = networks[0];
+
+				params.networks = [ admin.uuid ];
+
+				vmapiplus.createVm(params, cb);
+			});
+		},
+		function (cb) {
+			// Attemt upgrade to full mode, which should fail
+			var uri_mode = URI + '?mode=full';
+
+			self.client.post(uri_mode,
+			    function (err, req, res, obj) {
+				t.ok(err);
+				t.equal(res.statusCode, 500);
+				cb();
+			});
+		},
+		function (cb) {
+			// Should remain in proto mode
+			self.client.get(URI, function (err, req, res, obj) {
+				t.ifError(err);
+				t.equal(res.statusCode, 200);
+				t.equal(obj, 'proto');
+				cb();
+			});
+		},
+		function (cb) {
+			/*
+			 * Even after the failed setMode() above, all the
+			 * objects must remain available.
+			 */
+			var uris = [
+				'/manifests/' + man_uuid,
+				'/applications/' + app_uuid,
+				'/services/' + svc_uuid,
+				'/instances/' + inst_uuid
+			];
+
+			async.forEach(uris, function (uri, subcb) {
+				self.client.get(uri,
+				    function (err, req, res, obj) {
+					t.ifError(err);
+					t.ok(obj);
+					t.equal(obj.uuid, path.basename(uri));
+					subcb();
+				});
+			}, cb);
+		}
+	], function (err) {
+		t.ifError(err);
+		t.end();
+	});
+});
 // -- Test upgrade proto -> full
 
 test('upgrade to full mode', function (t) {

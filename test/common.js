@@ -50,15 +50,19 @@ function createInstance(svc_uuid, uuid, cb) {
 	this.sapi.createInstance(svc_uuid, opts, cb);
 }
 
-function createManifest(cb) {
-	assert.func(cb, 'cb');
+function createManifest(uuid, cb) {
+	var opts = {};
 
-	var path = '/var/tmp/config.json';
-	var template = '{ logLevel: "debug" }';
-	var name = 'more_or_less_empty test config';
+	if (arguments.length === 1)
+		cb = uuid;
+	else
+		opts.uuid = uuid;
 
-	// XXX need to fix up SAPI client with post_cmd
-	this.sapi.createManifest(name, template, path, cb);
+	opts.path = '/var/tmp/config.json';
+	opts.template = '{ logLevel: "debug" }';
+	opts.name = 'more_or_less_empty test config';
+
+	this.sapi.createManifest(opts, cb);
 }
 
 function testUpdates(t, uri, cb) {

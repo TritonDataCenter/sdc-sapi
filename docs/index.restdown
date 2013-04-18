@@ -654,13 +654,13 @@ These endpoints will be moved into IMGAPI.  See IMGAPI-80 for details.
 
 ## SearchImage (GET /images?name=<search term>)
 
-Queries the updates.joyent.us IMGAPI for images which match the "name" search
+Queries the updates.joyent.com IMGAPI for images which match the "name" search
 parameter.
 
 
 ## DownloadImage (POST /images/:uuid)
 
-Downloads an image from the updates.joyent.us IMGAPI repo and installs it into
+Downloads an image from the updates.joyent.com IMGAPI repo and installs it into
 the local datacenter.
 
 

@@ -57,16 +57,15 @@ test('missing "name" parameter', function (t) {
 
 // -- Test download and install
 
-test('find, download, install image', function (t) {
+function searchAndDownload(t, search_uri, cb) {
 	var self = this;
 
 	var uuid;
 
 	async.waterfall([
-		function (cb) {
-			var uri = URI + '?name=moray';
-
-			self.client.get(uri, function (err, _, res, obj) {
+		function (subcb) {
+			self.client.get(search_uri,
+			    function (err, _, res, obj) {
 				if (process.env.MODE === 'proto') {
 					t.ok(err);
 					t.equal(err.name,
@@ -79,10 +78,10 @@ test('find, download, install image', function (t) {
 					uuid = obj[0].uuid;
 				}
 
-				cb(null);
+				subcb(null);
 			});
 		},
-		function (cb) {
+		function (subcb) {
 			var uri = URI + '/' + uuid;
 
 			self.client.post(uri, function (err, _, res, obj) {
@@ -95,10 +94,10 @@ test('find, download, install image', function (t) {
 					t.ifError(err);
 					t.equal(res.statusCode, 204);
 				}
-				cb(null);
+				subcb(null);
 			});
 		},
-		function (cb) {
+		function (subcb) {
 			var uri = URI + '/' + uuid;
 
 			// Downloading again has same result
@@ -112,11 +111,21 @@ test('find, download, install image', function (t) {
 					t.ifError(err);
 					t.equal(res.statusCode, 204);
 				}
-				cb(null);
+				subcb(null);
 			});
 		}
-	], function (err, results) {
-		t.ifError(err);
-		t.end();
+	], cb);
+}
+
+test('find, download, install image', function (t) {
+	searchAndDownload.call(this, t, '/images?name=moray', function (err) {
+		t.done();
+	});
+});
+
+test('find, download, install master image', function (t) {
+	searchAndDownload.call(this, t, '/images?name=vmapi&version=master',
+	    function (err) {
+		t.done();
 	});
 });

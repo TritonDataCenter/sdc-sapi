@@ -23,7 +23,7 @@
 		"url": "http://10.2.206.17"
 	},
 	"remote_imgapi": {
-		"url": "https://10.2.172.75"
+		"url": "https://updates.joyent.com"
 	},
 	"ufds": {
 		"url": "ldaps://10.2.206.14",

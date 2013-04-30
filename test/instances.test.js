@@ -9,6 +9,7 @@ var common = require('./common');
 var jsprim = require('jsprim');
 var node_uuid = require('node-uuid');
 var sdc = require('sdc-clients');
+var vasync = require('vasync');
 
 var VMAPIPlus = require('../lib/server/vmapiplus');
 
@@ -305,14 +306,13 @@ test('put/get/del instance', function (t) {
 });
 
 
-function createVm(uuid, cb) {
+function consVmParams(cb) {
 	var params = {};
 	params.brand = 'joyent-minimal';
 	params.image_uuid = common.SMARTOS_163_UUID;
 	params.owner_uuid = process.env.ADMIN_UUID;
 	params.ram = 256;
 
-	var vmapiplus = helper.createVmapiPlusClient();
 	var cnapi = helper.createCnapiClient();
 	var napi = helper.createNapiClient();
 
@@ -333,13 +333,20 @@ function createVm(uuid, cb) {
 				params.networks = [ networks[0].uuid ];
 				subcb();
 			});
-		},
-		function (subcb) {
-			vmapiplus.createVm(params, function (err) {
-				subcb(err);
-			});
 		}
-	], cb);
+	], function (err) {
+		return (cb(err, params));
+	});
+}
+
+function createVm(uuid, cb) {
+	var vmapiplus = helper.createVmapiPlusClient();
+
+	consVmParams(function (err, params) {
+		params.uuid = uuid;
+
+		vmapiplus.createVm(params, cb);
+	});
 }
 
 
@@ -570,6 +577,135 @@ test('invalid zone parameters', function (t) {
 				else
 					t.equal(res.statusCode, 404);
 				cb();
+			});
+		},
+		function (cb) {
+			self.sapi.deleteService(svc_uuid, function (err) {
+				cb(err);
+			});
+		},
+		function (cb) {
+			self.sapi.deleteApplication(app_uuid, function (err) {
+				cb(err);
+			});
+		}
+	], function (err, results) {
+		t.ifError(err);
+		t.end();
+	});
+});
+
+// -- Test upgrading a zone
+
+test('upgrading a zone', function (t) {
+	var self = this;
+	var client = this.client;
+
+	var vmapi = helper.createVmapiClient();
+
+	var old_image = '3ace697b-ad1e-44f8-8eac-ba383de05a05';
+	var new_image = '19dba40a-a590-45d0-8eec-ca47c784554f';
+
+	var app_uuid = node_uuid.v4();
+	var svc_uuid = node_uuid.v4();
+
+	var inst = {};
+	inst.uuid = node_uuid.v4();
+	inst.service_uuid = svc_uuid;
+
+	async.waterfall([
+		function (cb) {
+			// Before the test starts, download both images.
+			if (process.env.MODE === 'proto')
+				return (cb());
+
+			var images = [ old_image, new_image ];
+
+			vasync.forEachParallel({
+				func: function (image, subcb) {
+					self.sapi.downloadImage(image, subcb);
+				},
+				inputs: images
+			}, function (err) {
+				cb();
+			});
+		},
+		function (cb) {
+			var uri = sprintf('/instances/%s/upgrade', inst.uuid);
+
+			var opts = {};
+			opts.image_uuid = new_image;
+
+			client.put(uri, opts, function (err, _, res, obj) {
+				t.equal(res.statusCode, 404);
+				cb();
+			});
+		},
+		function (cb) {
+			consVmParams(function (err, params) {
+				if (err)
+					return (cb(err));
+
+				params.networks = [ 'admin' ];
+				params.image_uuid = old_image;
+
+				inst.params = params;
+				cb();
+			});
+		},
+		function (cb) {
+			common.createApplication.call(self, app_uuid, cb);
+		},
+		function (cb) {
+			common.createService.call(self, app_uuid, svc_uuid, cb);
+		},
+		function (cb) {
+			client.post(URI, inst, function (err, _, res, obj) {
+				t.ifError(err);
+				t.equal(res.statusCode, 200);
+				if (obj && obj.params) {
+					t.equal(obj.params.image_uuid,
+					    old_image);
+				}
+
+				cb();
+			});
+		},
+		function (cb) {
+			var uri = sprintf('/instances/%s/upgrade', inst.uuid);
+
+			var opts = {};
+			opts.image_uuid = new_image;
+
+			client.put(uri, opts, function (err, _, res, obj) {
+				t.ifError(err);
+				t.equal(res.statusCode, 200);
+
+				/*
+				 * This call shouldn't actually change
+				 * params.image_uuid.
+				 */
+				if (obj && obj.params) {
+					t.equal(obj.params.image_uuid,
+					    old_image);
+				}
+
+				cb();
+			});
+		},
+		function (cb) {
+			if (process.env.MODE === 'proto')
+				return (cb());
+
+			vmapi.getVm({ uuid: inst.uuid }, function (err, vm) {
+				t.ifError(err);
+				t.equal(vm.image_uuid, new_image);
+				cb();
+			});
+		},
+		function (cb) {
+			self.sapi.deleteInstance(inst.uuid, function (err) {
+				cb(err);
 			});
 		},
 		function (cb) {

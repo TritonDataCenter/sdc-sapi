@@ -611,6 +611,30 @@ Updates an instance.
     }'
 
 
+## UpgradeInstance (PUT /instances/:uuid/upgrade)
+
+Upgrades an instance to a newer image version.  This endpoint uses the
+VMAPI.reprovisionVm() endpoint.
+
+### Inputs
+
+||**Param**||**Type**||**Description**||**Required?**||
+|| uuid || UUID || UUID of instance || yes ||
+|| image_uuid || UUID || UUID of new image || yes ||
+
+### Responses
+
+||**Code**||**Description**||**Response**||
+|| 200 || Updates completed || Updated instance object ||
+|| 404 || No instance found || none ||
+
+### Example
+
+    PUT /instances/b0d2f944-7fa3-11e2-a53c-3f3c7a8e7341 -d '{
+      "image_uuid": "01df6bd2-b132-11e2-b6df-ef5e1316b487"
+    }'
+
+
 ## DeleteInstance (DELETE /instances/:instance_uuid)
 
 ### Inputs

@@ -56,6 +56,19 @@ function createSapiClient() {
 	return (client);
 }
 
+function createVmapiClient() {
+	var log = createLogger();
+
+	var client = new sdc.VMAPI({
+		agent: false,
+		log: log,
+		url: process.env.VMAPI_URL || 'http://10.2.206.23'
+	});
+
+	return (client);
+}
+
+
 function createVmapiPlusClient() {
 	var log = createLogger();
 
@@ -130,6 +143,7 @@ function startSapiServer(mode, cb) {
 			path: path.join(__dirname, 'tests.log')
 		}
 	];
+	log_options.serializers = restify.bunyan.serializers;
 
 	var log = new Logger(log_options);
 	config.log = log;
@@ -208,6 +222,7 @@ module.exports = {
 
 	createJsonClient: createJsonClient,
 	createSapiClient: createSapiClient,
+	createVmapiClient: createVmapiClient,
 	createVmapiPlusClient: createVmapiPlusClient,
 	createNapiClient: createNapiClient,
 	createCnapiClient: createCnapiClient,

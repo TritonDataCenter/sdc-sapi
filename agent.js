@@ -14,6 +14,7 @@ var util = require('./lib/common/util');
 
 var Agent = require('./lib/agent/agent');
 var Logger = require('bunyan');
+var restify = require('restify');
 
 
 var ARGV = optimist.options({
@@ -41,7 +42,8 @@ assert.string(config.sapi.url, 'config.sapi.url');
 var log = new Logger({
 	name: 'config-agent',
 	level: config.logLevel,
-	stream: process.stdout
+	stream: process.stdout,
+	serializers: restify.bunyan.serializers
 });
 
 config.log = log;

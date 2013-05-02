@@ -1,4 +1,4 @@
-#!/opt/smartdc/config-agent/build/node/bin/node
+#!/usr/node/bin/node
 
 /*
  * Copyright (c) 2013, Joyent, Inc. All rights reserved.
@@ -14,6 +14,8 @@ var fs = require('fs');
 var read = require('read');
 var sdc = require('sdc-clients');
 var util = require('util');
+
+var mod_util = require('../lib/common/util');
 
 var sprintf = require('sprintf-js').sprintf;
 
@@ -49,6 +51,8 @@ function Sapiadm() {
 util.inherits(Sapiadm, Cmdln);
 
 Sapiadm.prototype.init = function (opts, args, cb) {
+	var self = this;
+
 	if (opts.version) {
 		console.log(VERSION);
 		cb(false);
@@ -60,18 +64,67 @@ Sapiadm.prototype.init = function (opts, args, cb) {
 		serializers: Logger.stdSerializers
 	});
 
-	var CFG = '/opt/smartdc/config-agent/etc/config.json';
-	var config = JSON.parse(fs.readFileSync(CFG, 'utf8'));
+	var onReady = function (err, client) {
+		if (err)
+			return (cb(err));
+		self.client = client;
+		Cmdln.prototype.init.call(self, opts, args, cb);
+	};
 
-	this.client = new sdc.SAPI({
-		url: config.sapi.url,
-		log: this.log,
-		agent: false
+	mod_util.zonename(function (err, zonename) {
+		if (err)
+			return (cb(err));
+
+		if (zonename === 'global')
+			initGlobalZone.call(self, onReady);
+		else
+			initNonGlobalZone.call(self, onReady);
+
 	});
-
-	Cmdln.prototype.init.apply(this, arguments);
 };
 
+function initGlobalZone(cb) {
+	var self = this;
+
+	var cmd = '/usr/bin/bash /lib/sdc/config.sh -json';
+
+	cp.exec(cmd, function (err, stdout, stderr) {
+		if (err)
+			return (cb(err));
+
+		var config = JSON.parse(stdout);
+		var sapi_url = 'http://' + config.sapi_domain;
+
+		var client = new sdc.SAPI({
+			url: sapi_url,
+			log: self.log,
+			agent: false
+		});
+
+		cb(null, client);
+	});
+}
+
+function initNonGlobalZone(cb) {
+	var self = this;
+
+	var CFG = '/opt/smartdc/config-agent/etc/config.json';
+
+	fs.readFile(CFG, 'utf8', function (err, contents) {
+		if (err)
+			return (cb(err));
+
+		var config = JSON.parse(contents);
+
+		var client = new sdc.SAPI({
+			url: config.sapi.url,
+			log: self.log,
+			agent: false
+		});
+
+		cb(null, client);
+	});
+}
 
 
 // -- Main subcommands

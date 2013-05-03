@@ -314,7 +314,6 @@ function consVmParams(cb) {
 	params.ram = 256;
 
 	var cnapi = helper.createCnapiClient();
-	var napi = helper.createNapiClient();
 
 	async.waterfall([
 		function (subcb) {
@@ -326,16 +325,24 @@ function consVmParams(cb) {
 			});
 		},
 		function (subcb) {
-			napi.listNetworks({ name: 'admin' },
-			    function (err, networks) {
+			resolveNetwork('admin', function (err, uuid) {
 				if (err)
 					return (subcb(err));
-				params.networks = [ networks[0].uuid ];
+				params.networks = [ { uuid: uuid } ];
 				subcb();
 			});
 		}
 	], function (err) {
 		return (cb(err, params));
+	});
+}
+
+function resolveNetwork(name, cb) {
+	var napi = helper.createNapiClient();
+	napi.listNetworks({ name: name }, function (err, networks) {
+		if (err)
+			return (cb(err));
+		return (cb(null, networks[0].uuid));
 	});
 }
 
@@ -706,6 +713,66 @@ test('upgrading a zone', function (t) {
 		function (cb) {
 			self.sapi.deleteInstance(inst.uuid, function (err) {
 				cb(err);
+			});
+		},
+		function (cb) {
+			self.sapi.deleteService(svc_uuid, function (err) {
+				cb(err);
+			});
+		},
+		function (cb) {
+			self.sapi.deleteApplication(app_uuid, function (err) {
+				cb(err);
+			});
+		}
+	], function (err, results) {
+		t.ifError(err);
+		t.end();
+	});
+});
+
+
+// -- Test passing NAPI-ifed networks
+
+test('create instance with NAPI networks', function (t) {
+	var self = this;
+	var client = this.client;
+
+	var app_uuid = node_uuid.v4();
+	var svc_uuid = node_uuid.v4();
+
+	var inst = {};
+	inst.uuid = node_uuid.v4();
+	inst.service_uuid = svc_uuid;
+
+	var uri_inst = '/instances/' + inst.uuid;
+
+	async.waterfall([
+		function (cb) {
+			common.createApplication.call(self, app_uuid, cb);
+		},
+		function (cb) {
+			common.createService.call(self, app_uuid, svc_uuid, cb);
+		},
+		function (cb) {
+			resolveNetwork('admin', function (err, uuid) {
+				inst.params = {};
+				inst.params.networks = [ { uuid: uuid } ];
+				cb(err);
+			});
+		},
+		function (cb) {
+			client.post(URI, inst, function (err, _, res, obj) {
+				t.ifError(err);
+				t.equal(res.statusCode, 200);
+				cb(null);
+			});
+		},
+		function (cb) {
+			self.client.del(uri_inst, function (err, _, res, obj) {
+				t.ifError(err);
+				t.equal(res.statusCode, 204);
+				cb(null);
 			});
 		},
 		function (cb) {

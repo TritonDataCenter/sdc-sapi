@@ -503,8 +503,8 @@ Create and deploy an instance.
 ### Inputs
 
 ||**Param**||**Type**||**Description**||**Required?**||
-|| name || string || Name of instance || yes ||
 || service_uuid || UUID || Service's UUID || yes ||
+|| uuid || UUID || UUID to use for the new instance || no ||
 || params || object || zone parameters || no ||
 || metadata || object || zone metadata || no ||
 || manifests || array of UUIDs || configuration manifests || no ||

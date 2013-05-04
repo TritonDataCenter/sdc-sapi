@@ -20,7 +20,7 @@ var mod_util = require('../lib/common/util');
 var sprintf = require('sprintf-js').sprintf;
 
 var Cmdln = cmdln.Cmdln;
-var Logger = require('bunyan');
+var bunyan = require('bunyan');
 
 var VERSION = '1.0.0';
 
@@ -44,7 +44,9 @@ function Sapiadm() {
 			{names: ['help', 'h'], type: 'bool',
 			    help: 'Print help and exit.'},
 			{name: 'version', type: 'bool',
-			    help: 'Print version and exit.'}
+			    help: 'Print version and exit.'},
+			{names: ['verbose', 'v'], type: 'arrayOfBool',
+			    help: 'More verbose logging.'}
 		]
 	});
 }
@@ -59,9 +61,28 @@ Sapiadm.prototype.init = function (opts, args, cb) {
 		return;
 	}
 
-	this.log = new Logger({
+	var level = 'warn';
+	var src = false;
+	if (opts.verbose) {
+		if (opts.verbose.length === 1) {
+			level = 'info';
+		} else if (opts.verbose.length === 2) {
+			level = 'debug';
+		} else {
+			level = 'trace';
+			src = true;
+		}
+	}
+	this.log = bunyan.createLogger({
 		name: __filename,
-		serializers: Logger.stdSerializers
+		serializers: bunyan.stdSerializers,
+		src: src,
+		streams: [
+			{
+				stream: process.stderr,
+				level: level
+			}
+		]
 	});
 
 	var onReady = function (err, client) {
@@ -274,9 +295,10 @@ Sapiadm.prototype.do_update = function (subcmd, opts, args, cb) {
 };
 Sapiadm.prototype.do_update.options = [
 	{
-		names: [ 'T' ],
+		names: [ 'f' ],
 		type: 'string',
-		help: 'file containing update (e.g. `curl -T`)'
+		helpArg: 'FILE',
+		help: 'file containing update JSON'
 	}
 ];
 Sapiadm.prototype.do_update.help = (
@@ -284,34 +306,109 @@ Sapiadm.prototype.do_update.help = (
     + '\n'
     + 'Usage:\n'
     + '     sapiadm update UUID metadata.foo=bar\n'
-    + '     sapiadm update UUID -T /tmp/changes.json\n'
+    + '     sapiadm update UUID -f /tmp/changes.json\n'
     + '     echo \'{ "metadata": { "foo": "bar" } }\' |\n'
     + '         sapiadm update UUID\n'
+    + '\n'
+    + '{{options}}\n'
 );
 
 
 Sapiadm.prototype.do_provision = function (subcmd, opts, args, cb) {
-	if (args.length !== 1) {
+	var self = this;
+	// Cannot specify '-f FILE' *and* SERVICE-UUID arg.
+	if (args.length > 1 || (opts.f && args.length)) {
 		this.do_help('help', {}, [subcmd], cb);
 		return;
 	}
 
-	var service_uuid = args[0];
+	function readInputStr(subcb) {
+		if (opts.f) {
+			fs.readFile(opts.f, 'utf8', subcb);
+		} else if (args.length) {
+			subcb(null, JSON.stringify({service_uuid: args[0]}));
+		} else {
+			var stdin = '';
+			process.stdin.resume();
+			process.stdin.on('data', function (chunk) {
+				stdin += chunk;
+			});
+			process.stdin.on('end', function () {
+				subcb(null, stdin);
+			});
+		}
+	}
 
-	this.client.createInstance(service_uuid, function (err, inst) {
-		if (err)
-			return (cb(err));
+	function getInput(subcb) {
+		readInputStr(function (rErr, input_str) {
+			if (rErr)
+				return (subcb(rErr));
+			parseInput(input_str, function (err, input) {
+				if (err) {
+					return (subcb(err));
+				}
+				subcb(null, input);
+			});
+		});
+	}
 
-		console.log(sprintf('Provisioned instance %s successfully',
-		    inst.uuid));
-		cb();
+	getInput(function (pErr, input) {
+		if (pErr)
+			return (cb(pErr));
+
+		var service_uuid = input.service_uuid;
+		delete input.service_uuid;
+
+		self.log.debug({service_uuid: service_uuid, opts: input},
+		    'call SAPI.createInstance');
+		self.client.createInstance(service_uuid, input,
+		    function (err, inst) {
+			if (err)
+				return (cb(err));
+
+			console.log('Provisioned instance %s successfully',
+			    inst.uuid);
+			cb();
+		});
 	});
 };
+Sapiadm.prototype.do_provision.options = [
+	{
+		names: [ 'f' ],
+		type: 'string',
+		helpArg: 'FILE',
+		help: 'Optional additional provision JSON payload. Use "-"'
+		    + 'to read JSON from stdin.'
+	}
+];
 Sapiadm.prototype.do_provision.help = (
-    'Provision a new instance.\n'
+    'Provision a new instance the given service.\n'
+    + '\n'
+    + 'Extra provision params, instance metadata and manifests can\n'
+    + 'optionally be provided via stdin or a file specified with "-f".\n'
+    + 'Minimally a service uuid must be provided as an argument or as\n'
+    + '"service_uuid" in the JSON payload. See \n'
+    + '<https://mo.joyent.com/docs/sapi/master/#CreateInstance> for full\n'
+    + 'details on acceptable payload.\n'
     + '\n'
     + 'Usage:\n'
-    + '     sapiadm provision SERVICE-UUID\n'
+    + '     sapiadm provision <service-uuid>\n'
+    + '     sapiadm provision -f <file>\n'
+    + '     ...payload on stdin ... | sapiadm provision\n'
+    + '\n'
+    + '{{options}}'
+    + '\n'
+    + 'Examples:\n'
+    + '     sapiadm provision 66a67b43-6744-4f4d-afee-6f64dc61afb7\n'
+    + '\n'
+    + '     sapiadm provision -f payload.json\n'
+    + '\n'
+    + '     echo \'{\n'
+    + '         "service_uuid": "66a67b43-6744-4f4d-afee-6f64dc61afb7",\n'
+    + '         "params": {\n'
+    + '             "alias": "foo0"\n'
+    + '         }\n'
+    + '     }\' | sapiadm provision\n'
 );
 
 
@@ -376,8 +473,8 @@ function printApplication(services, instances) {
 
 
 function readInput(opts, cb) {
-	if (opts.T) {
-		fs.readFile(opts.T, 'utf8', function (err, contents) {
+	if (opts.f) {
+		fs.readFile(opts.f, 'utf8', function (err, contents) {
 			if (err)
 				return (cb(err));
 			parseInput(contents, cb);

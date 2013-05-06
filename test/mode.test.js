@@ -170,16 +170,15 @@ test('failed upgrade to full mode', function (t) {
 		},
 		function (cb) {
 			/*
-			 * This UUID is a known bogus user, so the
+			 * This UUID is a known bogus image, so the
 			 * SAPI.setMode() call later will fail.
 			 */
-			var admin_uuid = process.env['ADMIN_UUID'];
-			process.env['ADMIN_UUID'] =
-			    'dcb91b8c-a781-11e2-9b10-e3356d873457';
+			process.env['IMAGE_UUID'] =
+			    '0ee75f7e-b5d8-11e2-8c16-bb0d1acfb63d';
 
 			common.createApplication.call(self, app_uuid,
 			    function (err) {
-				process.env['ADMIN_UUID'] = admin_uuid;
+				delete process.env['IMAGE_UUID'];
 				cb(err);
 			});
 		},

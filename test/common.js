@@ -13,8 +13,13 @@ var SMARTOS_163_UUID = '01b2c898-945f-11e1-a523-af1afbe22822';
 function createApplication(uuid, cb) {
 	var name = 'empty_test_application';
 
-	this.sapi.createApplication(name, process.env.ADMIN_UUID,
-	    { uuid: uuid },
+	var opts = {};
+	opts.uuid = uuid;
+	opts.params = {};
+	if (process.env['IMAGE_UUID'])
+		opts.params.image_uuid = process.env['IMAGE_UUID'];
+
+	this.sapi.createApplication(name, process.env.ADMIN_UUID, opts,
 	    function (err, app) {
 		return (cb(err));
 	});

@@ -201,16 +201,29 @@ Sapiadm.prototype.do_showapp = function (subcmd, opts, args, cb) {
 		    function (suberr, ret) {
 			if (suberr)
 				return (cb(suberr));
-			printApplication(ret.services, ret.instances);
+			if (opts.json) {
+				printApplicationJSON(ret.services,
+				                     ret.instances);
+			} else {
+				printApplication(ret.services, ret.instances);
+			}
 			return (cb(null));
 		});
 	});
 };
+Sapiadm.prototype.do_showapp.options = [
+	{
+		names: [ 'json', 'j' ],
+		type: 'bool',
+		help: 'output in JSON'
+	}
+];
 Sapiadm.prototype.do_showapp.help = (
     'Show services and instances inside an application.\n'
     + '\n'
     + 'Usage:\n'
     + '     sapiadm showapp APPLICATION-NAME\n'
+    + '     sapiadm showapp -j APPLICATION-NAME\n'
 );
 
 
@@ -471,6 +484,24 @@ function printApplication(services, instances) {
 	});
 }
 
+function printApplicationJSON(services, instances) {
+	Object.keys(services).forEach(function (uuid) {
+		var name = services[uuid].name;
+		var insts = instances[uuid] ? instances[uuid] : [];
+
+		for (var ii = 0; ii < insts.length; ii++) {
+			insts[ii] = insts[ii].uuid;
+		}
+
+		var out = {
+			name: name,
+			uuid: uuid,
+			instances: insts
+		};
+
+		console.log(JSON.stringify(out));
+	});
+}
 
 function readInput(opts, cb) {
 	if (opts.f) {

@@ -92,7 +92,7 @@ test('create w/ invalid inputs', function (t) {
 
 			self.client.post(URI, badinst, function (err, _, res) {
 				t.ok(err);
-				t.equal(res.statusCode, 500);
+				t.equal(res.statusCode, 404);
 				cb();
 			});
 		},
@@ -192,7 +192,7 @@ test('put/get/del instance', function (t) {
 
 			client.post(URI, badinst, function (err, _, res, obj) {
 				t.ok(err);
-				t.equal(res.statusCode, 500);
+				t.equal(res.statusCode, 404);
 
 				cb(null);
 			});
@@ -260,9 +260,14 @@ test('put/get/del instance', function (t) {
 				t.equal(res.statusCode, 200);
 
 				t.ok(obj);
-				t.equal(obj.metadata.ZONE_UUID, inst.uuid);
-				t.equal(obj.metadata.SERVER_UUID,
-				    process.env.SERVER_UUID);
+				if (obj.metadata) {
+					t.equal(obj.metadata.ZONE_UUID,
+					    inst.uuid);
+					t.equal(obj.metadata.SERVER_UUID,
+					    process.env.SERVER_UUID);
+				} else {
+					t.fail('obj.METADATA is null');
+				}
 
 				cb(null);
 			});

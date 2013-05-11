@@ -101,7 +101,7 @@ test('create w/ invalid application_uuid', function (t) {
 
 	this.client.post('/services', svc, function (err, req, res, obj) {
 		t.ok(err);
-		t.equal(res.statusCode, 500);
+		t.equal(res.statusCode, 404);
 		t.end();
 	});
 });
@@ -152,7 +152,7 @@ test('create w/ other invalid inputs', function (t) {
 
 			self.client.post(URI, badsvc, function (err, _, res) {
 				t.ok(err);
-				t.equal(res.statusCode, 500);
+				t.equal(res.statusCode, 404);
 				cb();
 			});
 		},

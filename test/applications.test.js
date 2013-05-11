@@ -95,7 +95,7 @@ test('create w/ invalid owner_uuid', function (t) {
 			t.equal(res.statusCode, 200);
 		} else {
 			t.ok(err);
-			t.equal(res.statusCode, 500);
+			t.equal(res.statusCode, 404);
 		}
 		t.end();
 	});
@@ -103,14 +103,14 @@ test('create w/ invalid owner_uuid', function (t) {
 
 test('create w/ invalid manifest', function (t) {
 	var app = {
-		name: 'invalid owner_uuid',
+		name: 'invalid manifest',
 		owner_uuid: process.env.ADMIN_UUID,
 		manifests: { my_service: node_uuid.v4() }
 	};
 
 	this.client.post(URI, app, function (err, req, res, obj) {
 		t.ok(err);
-		t.equal(res.statusCode, 500);
+		t.equal(res.statusCode, 404);
 		t.end();
 	});
 });

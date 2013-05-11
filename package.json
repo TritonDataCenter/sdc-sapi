@@ -12,7 +12,7 @@
 		"hogan.js": "2.0.0",
 		"jsprim": "0.3.1",
 		"ldapjs": "git://github.com/mcavage/node-ldapjs.git#17f5518",
-		"lru-cache": "2.2.2",
+		"lru-cache": "2.3.0",
 		"mkdirp": "0.3.4",
 		"moray": "git+ssh://git@git.joyent.com:node-moray.git#084f97d169d01ee8bdf764d3e56eece3b2f0db41",
 		"node-uuid": "1.4.0",

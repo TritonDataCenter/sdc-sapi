@@ -82,7 +82,7 @@ function searchAndDownload(t, search_uri, cb) {
 			});
 		},
 		function (subcb) {
-			var uri = URI + '/' + uuid;
+			var uri = URI + '/' + uuid + '?skipOwnerCheck=true';
 
 			self.client.post(uri, function (err, _, res, obj) {
 				if (process.env.MODE === 'proto') {
@@ -98,7 +98,7 @@ function searchAndDownload(t, search_uri, cb) {
 			});
 		},
 		function (subcb) {
-			var uri = URI + '/' + uuid;
+			var uri = URI + '/' + uuid + '?skipOwnerCheck=true';
 
 			// Downloading again has same result
 			self.client.post(uri, function (err, _, res, obj) {

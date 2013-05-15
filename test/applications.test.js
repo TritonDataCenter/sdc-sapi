@@ -110,7 +110,7 @@ test('create w/ invalid manifest', function (t) {
 
 	this.client.post(URI, app, function (err, req, res, obj) {
 		t.ok(err);
-		t.equal(res.statusCode, 404);
+		t.equal(res.statusCode, 500);
 		t.end();
 	});
 });

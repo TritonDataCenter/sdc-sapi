@@ -152,7 +152,7 @@ test('create w/ other invalid inputs', function (t) {
 
 			self.client.post(URI, badsvc, function (err, _, res) {
 				t.ok(err);
-				t.equal(res.statusCode, 404);
+				t.equal(res.statusCode, 500);
 				cb();
 			});
 		},

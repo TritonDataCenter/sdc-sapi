@@ -192,7 +192,7 @@ test('put/get/del instance', function (t) {
 
 			client.post(URI, badinst, function (err, _, res, obj) {
 				t.ok(err);
-				t.equal(res.statusCode, 404);
+				t.equal(res.statusCode, 500);
 
 				cb(null);
 			});

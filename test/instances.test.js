@@ -660,6 +660,7 @@ test('upgrading a zone', function (t) {
 
 				params.networks = [ 'admin' ];
 				params.image_uuid = old_image;
+				params.ram = 256;
 
 				inst.params = params;
 				cb();

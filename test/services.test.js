@@ -181,7 +181,6 @@ test('get nonexistent service', function (t) {
 test('put/get/del service', function (t) {
 	var self = this;
 
-
 	var app_uuid = node_uuid.v4();
 
 	var svc = {};
@@ -270,6 +269,18 @@ test('put/get/del service', function (t) {
 				cb();
 			});
 		},
+		function (cb) {
+			// Check to make sure the service object is not
+			// available through /applications -- this was a bug in
+			// the moray cache looking in the wrong bucket.
+			var uri = '/applications/' + svc.uuid;
+			self.client.get(uri, function (err, _, res, obj) {
+				t.ok(err);
+				t.equal(res.statusCode, 404);
+				cb();
+			});
+		},
+
 		function (cb) {
 			var uri = '/services?name=' + svc.name;
 

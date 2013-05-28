@@ -272,6 +272,14 @@ Sapiadm.prototype.do_update = function (subcmd, opts, args, cb) {
 
 			var field = key.substr(key.indexOf('.') + 1);
 
+			if (field.indexOf('.') !== -1) {
+				return (cb(new Error(
+				    'fields cannot be complex objects ' +
+				    '(' + field + ' contains a \'.\'). ' +
+				    'Please update with the -f option or by ' +
+				    'piping a json object in.')));
+			}
+
 			var changes = {};
 			changes[type] = {};
 			changes[type][field] = value;

@@ -31,6 +31,7 @@ var tests_run = 0;
 helper.before(function (cb) {
 	this.client = helper.createJsonClient();
 	this.sapi = helper.createSapiClient();
+	this.imgapi = helper.createImgapiClient();
 
 	if (server)
 		return (cb(null));
@@ -314,7 +315,7 @@ test('put/get/del instance', function (t) {
 function consVmParams(cb) {
 	var params = {};
 	params.brand = 'joyent-minimal';
-	params.image_uuid = common.SMARTOS_163_UUID;
+	params.image_uuid = common.IMAGE_UUID;
 	params.owner_uuid = process.env.ADMIN_UUID;
 	params.ram = 256;
 
@@ -635,7 +636,11 @@ test('upgrading a zone', function (t) {
 
 			vasync.forEachParallel({
 				func: function (image, subcb) {
-					self.sapi.downloadImage(image, subcb);
+					var imgapi = self.imgapi;
+
+					imgapi.adminImportRemoteImageAndWait(
+					    image, 'https://updates.joyent.com',
+					    { skipOwnerCheck: true }, subcb);
 				},
 				inputs: images
 			}, function (err) {
@@ -712,7 +717,10 @@ test('upgrading a zone', function (t) {
 
 			vmapi.getVm({ uuid: inst.uuid }, function (err, vm) {
 				t.ifError(err);
-				t.equal(vm.image_uuid, new_image);
+				if (vm)
+					t.equal(vm.image_uuid, new_image);
+				else
+					t.fail('VM object is null');
 				cb();
 			});
 		},

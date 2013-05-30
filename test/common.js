@@ -8,7 +8,7 @@ var assert = require('assert-plus');
 var async = require('async');
 
 
-var SMARTOS_163_UUID = '01b2c898-945f-11e1-a523-af1afbe22822';
+var IMAGE_UUID = '1eddb7ec-3e1d-423a-b876-f6e069496f35';
 
 function createApplication(uuid, cb) {
 	var name = 'empty_test_application';
@@ -32,7 +32,7 @@ function createService(app_uuid, uuid, cb) {
 	opts.params = {};
 	opts.params.ram = 256;
 	opts.params.networks = [ 'admin' ];
-	opts.params.image_uuid = SMARTOS_163_UUID;
+	opts.params.image_uuid = IMAGE_UUID;
 
 	if (arguments.length === 2)
 		cb = uuid;
@@ -156,7 +156,7 @@ function testUpdates(t, uri, cb) {
 }
 
 
-exports.SMARTOS_163_UUID = SMARTOS_163_UUID;
+exports.IMAGE_UUID = IMAGE_UUID;
 
 exports.createApplication = createApplication;
 exports.createService = createService;

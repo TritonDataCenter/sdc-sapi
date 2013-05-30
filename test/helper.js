@@ -110,6 +110,19 @@ function createCnapiClient() {
 	return (client);
 }
 
+function createImgapiClient() {
+	var log = createLogger();
+
+	var client = new sdc.IMGAPI({
+		agent: false,
+		log: log,
+		url: process.env.IMGAPI_URL || 'http://10.2.206.17'
+	});
+
+	return (client);
+}
+
+
 function startSapiServer(mode, cb) {
 	if (arguments.length === 1) {
 		cb = mode;
@@ -155,6 +168,8 @@ function startSapiServer(mode, cb) {
 	process.env.VMAPI_URL = config.vmapi.url;
 	process.env.NAPI_URL = config.napi.url;
 	process.env.CNAPI_URL = config.cnapi.url;
+	process.env.IMGAPI_URL = config.imgapi.url;
+
 	process.env.ADMIN_UUID = config.adminUuid;
 	process.env.SERVER_UUID = config.server_uuid;
 
@@ -225,6 +240,7 @@ module.exports = {
 	createVmapiClient: createVmapiClient,
 	createVmapiPlusClient: createVmapiPlusClient,
 	createNapiClient: createNapiClient,
+	createImgapiClient: createImgapiClient,
 	createCnapiClient: createCnapiClient,
 
 	startSapiServer: startSapiServer,

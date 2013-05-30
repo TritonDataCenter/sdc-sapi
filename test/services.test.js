@@ -55,7 +55,7 @@ test('create w/ missing inputs', function (t) {
 	svc.application_uuid = node_uuid.v4();
 
 	svc.params = {};
-	svc.params.image_uuid = common.SMARTOS_163_UUID;
+	svc.params.image_uuid = common.IMAGE_UUID;
 	svc.params.ram = 256;
 	svc.params.networks = [ 'admin' ];
 
@@ -95,7 +95,7 @@ test('create w/ invalid application_uuid', function (t) {
 	svc.application_uuid = node_uuid.v4();  // invalid
 
 	svc.params = {};
-	svc.params.image_uuid = common.SMARTOS_163_UUID;
+	svc.params.image_uuid = common.IMAGE_UUID;
 	svc.params.ram = 256;
 	svc.params.networks = [ 'admin' ];
 
@@ -116,7 +116,7 @@ test('create w/ other invalid inputs', function (t) {
 	svc.application_uuid = app_uuid;
 
 	svc.params = {};
-	svc.params.image_uuid = common.SMARTOS_163_UUID;
+	svc.params.image_uuid = common.IMAGE_UUID;
 	svc.params.ram = 256;
 	svc.params.networks = [ 'admin' ];
 
@@ -189,7 +189,7 @@ test('put/get/del service', function (t) {
 	svc.application_uuid = app_uuid;
 
 	svc.params = {};
-	svc.params.image_uuid = common.SMARTOS_163_UUID;
+	svc.params.image_uuid = common.IMAGE_UUID;
 	svc.params.ram = 256;
 	svc.params.networks = [ 'admin' ];
 

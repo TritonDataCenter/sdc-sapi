@@ -200,7 +200,7 @@ test('failed upgrade to full mode', function (t) {
 			var params = {};
 			params.uuid = inst_uuid;
 			params.owner_uuid = process.env.ADMIN_UUID;
-			params.image_uuid = common.SMARTOS_163_UUID;
+			params.image_uuid = common.IMAGE_UUID;
 			params.brand = 'joyent-minimal';
 			params.ram = 256;
 
@@ -235,7 +235,10 @@ test('failed upgrade to full mode', function (t) {
 			self.client.post(uri_mode,
 			    function (err, req, res, obj) {
 				t.ok(err);
-				t.equal(res.statusCode, 500);
+				if (res)
+					t.equal(res.statusCode, 500);
+				else
+					t.fail('res is null');
 				cb();
 			});
 		},
@@ -326,7 +329,7 @@ test('upgrade to full mode', function (t) {
 			var params = {};
 			params.uuid = inst_uuid;
 			params.owner_uuid = process.env.ADMIN_UUID;
-			params.image_uuid = common.SMARTOS_163_UUID;
+			params.image_uuid = common.IMAGE_UUID;
 			params.brand = 'joyent-minimal';
 			params.ram = 256;
 

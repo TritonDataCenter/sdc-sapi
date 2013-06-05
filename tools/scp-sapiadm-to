@@ -1,0 +1,12 @@
+#!/bin/bash
+#
+# scp cmd/sapiadm.js to sapiadm on the given HN.
+#
+
+#set -o xtrace
+set -o errexit
+
+TOP=$(cd $(dirname $0)/../; pwd)
+NODE=$1
+scp $TOP/cmd/sapiadm.js $NODE:/opt/smartdc/bin/sapiadm
+

@@ -11,6 +11,8 @@ var async = require('async');
 var cmdln = require('cmdln');
 var cp = require('child_process');
 var fs = require('fs');
+var os = require('os');
+var path = require('path');
 var read = require('read');
 var sdc = require('sdc-clients');
 var util = require('util');
@@ -460,7 +462,132 @@ Sapiadm.prototype.do_reprovision.help = (
 );
 
 
+Sapiadm.prototype.do_edit_manifest = function (subcmd, opts, args, cb) {
+	if (args.length !== 2) {
+		this.do_help('help', {}, [subcmd], cb);
+		return;
+	}
+
+	var self = this;
+	var svc_uuid = args[0];
+	var mn_name = args[1];
+	var old_mn_uuid;
+	var svc;
+	var mn;
+
+	async.waterfall([
+		function getSvc(subcb) {
+			self.client.getService(svc_uuid, function (err, svc_) {
+				svc = svc_;
+				subcb(err);
+			});
+		},
+		function getMn(subcb) {
+			var mn_uuid = svc.manifests[mn_name];
+			if (!mn_uuid) {
+				subcb(new Error(sprintf(
+				    'no manifest named "%s" on service "%s"',
+				    mn_name, svc_uuid)));
+				return;
+			}
+			self.client.getManifest(mn_uuid, function (err, mn_) {
+				mn = mn_;
+				old_mn_uuid = mn.uuid;
+				subcb(err);
+			});
+		},
+		function editMn(subcb) {
+			editInVi(mn_name, mn.template, subcb);
+		},
+		function earlyOutOrNewMn(new_template, changed, subcb) {
+			if (!changed) {
+				console.log(
+				    'Manifest "%s" on service "%s" unchanged.',
+				    mn_name, svc_uuid);
+				subcb(true);
+				return;
+			}
+			delete mn.uuid;
+			mn.template = new_template;
+			self.client.createManifest(mn, function (err, newMn) {
+				if (!err) {
+					console.log(
+					    'Created new manifest "%s".',
+					    newMn.uuid);
+				}
+				subcb(err, newMn);
+			});
+		},
+		function updateSvc(newMn, subcb) {
+			var update = {
+				action: 'update',
+				manifests: {}
+			};
+			update.manifests[mn_name] = newMn.uuid;
+			self.client.updateService(svc_uuid, update,
+			    function (err, newSvc) {
+				if (!err) {
+					console.log('Updated service "%s" with '
+					    + 'new manifest.', svc_uuid);
+				}
+				subcb(err);
+			});
+		},
+		function deleteMn(subcb) {
+			self.client.deleteManifest(old_mn_uuid, function (err) {
+				if (!err) {
+					console.log(
+					    'Deleted old manifest "%s".',
+					    old_mn_uuid);
+				}
+				subcb(err);
+			});
+		}
+	], function (err) {
+		// `err === true` is the early out
+		if (err && err !== true) {
+			cb(err);
+			return;
+		}
+		cb();
+	});
+};
+Sapiadm.prototype.do_edit_manifest.help = (
+    'Edit a manifest tied to a service and save it back.\n'
+    + '\n'
+    + 'SAPI does not include an UpdateManifest endpoint, so this instead\n'
+    + 'creates a new manifest, swaps the new manifest UUID into the service,\n'
+    + 'and deletes the old.\n'
+    + '\n'
+    + 'Usage:\n'
+    + '     sapiadm edit-manifest SERVICE-UUID MANIFEST-NAME\n'
+);
+
+
 // -- Helper functions
+
+
+/**
+ * Edit the given text in Vi and return the edited text.
+ *
+ * This callback with `callback(err, updatedText, changed)` where `changed`
+ * is a boolean true if the text was changed.
+ */
+function editInVi(filename, beforeText, callback) {
+	var tmpPath = path.resolve(os.tmpDir(),
+	    sprintf('sapiadm-%s-edit-%s', process.pid, filename));
+	fs.writeFileSync(tmpPath, beforeText, 'utf8');
+
+	var vi = cp.spawn('/usr/bin/vi', ['-f', tmpPath], {stdio: 'inherit'});
+	vi.on('exit', function (code) {
+		if (code) {
+			return (callback(code));
+		}
+		var afterText = fs.readFileSync(tmpPath, 'utf8');
+		fs.unlinkSync(tmpPath);
+		callback(null, afterText, (afterText !== beforeText));
+	});
+}
 
 function printApplication(services, instances) {
 	var width = 0;

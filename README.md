@@ -49,6 +49,18 @@ To test:
 
     make prepush
 
-The etc/config.json defaults to SDC endpoints on bh1-kvm6.  If you're testing
-SAPI against a different machine, modify those parameters or use
-etc/config.coal.json.
+The full test suite takes approximately 10 minutes to run.
+
+The test suite's configuration (test/etc/config.kvm6.json) defaults to SDC
+endpoints on bh1-kvm6.  If you're testing SAPI against a different machine,
+you'll need to update those parameters accordingly.
+
+Since gateways on the admin network are no longer added by default, you may need
+to use the usb-headnode.git/devtools/add-admin-gateway.sh script to add those
+gateways.  In addition, some zones may have firewall rules which prevent those
+zones from being reached from a development zone, so you may also need to
+disable those firewalls ("fmadm stop <uuid>").
+
+Eventually the SAPI test suite should be shipped alongside SAPI itself to allow
+in-situ testing of SAPI.  That improvement will greatly reduce the amount of
+configuration necessary for a test environment.

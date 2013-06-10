@@ -50,7 +50,6 @@ var log = new Logger({
 	serializers: restify.bunyan.serializers
 });
 
-config.log = log;
 
 var agent;
 
@@ -65,7 +64,7 @@ async.waterfall([
 		});
 	},
 	function (cb) {
-		agent = new Agent(config);
+		agent = new Agent(config, log);
 
 		agent.init(function (err) {
 			if (err)

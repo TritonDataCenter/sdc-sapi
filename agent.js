@@ -1,13 +1,14 @@
 /*
  * Copyright (c) 2013, Joyent, Inc. All rights reserved.
  *
- * main.js: configuration agent
+ * agent.js: SDC configuration agent
  *
- * This agent queries the metadata API for changes to a zone's configuration and
- * downloads and applies any applicable updates.
+ * This agent queries SAPI for changes to a zone's configuration, downloads
+ * those changes, and applies any applicable updates.
  */
 
 var assert = require('assert-plus');
+var async = require('async');
 var fs = require('fs');
 var optimist = require('optimist');
 var util = require('./lib/common/util');
@@ -39,6 +40,9 @@ assert.number(config.pollInterval, 'config.pollInterval');
 assert.object(config.sapi, 'config.sapi');
 assert.string(config.sapi.url, 'config.sapi.url');
 
+assert.optionalArrayOfString(config.localManifestDirs,
+    'config.localManifestDirs');
+
 var log = new Logger({
 	name: 'config-agent',
 	level: config.logLevel,
@@ -48,32 +52,54 @@ var log = new Logger({
 
 config.log = log;
 
-util.zonename(function (err, zonename) {
-	if (err) {
-		log.error(err, 'failed to determine zone name');
-		process.exit(1);
-	}
+var agent;
 
-	config.zonename = zonename;
+async.waterfall([
+	function (cb) {
+		util.zonename(function (err, zonename) {
+			if (err)
+				log.error(err, 'failed to determine zone name');
 
-	var agent = new Agent(config);
-
-	if (ARGV.s) {
-		/*
-		 * Synchronous mode is used as part of a zone's first boot and
-		 * initial setup.  Instead of polling at some interval,
-		 * immediately write out the configuration files and exit.
-		 */
-		agent.checkAndRefresh(function (suberr) {
-			if (suberr)
-				log.error(suberr, 'failed to write config');
-			else
-				log.info('wrote configuration synchronously');
-
-			process.exit(suberr ? 1 : 0);
+			config.zonename = zonename;
+			return (cb(err));
 		});
-	} else {
-		setInterval(agent.checkAndRefresh.bind(agent),
-		    config.pollInterval);
+	},
+	function (cb) {
+		agent = new Agent(config);
+
+		agent.init(function (err) {
+			if (err)
+				log.error(err, 'failed to initialize agent');
+			return (cb(err));
+		});
+	},
+	function (cb) {
+		if (ARGV.s) {
+			/*
+			 * Synchronous mode is used as part of a zone's first
+			 * boot and initial setup.  Instead of polling at some
+			 * interval, immediately write out the configuration
+			 * files and exit.
+			 */
+			agent.checkAndRefresh(function (err) {
+				if (err) {
+					log.error(err,
+					    'failed to write config');
+				} else {
+					log.info('wrote ' +
+					    'configuration synchronously');
+				}
+
+				cb(err);
+			});
+		} else {
+			setInterval(agent.checkAndRefresh.bind(agent),
+			    config.pollInterval);
+			cb(null);
+		}
 	}
+], function (err) {
+	if (err)
+		process.exit(1);
+
 });

@@ -11,6 +11,7 @@
 		"cmdln": "1.2.0",
 		"hogan.js": "2.0.0",
 		"jsprim": "0.3.1",
+		"find": "0.1.4",
 		"ldapjs": "git://github.com/mcavage/node-ldapjs.git#17f5518",
 		"lru-cache": "2.3.0",
 		"mkdirp": "0.3.4",
@@ -20,7 +21,7 @@
 		"optimist": "0.3.5",
 		"read": "1.0.4",
 		"restify": "2.3.2",
-		"sdc-clients": "git+ssh://git@git.joyent.com:node-sdc-clients.git#5bbc9f6",
+		"sdc-clients": "git+ssh://git@git.joyent.com:node-sdc-clients.git#e36c598",
 		"semver": "1.1.4",
 		"sprintf-js": "0.0.7",
 		"vasync": "1.3.3"

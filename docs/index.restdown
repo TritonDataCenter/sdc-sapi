@@ -1,6 +1,6 @@
 ---
 title: Services API
-apisections: Service Configuration, Amon Configuration, Applications, Services, Instances, Manifests, Images, Modes
+apisections: Service Configuration, Amon Configuration, Applications, Services, Instances, Manifests, Images, Modes, Configs
 markdown2extras: wiki-tables, code-friendly
 ---
 
@@ -259,7 +259,7 @@ Creates a new application.  An application must have a name and an owner_uuid.
 ### Responses
 
 ||**Code**||**Description**||**Response**||
-|| 204 || Application sucessfully created || Application object ||
+|| 204 || Application successfully created || Application object ||
 
 ### Example
 
@@ -318,7 +318,7 @@ Get an application by UUID.
 ### Inputs
 
 ||**Param**||**Type**||**Description**||**Required?**||
-|| uuid || UUID || UUID of application || yes||
+|| uuid || UUID || UUID of application || yes ||
 
 ### Responses
 
@@ -512,7 +512,7 @@ Create and deploy an instance.
 ### Responses
 
 ||**Code**||**Description**||**Response**||
-|| 204 || Instance sucessfully created || Instance object ||
+|| 204 || Instance successfully created || Instance object ||
 
 ### Example
 
@@ -674,18 +674,28 @@ Delete this configuration manifest.
 
 # Images
 
-These endpoints will be moved into IMGAPI.  See IMGAPI-80 for details.
-
-## SearchImage (GET /images?name=<search term>)
+## SearchImage (GET /images)
 
 Queries the updates.joyent.com IMGAPI for images which match the "name" search
 parameter.
+
+### Inputs
+
+||**Param**||**Type**||**Description**||**Required?**||
+|| name || string || image name || yes ||
+|| version || string || image version || no ||
+
+### Responses
+
+||**Code**||**Description**||**Response**||
+|| 200 || List of images || All images which match search criteria ||
 
 
 ## DownloadImage (POST /images/:uuid)
 
 Downloads an image from the updates.joyent.com IMGAPI repo and installs it into
-the local datacenter.
+the local datacenter.  This endpoint delegates the actual image download to
+IMGAPI.
 
 
 
@@ -695,6 +705,18 @@ the local datacenter.
 
 Gets the current SAPI mode.
 
-## SetMode (SET /mode?mode=full)
+## SetMode (POST /mode?mode=full)
 
 Changes the current mode to the specified one.
+
+
+
+# Configs
+
+## GetConfig (GET /configs/:uuid)
+
+Gets the full set of metadata and manifests for a given instance.  This set is
+determined by taking the union of the application's, service's, and instance's
+data.  Any data which collides (e.g. two manifests with the same name, or two
+metadata values with the same key) will be preferentially selected first from
+the instance, then from the service, and finally from the application.

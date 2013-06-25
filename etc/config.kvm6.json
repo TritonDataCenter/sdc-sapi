@@ -3,7 +3,7 @@
 		"name": "sapi",
 		"level": "debug"
 	},
-	"mode": "proto",
+	"mode": "full",
 	"datacenter_name": "bh1-kvm6",
 	"moray": {
 		"host": "10.2.206.13",

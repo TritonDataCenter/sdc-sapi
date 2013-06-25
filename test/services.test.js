@@ -348,3 +348,75 @@ test('put/get/del service', function (t) {
 		t.end();
 	});
 });
+
+// -- Test 1100 services to test moray findObjects limit
+
+test('test 1100 services', function (t) {
+	var self = this;
+
+	var app_uuid = node_uuid.v4();
+
+	var svcs = [];
+
+	async.waterfall([
+		function (cb) {
+			common.createApplication.call(self, app_uuid, cb);
+		},
+		function (cb) {
+			async.whilst(
+			function () {
+				return (svcs.length < 1100);
+			}, function (subcb) {
+				var svc = {};
+				svc.name = '1100services_' +
+				    node_uuid.v4().substr(0, 8);
+				svc.application_uuid = app_uuid;
+
+				self.client.post(URI, svc,
+				    function (err, _, res, obj) {
+					t.ifError(err);
+					t.equal(res.statusCode, 200);
+
+					svcs.push(obj);
+
+					subcb();
+				});
+			}, function (err) {
+				cb();
+			});
+		},
+		function (cb) {
+			var uri = '/services?application_uuid=' +
+			    app_uuid;
+
+			self.client.get(uri, function (err, _, res, obj) {
+				t.ifError(err);
+
+				if (res)
+					t.equal(res.statusCode, 200);
+				else
+					t.fail('res not defined');
+
+				t.equal(obj.length, 1100);
+
+				cb();
+			});
+		},
+		function (cb) {
+			async.forEachSeries(svcs, function (svc, subcb) {
+				var uri = '/services/' + svc.uuid;
+
+				self.client.del(uri, function (err, _, res) {
+					t.ifError(err);
+					t.equal(res.statusCode, 204);
+					subcb();
+				});
+			}, function (err) {
+				cb();
+			});
+		}
+	], function (err) {
+		t.ifError(err);
+		t.end();
+	});
+});

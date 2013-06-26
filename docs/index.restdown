@@ -343,6 +343,7 @@ Updates an application.
 || params || object || zone parameters || no ||
 || metadata || object || zone metadata || no ||
 || manifests || array of UUIDs || configuration manifests || no ||
+|| owner_uuid || UUID || application's new owner || no ||
 
 ### Responses
 

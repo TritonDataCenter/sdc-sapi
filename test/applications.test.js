@@ -355,3 +355,95 @@ test('delete reused application', function (t) {
 		});
 	});
 });
+
+
+test('updating owner_uuid', function (t) {
+	var self = this;
+
+	APP_UUID = node_uuid.v4();
+
+	var params = {
+		dns: '10.0.0.2',
+		domain: 'foo.co.us',
+		vmapi: {
+			url: 'https://10.0.0.10'
+		}
+	};
+
+	var app = {
+		name: 'mycoolapp_' + node_uuid.v4().substr(0, 8),
+		uuid: APP_UUID,
+		owner_uuid: process.env.ADMIN_UUID,
+		params: params
+	};
+
+	var new_owner_uuid = node_uuid.v4();
+
+	var uri_app = '/applications/' + APP_UUID;
+
+	async.waterfall([
+		function (cb) {
+			self.client.post(URI, app, function (err, _, res, obj) {
+				t.ifError(err);
+				t.equal(res.statusCode, 200);
+				t.equal(obj.owner_uuid, process.env.ADMIN_UUID);
+				cb();
+			});
+		},
+		function (cb) {
+			self.client.get(uri_app, function (err, _, res, obj) {
+				t.ifError(err);
+				t.equal(res.statusCode, 200);
+				t.ok(obj);
+				cb();
+			});
+		},
+		function (cb) {
+			var uri = '/applications?owner_uuid=' + app.owner_uuid;
+
+			self.client.get(uri, function (err, _, res, obj) {
+				t.ifError(err);
+				t.equal(res.statusCode, 200);
+
+				t.ok(obj.length >= 1);
+
+				cb();
+			});
+		},
+		function (cb) {
+			var changes = {};
+			changes.owner_uuid = new_owner_uuid;
+
+			self.client.put(uri_app, changes,
+			    function (err, _, res, obj) {
+				t.ifError(err);
+				t.equal(res.statusCode, 200);
+				t.equal(obj.owner_uuid, new_owner_uuid);
+				cb();
+			});
+		},
+		function (cb) {
+			var uri = '/applications?owner_uuid=' + new_owner_uuid;
+
+			self.client.get(uri, function (err, _, res, obj) {
+				t.ifError(err);
+				t.equal(res.statusCode, 200);
+
+				t.ok(obj.length === 1);
+
+				cb();
+			});
+		},
+		function (cb) {
+			self.client.del(uri_app, function (err, _, res, obj) {
+				t.ifError(err);
+				t.equal(res.statusCode, 204);
+
+				cb();
+			});
+		}
+	], function (err) {
+		t.ifError(err);
+		t.end();
+	});
+});

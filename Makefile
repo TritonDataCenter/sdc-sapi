@@ -40,7 +40,7 @@ all: $(SMF_MANIFESTS) | $(NODEUNIT) $(REPO_DEPS)
 $(NODEUNIT): | $(NPM_EXEC)
 	$(NPM) install
 
-CLEAN_FILES += $(NODEUNIT) ./node_modules/tap
+CLEAN_FILES += $(NODEUNIT) ./node_modules/tap ./test/tests.log
 
 #
 # Test SAPI in both modes: proto and full

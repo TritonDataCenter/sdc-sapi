@@ -196,40 +196,15 @@ test('failed upgrade to full mode', function (t) {
 		},
 		function (cb) {
 			// Create an actual zone
-
-			var params = {};
-			params.uuid = inst_uuid;
-			params.owner_uuid = process.env.ADMIN_UUID;
-			params.image_uuid = common.IMAGE_UUID;
-			params.brand = 'joyent-minimal';
-			params.ram = 256;
-
-			// XXX shouldn't need to do this
-			params.server_uuid =
-			    '44454c4c-4800-1034-804a-b2c04f354d31';
-
-			var napi = helper.createNapiClient();
 			var vmapiplus = helper.createVmapiPlusClient();
 
-			napi.listNetworks({ name: 'admin' },
-			    function (err, networks) {
-				if (err)
-					return (cb(err));
-
-				if (!networks && networks.length === 0) {
-					t.ok(false, 'no admin network');
-					return (cb(null));
-				}
-
-				var admin = networks[0];
-
-				params.networks = [ admin.uuid ];
-
+			helper.consVmParams(function (err, params) {
+				params.uuid = inst_uuid;
 				vmapiplus.createVm(params, cb);
 			});
 		},
 		function (cb) {
-			// Attemt upgrade to full mode, which should fail
+			// Attempt upgrade to full mode, which should fail
 			var uri_mode = URI + '?mode=full';
 
 			self.client.post(uri_mode,
@@ -278,6 +253,8 @@ test('failed upgrade to full mode', function (t) {
 		t.end();
 	});
 });
+
+
 // -- Test upgrade proto -> full
 
 test('upgrade to full mode', function (t) {
@@ -325,35 +302,10 @@ test('upgrade to full mode', function (t) {
 		},
 		function (cb) {
 			// Create an actual zone
-
-			var params = {};
-			params.uuid = inst_uuid;
-			params.owner_uuid = process.env.ADMIN_UUID;
-			params.image_uuid = common.IMAGE_UUID;
-			params.brand = 'joyent-minimal';
-			params.ram = 256;
-
-			// XXX shouldn't need to do this
-			params.server_uuid =
-			    '44454c4c-4800-1034-804a-b2c04f354d31';
-
-			var napi = helper.createNapiClient();
 			var vmapiplus = helper.createVmapiPlusClient();
 
-			napi.listNetworks({ name: 'admin' },
-			    function (err, networks) {
-				if (err)
-					return (cb(err));
-
-				if (!networks && networks.length === 0) {
-					t.ok(false, 'no admin network');
-					return (cb(null));
-				}
-
-				var admin = networks[0];
-
-				params.networks = [ admin.uuid ];
-
+			helper.consVmParams(function (err, params) {
+				params.uuid = inst_uuid;
 				vmapiplus.createVm(params, cb);
 			});
 		},

@@ -5,7 +5,9 @@
  */
 
 var assert = require('assert-plus');
+var async = require('async');
 var bunyan = require('bunyan');
+var common = require('./common');
 var fs = require('fs');
 var once = require('once');
 var path = require('path');
@@ -182,6 +184,59 @@ function shutdownSapiServer(sapi, cb) {
 	sapi.shutdown(cb);
 }
 
+/*
+ * Create a set of default VM params suitable for assing to
+ * SAPI.createInstance() or VMAPI.createVm().
+ *
+ * If more specific params are required, callers should override those params.
+ */
+function consVmParams(cb) {
+	var params = {};
+	params.brand = 'joyent-minimal';
+	params.image_uuid = common.IMAGE_UUID;
+	params.owner_uuid = process.env.ADMIN_UUID;
+	params.server_uuid = process.env.SERVER_UUID;
+	params.ram = 256;
+
+	async.waterfall([
+		function (subcb) {
+			var imgapi = createImgapiClient();
+
+			imgapi.adminImportRemoteImageAndWait(
+			    params.image_uuid, 'https://updates.joyent.com',
+			    { skipOwnerCheck: true },
+			    function (err) {
+				if (err && err.name ===
+				    'ImageUuidAlreadyExistsError')
+					err = null;
+				subcb(err);
+			});
+		},
+		function (subcb) {
+			resolveNetwork('admin', function (err, uuid) {
+				if (err)
+					return (subcb(err));
+				params.networks = [ { uuid: uuid } ];
+				subcb();
+			});
+		}
+	], function (err) {
+		return (cb(err, params));
+	});
+}
+
+/*
+ * Resolve a network name to its NAPI UUID.
+ */
+function resolveNetwork(name, cb) {
+	var napi = createNapiClient();
+	napi.listNetworks({ name: name }, function (err, networks) {
+		if (err)
+			return (cb(err));
+		return (cb(null, networks[0].uuid));
+	});
+}
+
 
 // -- Exports
 
@@ -241,6 +296,9 @@ module.exports = {
 
 	startSapiServer: startSapiServer,
 	shutdownSapiServer: shutdownSapiServer,
+
+	consVmParams: consVmParams,
+	resolveNetwork: resolveNetwork,
 
 	getNumTests: function () {
 		return (num_tests);

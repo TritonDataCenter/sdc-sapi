@@ -312,54 +312,10 @@ test('put/get/del instance', function (t) {
 });
 
 
-function consVmParams(cb) {
-	var params = {};
-	params.brand = 'joyent-minimal';
-	params.image_uuid = common.IMAGE_UUID;
-	params.owner_uuid = process.env.ADMIN_UUID;
-	params.server_uuid = process.env.SERVER_UUID;
-	params.ram = 256;
-
-	async.waterfall([
-		function (subcb) {
-			var imgapi = helper.createImgapiClient();
-
-			imgapi.adminImportRemoteImageAndWait(
-			    params.image_uuid, 'https://updates.joyent.com',
-			    { skipOwnerCheck: true },
-			    function (err) {
-				if (err && err.name ===
-				    'ImageUuidAlreadyExistsError')
-					err = null;
-				subcb(err);
-			});
-		},
-		function (subcb) {
-			resolveNetwork('admin', function (err, uuid) {
-				if (err)
-					return (subcb(err));
-				params.networks = [ { uuid: uuid } ];
-				subcb();
-			});
-		}
-	], function (err) {
-		return (cb(err, params));
-	});
-}
-
-function resolveNetwork(name, cb) {
-	var napi = helper.createNapiClient();
-	napi.listNetworks({ name: name }, function (err, networks) {
-		if (err)
-			return (cb(err));
-		return (cb(null, networks[0].uuid));
-	});
-}
-
 function createVm(uuid, cb) {
 	var vmapiplus = helper.createVmapiPlusClient();
 
-	consVmParams(function (err, params) {
+	helper.consVmParams(function (err, params) {
 		params.uuid = uuid;
 
 		vmapiplus.createVm(params, cb);
@@ -663,7 +619,7 @@ test('upgrading a zone', function (t) {
 			});
 		},
 		function (cb) {
-			consVmParams(function (err, params) {
+			helper.consVmParams(function (err, params) {
 				if (err)
 					return (cb(err));
 
@@ -773,7 +729,7 @@ test('create instance with NAPI networks', function (t) {
 			common.createService.call(self, app_uuid, svc_uuid, cb);
 		},
 		function (cb) {
-			resolveNetwork('admin', function (err, uuid) {
+			helper.resolveNetwork('admin', function (err, uuid) {
 				inst.params = {};
 				inst.params.networks = [ { uuid: uuid } ];
 				cb(err);

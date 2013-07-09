@@ -16,6 +16,8 @@ var Logger = require('bunyan');
 var SAPI = require('../lib/server/sapi');
 var VMAPIPlus = require('../lib/server/vmapiplus');
 
+var exec = require('child_process').exec;
+
 
 // -- Helpers
 
@@ -98,18 +100,6 @@ function createNapiClient() {
 	return (client);
 }
 
-function createCnapiClient() {
-	var log = createLogger();
-
-	var client = new sdc.CNAPI({
-		agent: false,
-		log: log,
-		url: process.env.CNAPI_URL || 'http://10.2.206.18'
-	});
-
-	return (client);
-}
-
 function createImgapiClient() {
 	var log = createLogger();
 
@@ -131,7 +121,7 @@ function startSapiServer(mode, cb) {
 
 	assert.func(cb, 'cb');
 
-	var file = path.join(__dirname, 'etc/config.kvm6.json');
+	var file = path.join(__dirname, '../etc/config.json');
 	var config = JSON.parse(fs.readFileSync(file));
 
 	config.vmapi.agent = false;
@@ -141,8 +131,8 @@ function startSapiServer(mode, cb) {
 
 	/*
 	 * First, check the mode argument to this function.  If that's not
-	 * specified, check the environment variables MODE.  Lastly, fallback on
-	 * the mode from the configuration file.
+	 * specified, check the environment variable's MODE.  Lastly, fallback
+	 * on the mode from the configuration file.
 	 */
 	if (mode)
 		config.mode = mode;
@@ -163,19 +153,26 @@ function startSapiServer(mode, cb) {
 
 	var sapi = new SAPI(config);
 
-	// Some of the tests use VMAPI and NAPI, so load those URLs into
+	// Some of the tests use other SDC services, so load those URLs into
 	// environment variables.
 	process.env.VMAPI_URL = config.vmapi.url;
 	process.env.NAPI_URL = config.napi.url;
-	process.env.CNAPI_URL = config.cnapi.url;
 	process.env.IMGAPI_URL = config.imgapi.url;
 
 	process.env.ADMIN_UUID = config.adminUuid;
-	process.env.SERVER_UUID = config.server_uuid;
 
-	sapi.start(function () {
-		cb(null, sapi);
+	var cmd = '/usr/sbin/mdata-get sdc:server_uuid';
+	exec(cmd, function (err, stdout) {
+		if (err)
+			throw (err);
+
+		process.env.SERVER_UUID = stdout.trim();
+
+		sapi.start(function () {
+			cb(null, sapi);
+		});
 	});
+
 }
 
 function shutdownSapiServer(sapi, cb) {
@@ -241,7 +238,6 @@ module.exports = {
 	createVmapiPlusClient: createVmapiPlusClient,
 	createNapiClient: createNapiClient,
 	createImgapiClient: createImgapiClient,
-	createCnapiClient: createCnapiClient,
 
 	startSapiServer: startSapiServer,
 	shutdownSapiServer: shutdownSapiServer,

@@ -317,19 +317,10 @@ function consVmParams(cb) {
 	params.brand = 'joyent-minimal';
 	params.image_uuid = common.IMAGE_UUID;
 	params.owner_uuid = process.env.ADMIN_UUID;
+	params.server_uuid = process.env.SERVER_UUID;
 	params.ram = 256;
 
-	var cnapi = helper.createCnapiClient();
-
 	async.waterfall([
-		function (subcb) {
-			cnapi.listServers(function (err, servers) {
-				if (err)
-					return (subcb(err));
-				params.server_uuid = servers[0].uuid;
-				subcb();
-			});
-		},
 		function (subcb) {
 			resolveNetwork('admin', function (err, uuid) {
 				if (err)

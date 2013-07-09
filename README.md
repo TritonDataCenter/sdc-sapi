@@ -50,4 +50,9 @@ To test, SSH to your test machine and run:
     # sdc-login sapi
     # /opt/smartdc/sapi/tests/runtests
 
-The full test suite takes approximately 8-10 minutes to run.
+The full test suite takes approximately 8-10 minutes to run.  It also requires
+that both the IMGAPI and SAPI zones have external NICs, as those services need
+to communicate with updates.joyent.com.  The external NIC is added as part of
+the staging machine's setup.  On other development machines, running the
+/usbkey/scripts/setup_manta_zone.sh script is a expedient way to add both those
+external NICs.

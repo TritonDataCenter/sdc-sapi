@@ -322,6 +322,19 @@ function consVmParams(cb) {
 
 	async.waterfall([
 		function (subcb) {
+			var imgapi = helper.createImgapiClient();
+
+			imgapi.adminImportRemoteImageAndWait(
+			    params.image_uuid, 'https://updates.joyent.com',
+			    { skipOwnerCheck: true },
+			    function (err) {
+				if (err && err.name ===
+				    'ImageUuidAlreadyExistsError')
+					err = null;
+				subcb(err);
+			});
+		},
+		function (subcb) {
 			resolveNetwork('admin', function (err, uuid) {
 				if (err)
 					return (subcb(err));

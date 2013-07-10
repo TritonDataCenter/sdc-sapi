@@ -85,6 +85,7 @@ service: all $(SMF_MANIFESTS)
 		$(TOP)/lib/server \
 		$(SVC_INSTDIR)/lib
 	cp -P smf/manifests/sapi.xml $(SVC_INSTDIR)/smf/manifests
+	cp -r $(TOP)/sapi_manifests $(SVC_INSTDIR)/
 	cp -r $(TOP)/test $(SVC_INSTDIR)/
 	cp -PR $(NODE_INSTALL) $(SVC_INSTDIR)/build/node
 

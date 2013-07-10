@@ -529,16 +529,65 @@ Create and deploy an instance.
 
 ## ListInstances (GET /instances)
 
-Get all instances.
+List all instances, with an optional service_uuid filter.
+
+### Inputs
+
+||**Param**||**Type**||**Description**||**Required?**||
+|| service_uuid || UUID || service_uuid to filter by || no ||
+
+### Responses
+
+||**Code**||**Description**||**Response**||
+|| 200 || All instances, or instances which match filter || Array of instance objects (possibly empty) ||
+
+Note that in the case that no instances match the service_uuid filter, this
+endpoint will still return 200, only with an empty array.
+
+If additional filters beyond service_uuid are required, they must be implemented
+on the client side.
+
+### Example
+
+    GET /instances?service_uuid=5081a5d6-6bd0-11e2-bafb-a735b6c6ccb6
+    [
+      {
+        "uuid": "b63c3b56-6bd1-11e2-af0a-836066bbb42e",
+        "service_uuid": "5081a5d6-6bd0-11e2-bafb-a735b6c6ccb6",  // "mako"
+        "params": {
+          ram: 4096
+        },
+        "metadata": {
+          "MORAY": "1.moray.manta.joyent.us"
+        },
+        "manifests": [ ]
+      },
+      ...
+    ]
 
 
-## GetInstance (GET /instances/:instance_uuid)
 
-Get a particular instance.
+## GetInstance (GET /instances/:uuid)
 
+Get a particular instance by UUID.
+
+### Inputs
+
+||**Param**||**Type**||**Description**||**Required?**||
+|| uuid || UUID || UUID of instance || yes ||
+
+### Responses
+
+||**Code**||**Description**||**Response**||
+|| 200 || Instance found || Instance object ||
+|| 404 || Instance not found || none ||
+
+### Example
+
+    GET /instances/b63c3b56-6bd1-11e2-af0a-836066bbb42e
     {
       "uuid": "b63c3b56-6bd1-11e2-af0a-836066bbb42e",
-      "service": "5081a5d6-6bd0-11e2-bafb-a735b6c6ccb6",  // "mako"
+      "service_uuid": "5081a5d6-6bd0-11e2-bafb-a735b6c6ccb6",  // "mako"
       "params": {
         ram: 4096
       },
@@ -549,7 +598,7 @@ Get a particular instance.
     }
 
 
-## GetInstancePayload (GET /instances/:instance_uuid/payload)
+## GetInstancePayload (GET /instances/:uuid/payload)
 
 Get the actual payload passed to VMAPI.createVm() for this instance.
 
@@ -562,6 +611,7 @@ Get the actual payload passed to VMAPI.createVm() for this instance.
 
 ||**Code**||**Description**||**Response**||
 || 200 || Payload provided to VMAPI.createVm() || Payload object ||
+|| 404 || Instance not found || none ||
 
 ### Example
 

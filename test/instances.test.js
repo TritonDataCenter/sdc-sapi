@@ -139,6 +139,7 @@ test('put/get/del instance', function (t) {
 	var check = function (obj) {
 		t.equal(obj.uuid, inst.uuid);
 		t.equal(obj.service_uuid, inst.service_uuid);
+		t.equal(obj.params.server_uuid, process.env.SERVER_UUID);
 		t.deepEqual(obj.metadata, inst.metadata);
 		t.deepEqual(obj.manifests, { my_service: cfg_uuid });
 	};

@@ -6,6 +6,7 @@
 
 var assert = require('assert-plus');
 var async = require('async');
+var node_uuid = require('node-uuid');
 
 
 var IMAGE_UUID = '1eddb7ec-3e1d-423a-b876-f6e069496f35';
@@ -51,6 +52,11 @@ function createInstance(svc_uuid, uuid, cb) {
 		cb = uuid;
 	else
 		opts.uuid = uuid;
+
+	if (!opts.params)
+		opts.params = {};
+	if (!opts.params.alias)
+		opts.params.alias = 'sapitest_' + node_uuid.v4().substr(0, 8);
 
 	this.sapi.createInstance(svc_uuid, opts, cb);
 }

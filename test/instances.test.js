@@ -126,6 +126,8 @@ test('put/get/del instance', function (t) {
 	var inst = {};
 	inst.uuid = node_uuid.v4();
 	inst.service_uuid = svc_uuid;
+	inst.params = {};
+	inst.params.alias = 'sapitest_normal_instance';
 	inst.metadata = {
 		string_val: 'my string',
 		num_val: 123,
@@ -336,6 +338,8 @@ test('create instance with VM aleady existing', function (t) {
 	var inst = {};
 	inst.uuid = node_uuid.v4();
 	inst.service_uuid = svc_uuid;
+	inst.params = {};
+	inst.params.alias = 'sapitest_vmexists';
 
 	var check = function (obj) {
 		t.equal(obj.uuid, inst.uuid);
@@ -417,6 +421,8 @@ test('delete instance with no VM', function (t) {
 	var inst = {};
 	inst.uuid = node_uuid.v4();
 	inst.service_uuid = svc_uuid;
+	inst.params = {};
+	inst.params.alias = 'sapitest_missingvm';
 
 	var check = function (obj) {
 		t.equal(obj.uuid, inst.uuid);
@@ -586,6 +592,8 @@ test('upgrading a zone', function (t) {
 	var inst = {};
 	inst.uuid = node_uuid.v4();
 	inst.service_uuid = svc_uuid;
+	inst.params = {};
+	inst.params.alias = 'sapitest_upgradevm';
 
 	async.waterfall([
 		function (cb) {
@@ -719,6 +727,8 @@ test('create instance with NAPI networks', function (t) {
 	var inst = {};
 	inst.uuid = node_uuid.v4();
 	inst.service_uuid = svc_uuid;
+	inst.params = {};
+	inst.params.alias = 'sapitest_napi_networks';
 
 	var uri_inst = '/instances/' + inst.uuid;
 

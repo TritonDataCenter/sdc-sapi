@@ -56,7 +56,7 @@ function createInstance(svc_uuid, uuid, cb) {
 	if (!opts.params)
 		opts.params = {};
 	if (!opts.params.alias)
-		opts.params.alias = 'sapitest_' + node_uuid.v4().substr(0, 8);
+		opts.params.alias = 'sapitest-' + node_uuid.v4().substr(0, 8);
 
 	this.sapi.createInstance(svc_uuid, opts, cb);
 }

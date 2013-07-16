@@ -127,6 +127,7 @@ function startSapiServer(mode, cb) {
 	var config = JSON.parse(fs.readFileSync(file));
 
 	config.vmapi.agent = false;
+	config.cnapi.agent = false;
 	config.napi.agent = false;
 	config.imgapi.agent = false;
 	config.remote_imgapi.agent = false;

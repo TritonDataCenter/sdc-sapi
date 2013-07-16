@@ -12,6 +12,9 @@
 		"master_host": "{{{MASTER_MORAY_IP}}}",
 		"master_port": "{{{MASTER_MORAY_PORT}}}"
 	},
+	"cnapi": {
+		"url": "http://{{{CNAPI_SERVICE}}}"
+	},
 	"vmapi": {
 		"url": "http://{{{VMAPI_SERVICE}}}"
 	},

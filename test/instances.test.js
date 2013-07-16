@@ -22,6 +22,10 @@ var test = helper.test;
 
 var URI = '/instances';
 
+var OLD_IMAGE = '3ace697b-ad1e-44f8-8eac-ba383de05a05';
+var NEW_IMAGE = '19dba40a-a590-45d0-8eec-ca47c784554f';
+
+
 
 // -- Boilerplate
 
@@ -587,9 +591,6 @@ test('upgrading a zone', function (t) {
 
 	var vmapi = helper.createVmapiClient();
 
-	var old_image = '3ace697b-ad1e-44f8-8eac-ba383de05a05';
-	var new_image = '19dba40a-a590-45d0-8eec-ca47c784554f';
-
 	var app_uuid = node_uuid.v4();
 	var svc_uuid = node_uuid.v4();
 
@@ -605,7 +606,7 @@ test('upgrading a zone', function (t) {
 			if (process.env.MODE === 'proto')
 				return (cb());
 
-			var images = [ old_image, new_image ];
+			var images = [ OLD_IMAGE, NEW_IMAGE ];
 
 			vasync.forEachParallel({
 				func: function (image, subcb) {
@@ -624,7 +625,7 @@ test('upgrading a zone', function (t) {
 			var uri = sprintf('/instances/%s/upgrade', inst.uuid);
 
 			var opts = {};
-			opts.image_uuid = new_image;
+			opts.image_uuid = NEW_IMAGE;
 
 			client.put(uri, opts, function (err, _, res, obj) {
 				t.equal(res.statusCode, 404);
@@ -637,7 +638,7 @@ test('upgrading a zone', function (t) {
 					return (cb(err));
 
 				params.networks = [ 'admin' ];
-				params.image_uuid = old_image;
+				params.image_uuid = OLD_IMAGE;
 				params.ram = 256;
 
 				inst.params = params;
@@ -656,7 +657,7 @@ test('upgrading a zone', function (t) {
 				t.equal(res.statusCode, 200);
 				if (obj && obj.params) {
 					t.equal(obj.params.image_uuid,
-					    old_image);
+					    OLD_IMAGE);
 				}
 
 				cb();
@@ -666,7 +667,7 @@ test('upgrading a zone', function (t) {
 			var uri = sprintf('/instances/%s/upgrade', inst.uuid);
 
 			var opts = {};
-			opts.image_uuid = new_image;
+			opts.image_uuid = NEW_IMAGE;
 
 			client.put(uri, opts, function (err, _, res, obj) {
 				t.ifError(err);
@@ -678,7 +679,7 @@ test('upgrading a zone', function (t) {
 				 */
 				if (obj && obj.params) {
 					t.equal(obj.params.image_uuid,
-					    old_image);
+					    OLD_IMAGE);
 				}
 
 				cb();
@@ -691,7 +692,7 @@ test('upgrading a zone', function (t) {
 			vmapi.getVm({ uuid: inst.uuid }, function (err, vm) {
 				t.ifError(err);
 				if (vm)
-					t.equal(vm.image_uuid, new_image);
+					t.equal(vm.image_uuid, NEW_IMAGE);
 				else
 					t.fail('VM object is null');
 				cb();
@@ -752,6 +753,188 @@ test('create instance with NAPI networks', function (t) {
 		},
 		function (cb) {
 			client.post(URI, inst, function (err, _, res, obj) {
+				t.ifError(err);
+				t.equal(res.statusCode, 200);
+				cb(null);
+			});
+		},
+		function (cb) {
+			self.client.del(uri_inst, function (err, _, res, obj) {
+				t.ifError(err);
+				t.equal(res.statusCode, 204);
+				cb(null);
+			});
+		},
+		function (cb) {
+			self.sapi.deleteService(svc_uuid, function (err) {
+				cb(err);
+			});
+		},
+		function (cb) {
+			self.sapi.deleteApplication(app_uuid, function (err) {
+				cb(err);
+			});
+		}
+	], function (err, results) {
+		t.ifError(err);
+		t.end();
+	});
+});
+
+
+// -- Test teardown hooks
+
+test('teardown hooks', function (t) {
+	var self = this;
+	var client = this.client;
+
+	var app_uuid = node_uuid.v4();
+	var svc_uuid = node_uuid.v4();
+
+	var inst = {};
+	inst.uuid = node_uuid.v4();
+	inst.service_uuid = svc_uuid;
+	inst.params = {};
+	inst.params.alias = 'sapitest-teardown-' + node_uuid.v4().substr(0, 8);
+	inst.params.image_uuid = OLD_IMAGE;
+	inst.params['teardown-hook'] = '/bin/false';
+
+	var uri_svc = '/services/' + svc_uuid;
+	var uri_inst = '/instances/' + inst.uuid;
+
+	/*
+	 * In proto mode, the teardown-hook can't run (since CNAPI is
+	 * unavailable), so don't run this test.
+	 */
+	if (process.env.MODE === 'proto') {
+		t.end();
+		return;
+	}
+
+	async.waterfall([
+		function (cb) {
+			common.createApplication.call(self, app_uuid, cb);
+		},
+		function (cb) {
+			common.createService.call(self, app_uuid, svc_uuid, cb);
+		},
+		function (cb) {
+			client.post(URI, inst, function (err, _, res, obj) {
+				t.ifError(err);
+				t.equal(res.statusCode, 200);
+				cb(null);
+			});
+		},
+		function (cb) {
+			/*
+			 * Both destroying and reprovisioning an instance should
+			 * fail when the teardown-hook fails.
+			 */
+			self.client.del(uri_inst, function (err, _, res, obj) {
+				t.ok(err);
+				t.equal(res.statusCode, 500);
+				cb(null);
+			});
+		},
+		function (cb) {
+			var uri = sprintf('/instances/%s/upgrade', inst.uuid);
+
+			var opts = {};
+			opts.image_uuid = NEW_IMAGE;
+
+			client.put(uri, opts, function (err, _, res, obj) {
+				t.ok(err);
+				t.equal(res.statusCode, 500);
+				cb(null);
+			});
+		},
+		function (cb) {
+			self.client.get(uri_inst, function (err, _, res, obj) {
+				t.ifError(err);
+				t.equal(res.statusCode, 200);
+				cb(null);
+			});
+		},
+		function (cb) {
+			var opts = {};
+			opts.params = {};
+			opts.params['teardown-hook'] = '/bin/true';
+
+			client.put(uri_inst, opts, function (err, _, res, obj) {
+				t.ifError(err);
+				t.equal(res.statusCode, 200);
+				t.equal(obj.params['teardown-hook'],
+				    '/bin/true');
+				cb(null);
+			});
+		},
+		function (cb) {
+			delete inst.params['teardown-hook'];
+
+			client.post(URI, inst, function (err, _, res, obj) {
+				t.ifError(err);
+				t.equal(res.statusCode, 200);
+				cb(null);
+			});
+		},
+		function (cb) {
+			var opts = {};
+			opts.params = {};
+			opts.params['teardown-hook'] = '/bin/false';
+
+			client.put(uri_svc, opts, function (err, _, res, obj) {
+				t.ifError(err);
+				t.equal(res.statusCode, 200);
+				t.equal(obj.params['teardown-hook'],
+				    '/bin/false');
+				cb(null);
+			});
+		},
+		function (cb) {
+			/*
+			 * Both destroying and reprovisioning an instance should
+			 * fail when the teardown-hook fails.  Note that in this
+			 * case, the instance is inheriting its teardown-hook
+			 * from the service.
+			 */
+			self.client.del(uri_inst, function (err, _, res, obj) {
+				t.ok(err);
+				t.equal(res.statusCode, 500);
+				cb(null);
+			});
+		},
+		function (cb) {
+			var uri = sprintf('/instances/%s/upgrade', inst.uuid);
+
+			var opts = {};
+			opts.image_uuid = NEW_IMAGE;
+
+			client.put(uri, opts, function (err, _, res, obj) {
+				t.ok(err);
+				t.equal(res.statusCode, 500);
+				cb(null);
+			});
+		},
+		function (cb) {
+			var opts = {};
+			opts.params = {};
+			opts.params['teardown-hook'] = '/bin/true';
+
+			client.put(uri_svc, opts, function (err, _, res, obj) {
+				t.ifError(err);
+				t.equal(res.statusCode, 200);
+				t.equal(obj.params['teardown-hook'],
+				    '/bin/true');
+				cb(null);
+			});
+		},
+		function (cb) {
+			var uri = sprintf('/instances/%s/upgrade', inst.uuid);
+
+			var opts = {};
+			opts.image_uuid = NEW_IMAGE;
+
+			client.put(uri, opts, function (err, _, res, obj) {
 				t.ifError(err);
 				t.equal(res.statusCode, 200);
 				cb(null);

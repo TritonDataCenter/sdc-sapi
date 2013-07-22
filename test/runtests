@@ -94,9 +94,9 @@ svcadm disable -s sapi
 
 cd ${TOP}
 MODE=proto ./node_modules/.bin/nodeunit ./test/*.test.js --reporter tap \
-    >${OUTPUT_DIR}/proto.tap
+    | tee ${OUTPUT_DIR}/proto.tap
 MODE=full ./node_modules/.bin/nodeunit ./test/*.test.js --reporter tap \
-    >${OUTPUT_DIR}/full.tap
+    | tee ${OUTPUT_DIR}/full.tap
 
 svcadm enable -s sapi
 

@@ -646,11 +646,24 @@ function readInput(opts, cb) {
 			parseInput(contents, cb);
 		});
 	} else {
-		read({ silent: true }, function (err, stdin) {
-			if (err)
-				return (cb(err));
-			parseInput(stdin, cb);
+		var content = '';
+		var calledBack = false;
+		process.stdin.on('data', function (chunk) {
+			content += chunk;
 		});
+		process.stdin.on('end', function () {
+			if (calledBack)
+				return;
+			calledBack = true;
+			parseInput(content, cb);
+		});
+		process.stdin.on('error', function (err) {
+			if (calledBack)
+				return;
+			calledBack = true;
+			cb(err);
+		});
+		process.stdin.resume();
 	}
 }
 

@@ -18,7 +18,6 @@
 		"node-uuid": "1.4.0",
 		"once": "1.1.1",
 		"optimist": "0.3.5",
-		"read": "1.0.4",
 		"restify": "2.4.1",
 		"sdc-clients": "git+ssh://git@git.joyent.com:node-sdc-clients.git#e36c598",
 		"semver": "1.1.4",

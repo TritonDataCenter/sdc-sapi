@@ -13,7 +13,6 @@ var cp = require('child_process');
 var fs = require('fs');
 var os = require('os');
 var path = require('path');
-var read = require('read');
 var sdc = require('sdc-clients');
 var util = require('util');
 

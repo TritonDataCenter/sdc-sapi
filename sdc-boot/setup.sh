@@ -8,6 +8,7 @@ set -o xtrace
 
 PATH=/opt/local/bin:/opt/local/sbin:/usr/bin:/usr/sbin
 
+CONFIG_AGENT_LOCAL_MANIFESTS_DIRS=/opt/smartdc/$role
 
 # Include common utility functions (then run the boilerplate)
 source /opt/smartdc/sdc-boot/scripts/util.sh
@@ -15,8 +16,6 @@ sdc_common_setup
 
 role=${zone_role}
 app_name=$role
-
-CONFIG_AGENT_LOCAL_MANIFESTS_DIRS=/opt/smartdc/$role
 
 # Cookie to identify this as a SmartDC zone and its role
 mkdir -p /var/smartdc/sapi

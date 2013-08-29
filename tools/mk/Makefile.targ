@@ -139,11 +139,11 @@ deps/%/.git:
 	git submodule update --init deps/$*
 
 #
-# This rule installs the common manta scripts into the build/scripts directory.
+# This rule installs the common SDC scripts into the build/scripts directory.
 #
-scripts: deps/sdc-scripts/.git
-	mkdir -p $(BUILD)/scripts
-	cp deps/sdc-scripts/*.sh $(BUILD)/scripts
+sdc-scripts: deps/sdc-scripts/.git
+	mkdir -p $(BUILD)/sdc-scripts
+	cp deps/sdc-scripts/*.sh $(BUILD)/sdc-scripts
 
 #
 # These recipes make heavy use of dynamically-created phony targets. The parent

@@ -34,7 +34,7 @@ include ./tools/mk/Makefile.smf.defs
 # Repo-specific targets
 #
 .PHONY: all
-all: scripts $(SMF_MANIFESTS) | $(NODEUNIT) $(REPO_DEPS)
+all: $(SMF_MANIFESTS) | $(NODEUNIT) $(REPO_DEPS) sdc-scripts
 	$(NPM) rebuild
 
 $(NODEUNIT): | $(NPM_EXEC)
@@ -84,9 +84,10 @@ service: all $(SMF_MANIFESTS)
 	cp -r $(TOP)/lib/common \
 		$(TOP)/lib/server \
 		$(SVC_INSTDIR)/lib
-	@mkdir -p $(MGTMPDIR)/root/opt/smartdc/sapi/sdc-boot
-	mv $(TOP)/build/scripts \
-	    $(MGTMPDIR)/root/opt/smartdc/sapi/sdc-boot
+	@mkdir -p $(TOP)/build/service/root/opt/smartdc/sapi/sdc-boot
+	mv $(TOP)/build/sdc-scripts \
+	    $(TOP)/build/service/root/opt/smartdc/sapi/sdc-boot/scripts
+	cp $(TOP)/sdc-boot/*.sh $(TOP)/build/service/root/opt/smartdc/sapi/sdc-boot/
 	cp -P smf/manifests/sapi.xml $(SVC_INSTDIR)/smf/manifests
 	cp -r $(TOP)/sapi_manifests $(SVC_INSTDIR)/
 	cp -r $(TOP)/test $(SVC_INSTDIR)/

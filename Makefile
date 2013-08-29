@@ -84,10 +84,10 @@ service: all $(SMF_MANIFESTS)
 	cp -r $(TOP)/lib/common \
 		$(TOP)/lib/server \
 		$(SVC_INSTDIR)/lib
-	@mkdir -p $(TOP)/build/service/root/opt/smartdc/sapi/sdc-boot
+	@mkdir -p $(TOP)/build/service/root/opt/smartdc/sdc-boot
 	mv $(TOP)/build/sdc-scripts \
-	    $(TOP)/build/service/root/opt/smartdc/sapi/sdc-boot/scripts
-	cp $(TOP)/sdc-boot/*.sh $(TOP)/build/service/root/opt/smartdc/sapi/sdc-boot/
+	    $(TOP)/build/service/root/opt/smartdc/sdc-boot/scripts
+	cp $(TOP)/sdc-boot/*.sh $(TOP)/build/service/root/opt/smartdc/sdc-boot/
 	cp -P smf/manifests/sapi.xml $(SVC_INSTDIR)/smf/manifests
 	cp -r $(TOP)/sapi_manifests $(SVC_INSTDIR)/
 	cp -r $(TOP)/test $(SVC_INSTDIR)/

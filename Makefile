@@ -85,7 +85,7 @@ service: all $(SMF_MANIFESTS)
 		$(TOP)/lib/server \
 		$(SVC_INSTDIR)/lib
 	@mkdir -p $(MGTMPDIR)/root/opt/smartdc/sapi/sdc-boot
-	mv $(MGTMPDIR)/root/opt/smartdc/sapi/build/scripts \
+	mv $(TOP)/build/scripts \
 	    $(MGTMPDIR)/root/opt/smartdc/sapi/sdc-boot
 	cp -P smf/manifests/sapi.xml $(SVC_INSTDIR)/smf/manifests
 	cp -r $(TOP)/sapi_manifests $(SVC_INSTDIR)/

@@ -85,7 +85,7 @@ service: all $(SMF_MANIFESTS)
 		$(TOP)/lib/server \
 		$(SVC_INSTDIR)/lib
 	mkdir -p $(TOP)/build/service/root/opt/smartdc/sdc-boot
-	cp -R $(TOP)/build/sdc-scripts/* \
+	cp -R $(TOP)/deps/sdc-scripts/* \
 	    $(TOP)/build/service/root/opt/smartdc/sdc-boot/
 	cp -R $(TOP)/sdc-boot/* \
 	    $(TOP)/build/service/root/opt/smartdc/sdc-boot/

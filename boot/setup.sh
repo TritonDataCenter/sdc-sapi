@@ -16,7 +16,6 @@ source /opt/smartdc/boot/lib/util.sh
 sdc_common_setup
 
 role=${zone_role}
-app_name=$role
 
 # Cookie to identify this as a SmartDC zone and its role
 mkdir -p /var/smartdc/sapi
@@ -123,8 +122,11 @@ HERE
 fi  # SAPI_MODE == proto
 
 echo "Adding log rotation"
-logadm -w sapi -C 48 -s 100m -p 1h \
-    /var/svc/log/smartdc-site-sapi:default.log
+sdc_log_rotation_add amon-agent /var/svc/log/*amon-agent*.log 1g
+sdc_log_rotation_add config-agent /var/svc/log/*config-agent*.log 1g
+sdc_log_rotation_add registrar /var/svc/log/*registrar*.log 1g
+sdc_log_rotation_add $role /var/svc/log/*$role*.log 1g
+sdc_log_rotation_setup_end
 
 # All done, run boilerplate end-of-setup
 sdc_setup_complete

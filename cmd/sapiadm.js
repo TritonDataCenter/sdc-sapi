@@ -468,25 +468,38 @@ Sapiadm.prototype.do_edit_manifest = function (subcmd, opts, args, cb) {
 	}
 
 	var self = this;
-	var svc_uuid = args[0];
+	var svc_or_app_uuid = args[0];
 	var mn_name = args[1];
 	var old_mn_uuid;
-	var svc;
+	var svcapp_type;
+	var svcapp;
 	var mn;
 
 	async.waterfall([
-		function getSvc(subcb) {
-			self.client.getService(svc_uuid, function (err, svc_) {
-				svc = svc_;
-				subcb(err);
+		function getSvcOrApp(subcb) {
+			self.client.getService(svc_or_app_uuid,
+					function (sErr, svc_) {
+				if (sErr) {
+					self.client.getApplication(
+							svc_or_app_uuid,
+							function (aErr, app_) {
+						svcapp = app_;
+						svcapp_type = 'application';
+						subcb(aErr);
+					});
+				} else {
+					svcapp = svc_;
+					svcapp_type = 'service';
+					subcb();
+				}
 			});
 		},
 		function getMn(subcb) {
-			var mn_uuid = svc.manifests[mn_name];
+			var mn_uuid = svcapp.manifests[mn_name];
 			if (!mn_uuid) {
 				subcb(new Error(sprintf(
-				    'no manifest named "%s" on service "%s"',
-				    mn_name, svc_uuid)));
+				    'no manifest named "%s" on %s "%s"',
+				    mn_name, svcapp_type, svc_or_app_uuid)));
 				return;
 			}
 			self.client.getManifest(mn_uuid, function (err, mn_) {
@@ -501,8 +514,8 @@ Sapiadm.prototype.do_edit_manifest = function (subcmd, opts, args, cb) {
 		function earlyOutOrNewMn(new_template, changed, subcb) {
 			if (!changed) {
 				console.log(
-				    'Manifest "%s" on service "%s" unchanged.',
-				    mn_name, svc_uuid);
+				    'Manifest "%s" on %s "%s" unchanged.',
+				    mn_name, svcapp_type, svc_or_app_uuid);
 				subcb(true);
 				return;
 			}
@@ -517,17 +530,22 @@ Sapiadm.prototype.do_edit_manifest = function (subcmd, opts, args, cb) {
 				subcb(err, newMn);
 			});
 		},
-		function updateSvc(newMn, subcb) {
+		function updateSvcOrApp(newMn, subcb) {
 			var update = {
 				action: 'update',
 				manifests: {}
 			};
 			update.manifests[mn_name] = newMn.uuid;
-			self.client.updateService(svc_uuid, update,
+			var updateFunc = (svcapp_type === 'service'
+				? self.client.updateService
+				: self.client.updateApplication)
+				.bind(self.client);
+			updateFunc(svc_or_app_uuid, update,
 			    function (err, newSvc) {
 				if (!err) {
-					console.log('Updated service "%s" with '
-					    + 'new manifest.', svc_uuid);
+					console.log('Updated %s "%s" with '
+					    + 'new manifest.', svcapp_type,
+					    svc_or_app_uuid);
 				}
 				subcb(err);
 			});
@@ -552,7 +570,7 @@ Sapiadm.prototype.do_edit_manifest = function (subcmd, opts, args, cb) {
 	});
 };
 Sapiadm.prototype.do_edit_manifest.help = (
-    'Edit a manifest tied to a service and save it back.\n'
+    'Edit a manifest tied to a service or application and save it back.\n'
     + '\n'
     + 'SAPI does not include an UpdateManifest endpoint, so this instead\n'
     + 'creates a new manifest, swaps the new manifest UUID into the service,\n'

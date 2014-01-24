@@ -723,33 +723,6 @@ Delete this configuration manifest.
 
 
 
-# Images
-
-## SearchImage (GET /images)
-
-Queries the updates.joyent.com IMGAPI for images which match the "name" search
-parameter.
-
-### Inputs
-
-||**Param**||**Type**||**Description**||**Required?**||
-|| name || string || image name || yes ||
-|| version || string || image version || no ||
-
-### Responses
-
-||**Code**||**Description**||**Response**||
-|| 200 || List of images || All images which match search criteria ||
-
-
-## DownloadImage (POST /images/:uuid)
-
-Downloads an image from the updates.joyent.com IMGAPI repo and installs it into
-the local datacenter.  This endpoint delegates the actual image download to
-IMGAPI.
-
-
-
 # Modes
 
 ## GetMode (GET /mode)

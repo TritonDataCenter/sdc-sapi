@@ -104,9 +104,6 @@ EOF
   "imgapi": {
     "url": "$IMGAPI_URL"
   },
-  "remote_imgapi": {
-    "url": "https://updates.joyent.com"
-  },
   "ufds": {
     "url": "$UFDS_URL",
     "bindDN": "$UFDS_LDAP_ROOT_DN",

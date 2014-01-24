@@ -24,9 +24,6 @@
 	"imgapi": {
 		"url": "http://{{{IMGAPI_SERVICE}}}"
 	},
-	"remote_imgapi": {
-		"url": "https://updates.joyent.com"
-	},
 	"ufds": {
 		"url": "ldaps://{{{ufds_admin_ips}}}",
 		"bindDN": "{{{ufds_ldap_root_dn}}}",

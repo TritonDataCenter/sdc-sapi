@@ -3,7 +3,7 @@
  *
  * test/instances.test.js: test /instances endpoints
  */
-
+//
 var async = require('async');
 var common = require('./common');
 var jsprim = require('jsprim');

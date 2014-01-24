@@ -130,7 +130,6 @@ function startSapiServer(mode, cb) {
 	config.cnapi.agent = false;
 	config.napi.agent = false;
 	config.imgapi.agent = false;
-	config.remote_imgapi.agent = false;
 
 	/*
 	 * First, check the mode argument to this function.  If that's not

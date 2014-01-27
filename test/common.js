@@ -8,8 +8,21 @@ var assert = require('assert-plus');
 var async = require('async');
 var node_uuid = require('node-uuid');
 
-
-var IMAGE_UUID = '1eddb7ec-3e1d-423a-b876-f6e069496f35';
+/*
+ * These images are manta-storage zones.  Not sure why those were picked, but
+ * that's that.  If these are ever deleted from imgapi on updates.joyent.com,
+ * then find two later ones, replace and go.  I fould these by:
+ *
+ * [root@headnode (us-east-3) ~]# sdc-imgadm list | grep manta-storage | tail -2
+ *
+ * Perhaps the long term solution here is to have the tests create their own
+ * images somewhere.  If we could rely on a some sort of tag to find them, we
+ * can determine if they are already there or need to be created.
+ *
+ * Also note there is this same comment and other image uuids in
+ * instances.test.js
+ */
+var IMAGE_UUID = 'daffafa6-081c-4732-8419-0a572f7fee10';
 
 function createApplication(uuid, cb) {
 	var name = 'empty_test_application';

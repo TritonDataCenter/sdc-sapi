@@ -22,8 +22,21 @@ var test = helper.test;
 
 var URI = '/instances';
 
-var OLD_IMAGE = '3ace697b-ad1e-44f8-8eac-ba383de05a05';
-var NEW_IMAGE = '19dba40a-a590-45d0-8eec-ca47c784554f';
+/*
+ * These images are manta-storage zones.  Not sure why those were picked, but
+ * that's that.  If these are ever deleted from imgapi on updates.joyent.com,
+ * then find two later ones, replace and go.  I fould these by:
+ *
+ * [root@headnode (us-east-3) ~]# sdc-imgadm list | grep manta-storage | tail -2
+ *
+ * Perhaps the long term solution here is to have the tests create their own
+ * images somewhere.  If we could rely on a some sort of tag to find them, we
+ * can determine if they are already there or need to be created.
+ *
+ * Also note there this comment and another image uuid in common.js.
+ */
+var OLD_IMAGE = 'daffafa6-081c-4732-8419-0a572f7fee10';
+var NEW_IMAGE = 'ee88648a-9327-cfc5-d0e9-ffcd407cbdbc';
 
 
 

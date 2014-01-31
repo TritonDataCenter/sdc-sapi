@@ -52,25 +52,16 @@ DATACENTER_NAME=${datacenter_name}
 IMGAPI_ADMIN_IPS=${imgapi_admin_ips}
 MORAY_ADMIN_IPS=${moray_admin_ips}
 NAPI_ADMIN_IPS=${napi_admin_ips}
-UFDS_ADMIN_IPS=${ufds_admin_ips}
 VMAPI_ADMIN_IPS=${vmapi_admin_ips}
 CNAPI_ADMIN_IPS=${cnapi_admin_ips}
-WORKFLOW_ADMIN_IPS=${workflow_admin_ips}
-UFDS_ADMIN_UUID=${ufds_admin_uuid}
-UFDS_LDAP_ROOT_DN=${ufds_ldap_root_dn}
-UFDS_LDAP_ROOT_PW=${ufds_ldap_root_pw}
-WFAPI_HTTP_ADMIN_USER=${workflow_http_admin_user}
-WFAPI_HTTP_ADMIN_PW=${workflow_http_admin_pw}
 EOF
     )
 
     IMGAPI_URL=http://$(echo "${IMGAPI_ADMIN_IPS}" | cut -d',' -f1)
     MORAY_HOST=$(echo "${MORAY_ADMIN_IPS}" | cut -d ',' -f1)
     NAPI_URL=http://$(echo "${NAPI_ADMIN_IPS}" | cut -d',' -f1)
-    UFDS_URL=ldaps://$(echo "${UFDS_ADMIN_IPS}" | cut -d ',' -f1)
     CNAPI_URL=http://$(echo "${CNAPI_ADMIN_IPS}" | cut -d',' -f1)
     VMAPI_URL=http://$(echo "${VMAPI_ADMIN_IPS}" | cut -d',' -f1)
-    WFAPI_URL=http://$(echo "${WORKFLOW_ADMIN_IPS}" | cut -d',' -f1)
 
     echo "Creating SAPI config file"
     mkdir -p /opt/smartdc/sapi/etc
@@ -87,7 +78,6 @@ EOF
   },
   "mode": "proto",
   "datacenter_name": "$DATACENTER_NAME",
-  "adminUuid": "$UFDS_ADMIN_UUID",
   "moray": {
     "host": "$MORAY_HOST",
     "port": 2020
@@ -103,15 +93,6 @@ EOF
   },
   "imgapi": {
     "url": "$IMGAPI_URL"
-  },
-  "ufds": {
-    "url": "$UFDS_URL",
-    "bindDN": "$UFDS_LDAP_ROOT_DN",
-    "bindPassword": "$UFDS_LDAP_ROOT_PW",
-    "cache": {
-      "size": 1000,
-      "expiry": 300
-    }
   }
 }
 HERE

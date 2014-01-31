@@ -5,7 +5,6 @@
 	},
 	"mode": "{{{SAPI_MODE}}}",
 	"datacenter_name": "{{{datacenter_name}}}",
-	"adminUuid": "{{{ufds_admin_uuid}}}",
 	"moray": {
 		"host": "{{{MORAY_SERVICE}}}",
 		"port": 2020,
@@ -23,14 +22,5 @@
 	},
 	"imgapi": {
 		"url": "http://{{{IMGAPI_SERVICE}}}"
-	},
-	"ufds": {
-		"url": "ldaps://{{{ufds_admin_ips}}}",
-		"bindDN": "{{{ufds_ldap_root_dn}}}",
-		"bindPassword": "{{{ufds_ldap_root_pw}}}",
-		"cache": {
-			"size": 1000,
-			"expiry": 300
-		}
 	}
 }

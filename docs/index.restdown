@@ -224,7 +224,6 @@ downstream services available, there are some limitations on what SAPI can do in
 proto mode:
 
 * The SearchImage and DownloadImage endpoints are not available.
-* SAPI cannot verify that an application's owner_uuid is valid.
 * SAPI cannot verify that an image_uuid is valid.
 * SAPI cannot provision zones when an instance is created.
 * SAPI cannot remove zones when an instance is destroyed.
@@ -234,7 +233,7 @@ full mode.  That upgrade iterates over all the local object and loads them into
 moray.  For any local instance objects, it is expected that a zone already
 exists for each instance object -- specifically, a VMAPI.getVm() must succeed
 for each local instance.  Should VMAPI not know about any instance, the SetMode
-request will fail.  In addition, SetMode does not verify any owner_uuid or
+request will fail.  In addition, SetMode does not verify the
 image_uuid; the expectation is that the operator used correct values while in
 proto mode.
 

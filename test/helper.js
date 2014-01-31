@@ -161,20 +161,32 @@ function startSapiServer(mode, cb) {
 	process.env.NAPI_URL = config.napi.url;
 	process.env.IMGAPI_URL = config.imgapi.url;
 
-	process.env.ADMIN_UUID = config.adminUuid;
-
-	var cmd = '/usr/sbin/mdata-get sdc:server_uuid';
-	exec(cmd, function (err, stdout) {
+	async.series([
+		function getServerUuid(next) {
+			var cmd = '/usr/sbin/mdata-get sdc:server_uuid';
+			exec(cmd, function (err, stdout) {
+				if (err)
+					return next (err);
+				process.env.SERVER_UUID = stdout.trim();
+				next();
+			});
+		},
+		function getAdminUuid(next) {
+			var cmd = '/usr/sbin/mdata-get sdc:owner_uuid';
+			exec(cmd, function (err, stdout) {
+				if (err)
+					return next (err);
+				process.env.ADMIN_UUID = stdout.trim();
+				next();
+			});
+		}
+	], function done(err) {
 		if (err)
 			throw (err);
-
-		process.env.SERVER_UUID = stdout.trim();
-
 		sapi.start(function () {
 			cb(null, sapi);
 		});
 	});
-
 }
 
 function shutdownSapiServer(sapi, cb) {
@@ -185,7 +197,7 @@ function shutdownSapiServer(sapi, cb) {
 }
 
 /*
- * Create a set of default VM params suitable for assing to
+ * Create a set of default VM params suitable for passing to
  * SAPI.createInstance() or VMAPI.createVm().
  *
  * If more specific params are required, callers should override those params.
@@ -204,7 +216,7 @@ function consVmParams(cb) {
 
 			imgapi.adminImportRemoteImageAndWait(
 			    params.image_uuid, 'https://updates.joyent.com',
-			    { skipOwnerCheck: true },
+			    {},
 			    function (err) {
 				if (err && err.name ===
 				    'ImageUuidAlreadyExistsError')

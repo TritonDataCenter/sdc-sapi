@@ -627,7 +627,7 @@ test('upgrading a zone', function (t) {
 
 					imgapi.adminImportRemoteImageAndWait(
 					    image, 'https://updates.joyent.com',
-					    { skipOwnerCheck: true }, subcb);
+					    {}, subcb);
 				},
 				inputs: images
 			}, function (err) {

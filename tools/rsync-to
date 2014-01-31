@@ -1,0 +1,41 @@
+#!/bin/bash
+#
+# Rsync the master in this working copy to the install on the given HN.
+#
+
+#set -o xtrace
+set -o errexit
+
+TOP=$(cd $(dirname $0)/../; pwd)
+NODE=$1
+
+if [[ -z "$SAPI_ZONE" ]]; then
+    SAPI_ZONE=$(ssh $NODE vmadm lookup -1 alias=sapi0 state=running)
+fi
+echo "SAPI_ZONE: $SAPI_ZONE"
+
+extraOpts=
+if [[ $(uname -s) != "SunOS" ]]; then
+    extraOpts="--exclude *.node --exclude build"
+else
+    # Clean node_modules everytime.
+    ssh $NODE rm -rf /zones/$SAPI_ZONE/root/opt/smartdc/sapi/node_modules
+fi
+
+for f in lib node_modules sapi_manifests server.js smf test; do
+    rsync -av ${TOP}/$f $NODE:/zones/$SAPI_ZONE/root/opt/smartdc/sapi/ $extraOpts
+done
+#rsync -av ${TOP}/lib $NODE:/zones/$SAPI_ZONE/root/opt/smartdc/sapi/lib $extraOpts
+#rsync -av ${TOP}/node_modules $NODE:/zones/$SAPI_ZONE/root/opt/smartdc/sapi/node_modules $extraOpts
+#rsync -av ${TOP}/sapi_manifests $NODE:/zones/$SAPI_ZONE/root/opt/smartdc/sapi/sapi_manifests $extraOpts
+#rsync -av ${TOP}/server.js $NODE:/zones/$SAPI_ZONE/root/opt/smartdc/sapi/server.js $extraOpts
+#rsync -av ${TOP}/smf $NODE:/zones/$SAPI_ZONE/root/opt/smartdc/sapi/smf $extraOpts
+#rsync -av ${TOP}/test $NODE:/zones/$SAPI_ZONE/root/opt/smartdc/sapi/test $extraOpts
+
+state=$(ssh ${NODE} svcs -z ${SAPI_ZONE} -H -o state sapi)
+if [[ "$state" == "maintenance" ]]; then
+    ssh ${NODE} svcadm -z ${SAPI_ZONE} clear sapi
+else
+    ssh ${NODE} svcadm -z ${SAPI_ZONE} restart sapi
+fi
+ssh ${NODE} svcadm -z ${SAPI_ZONE} restart config-agent

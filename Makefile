@@ -21,12 +21,19 @@ JSSTYLE_FLAGS    = -o doxygen
 SMF_MANIFESTS_IN = smf/manifests/sapi.xml.in smf/manifests/config-agent.xml.in
 
 NODE_PREBUILT_VERSION=v0.8.22
-NODE_PREBUILT_TAG=zone
+ifeq ($(shell uname -s),SunOS)
+	NODE_PREBUILT_TAG=zone
+	# Allow building on a SmartOS image other than smartos-1.6.3.
+	NODE_PREBUILT_IMAGE=01b2c898-945f-11e1-a523-af1afbe22822
+endif
 
 
 include ./tools/mk/Makefile.defs
-include ./tools/mk/Makefile.node_prebuilt.defs
-include ./tools/mk/Makefile.node_deps.defs
+ifeq ($(shell uname -s),SunOS)
+	include ./tools/mk/Makefile.node_prebuilt.defs
+else
+	include ./tools/mk/Makefile.node.defs
+endif
 include ./tools/mk/Makefile.smf.defs
 
 
@@ -35,7 +42,7 @@ include ./tools/mk/Makefile.smf.defs
 #
 .PHONY: all
 all: $(SMF_MANIFESTS) | $(NODEUNIT) $(REPO_DEPS) sdc-scripts
-	$(NPM) rebuild
+	$(NPM) install
 
 $(NODEUNIT): | $(NPM_EXEC)
 	$(NPM) install
@@ -135,10 +142,12 @@ publish: release
 	cp $(TOP)/$(AGENT_TARBALL) $(BITS_DIR)/sapi/$(AGENT_TARBALL)
 
 
-
 include ./tools/mk/Makefile.deps
-include ./tools/mk/Makefile.node_prebuilt.targ
-include ./tools/mk/Makefile.node_deps.targ
+ifeq ($(shell uname -s),SunOS)
+	include ./tools/mk/Makefile.node_prebuilt.targ
+else
+	include ./tools/mk/Makefile.node.targ
+endif
 include ./tools/mk/Makefile.smf.targ
 include ./tools/mk/Makefile.targ
 

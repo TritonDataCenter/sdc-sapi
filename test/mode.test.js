@@ -53,11 +53,11 @@ helper.before(function (cb) {
 			else if (tests_run === 1)
 				mode = 'full';
 			else
-				return (cb(null));
+				return (subcb(null));
 
 			helper.startSapiServer(mode, function (err, res) {
 				server = res;
-				cb(err);
+				subcb(err);
 			});
 		}
 	], function (err) {
@@ -90,8 +90,13 @@ function testMode(t, mode, cb) {
 			});
 		},
 		function (subcb) {
-			var uri_mode = URI + '?mode=' + mode;
+			if (mode === 'proto') {
+				// Skip because switching to proto mode isn't
+				// supported. Not even as a no-op.
+				return (subcb());
+			}
 
+			var uri_mode = URI + '?mode=' + mode;
 			self.client.post(uri_mode,
 			    function (err, req, res, obj) {
 				t.ifError(err);
@@ -142,7 +147,7 @@ test('in full mode', function (t) {
 
 // -- Test failed upgrade
 
-test('failed upgrade to full mode', function (t) {
+test('upgrade to full mode with bogus IMAGE_UUID should fail', function (t) {
 	var self = this;
 
 	var man_uuid = node_uuid.v4();
@@ -210,10 +215,11 @@ test('failed upgrade to full mode', function (t) {
 			self.client.post(uri_mode,
 			    function (err, req, res, obj) {
 				t.ok(err);
-				if (res)
+				if (res) {
 					t.equal(res.statusCode, 500);
-				else
+				} else {
 					t.fail('res is null');
+				}
 				cb();
 			});
 		},

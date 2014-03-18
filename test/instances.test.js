@@ -380,7 +380,7 @@ test('create instance with VM aleady existing', function (t) {
 			/*
 			 * This check doesn't apply to proto mode.
 			 */
-			if (process.env.MODE === 'proto')
+			if (process.env.TEST_SAPI_PROTO_MODE === 'true')
 				return (cb(null));
 
 			createVm(inst.uuid, cb);
@@ -483,7 +483,7 @@ test('delete instance with no VM', function (t) {
 			/*
 			 * This check doesn't apply to proto mode.
 			 */
-			if (process.env.MODE === 'proto') {
+			if (process.env.TEST_SAPI_PROTO_MODE === 'true') {
 				return (cb(null));
 			}
 
@@ -564,7 +564,7 @@ test('invalid zone parameters', function (t) {
 		},
 		function (cb) {
 			client.post(URI, inst, function (err, _, res, obj) {
-				if (process.env.MODE === 'proto')
+				if (process.env.TEST_SAPI_PROTO_MODE === 'true')
 					t.equal(res.statusCode, 200);
 				else
 					t.equal(res.statusCode, 500);
@@ -573,7 +573,7 @@ test('invalid zone parameters', function (t) {
 		},
 		function (cb) {
 			client.get(uri_inst, function (err, _, res, obj) {
-				if (process.env.MODE === 'proto')
+				if (process.env.TEST_SAPI_PROTO_MODE === 'true')
 					t.equal(res.statusCode, 200);
 				else
 					t.equal(res.statusCode, 404);
@@ -616,7 +616,7 @@ test('upgrading a zone', function (t) {
 	async.waterfall([
 		function (cb) {
 			// Before the test starts, download both images.
-			if (process.env.MODE === 'proto')
+			if (process.env.TEST_SAPI_PROTO_MODE === 'true')
 				return (cb());
 
 			var images = [ OLD_IMAGE, NEW_IMAGE ];
@@ -624,10 +624,11 @@ test('upgrading a zone', function (t) {
 			vasync.forEachParallel({
 				func: function (image, subcb) {
 					var imgapi = self.imgapi;
-
 					imgapi.adminImportRemoteImageAndWait(
-					    image, 'https://updates.joyent.com',
-					    {}, subcb);
+					    image,
+					    'https://updates.joyent.com',
+					    {skipOwnerCheck: true},
+					    subcb);
 				},
 				inputs: images
 			}, function (err) {
@@ -699,7 +700,7 @@ test('upgrading a zone', function (t) {
 			});
 		},
 		function (cb) {
-			if (process.env.MODE === 'proto')
+			if (process.env.TEST_SAPI_PROTO_MODE === 'true')
 				return (cb());
 
 			vmapi.getVm({ uuid: inst.uuid }, function (err, vm) {
@@ -819,7 +820,7 @@ test('teardown hooks', function (t) {
 	 * In proto mode, the teardown-hook can't run (since CNAPI is
 	 * unavailable), so don't run this test.
 	 */
-	if (process.env.MODE === 'proto') {
+	if (process.env.TEST_SAPI_PROTO_MODE === 'true') {
 		t.end();
 		return;
 	}

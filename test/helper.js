@@ -136,12 +136,14 @@ function startSapiServer(mode, cb) {
 	 * specified, check the environment variable's MODE.  Lastly, fallback
 	 * on the mode from the configuration file.
 	 */
-	if (mode)
-		config.mode = mode;
-	else if (process.env.MODE)
-		config.mode = process.env.MODE;
+	if (mode === 'proto') {
+		process.env.TEST_SAPI_PROTO_MODE = 'true';
+	} else if (mode === 'full') {
+		process.env.TEST_SAPI_PROTO_MODE = undefined;
+	}
 
 	var log_options = config.log_options;
+	log_options.src = true;
 	log_options.streams = [
 		{
 			level: 'debug',
@@ -216,7 +218,9 @@ function consVmParams(cb) {
 
 			imgapi.adminImportRemoteImageAndWait(
 			    params.image_uuid, 'https://updates.joyent.com',
-			    {},
+			    {
+				skipOwnerCheck: true
+			    },
 			    function (err) {
 				if (err && err.name ===
 				    'ImageUuidAlreadyExistsError')

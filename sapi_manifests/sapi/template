@@ -3,7 +3,6 @@
 		"name": "sapi",
 		"level": "info"
 	},
-	"mode": "{{{SAPI_MODE}}}",
 	"datacenter_name": "{{{datacenter_name}}}",
 	"moray": {
 		"host": "{{{MORAY_SERVICE}}}",

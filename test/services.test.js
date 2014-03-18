@@ -135,7 +135,7 @@ test('create w/ other invalid inputs', function (t) {
 				 * mode, so there's no validation of the
 				 * image_uuid.
 				 */
-				if (process.env.MODE === 'proto') {
+				if (process.env.TEST_SAPI_PROTO_MODE === 'true') {
 					t.ifError(err);
 					t.equal(res.statusCode, 200);
 				} else {

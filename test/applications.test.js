@@ -90,7 +90,7 @@ test('create w/ invalid owner_uuid', function (t) {
 	};
 
 	this.client.post(URI, app, function (err, req, res, obj) {
-		if (process.env.MODE === 'proto') {
+		if (process.env.TEST_SAPI_PROTO_MODE === 'true') {
 			t.ifError(err);
 			t.equal(res.statusCode, 200);
 		} else {

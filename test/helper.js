@@ -168,7 +168,7 @@ function startSapiServer(mode, cb) {
 			var cmd = '/usr/sbin/mdata-get sdc:server_uuid';
 			exec(cmd, function (err, stdout) {
 				if (err)
-					return next (err);
+					return (next(err));
 				process.env.SERVER_UUID = stdout.trim();
 				next();
 			});
@@ -177,7 +177,7 @@ function startSapiServer(mode, cb) {
 			var cmd = '/usr/sbin/mdata-get sdc:owner_uuid';
 			exec(cmd, function (err, stdout) {
 				if (err)
-					return next (err);
+					return (next(err));
 				process.env.ADMIN_UUID = stdout.trim();
 				next();
 			});

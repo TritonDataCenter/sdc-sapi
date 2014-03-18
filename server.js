@@ -9,7 +9,6 @@ var bunyan = require('bunyan');
 var fs = require('fs');
 var optimist = require('optimist');
 
-var common = require('./lib/server/common');
 var SAPI = require('./lib/server/sapi');
 
 

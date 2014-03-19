@@ -21,9 +21,9 @@ echo "export PATH=\$PATH:/opt/smartdc/sapi/build/node/bin:/opt/smartdc/sapi/node
 # Include common utility functions (then run the boilerplate).
 source /opt/smartdc/boot/lib/util.sh
 CONFIG_AGENT_LOCAL_MANIFESTS_DIRS=/opt/smartdc/sapi
+SAPI_PROTO_MODE=$(mdata-get SAPI_PROTO_MODE || true)
 sdc_common_setup
 
-SAPI_PROTO_MODE=$(mdata-get SAPI_PROTO_MODE || true)
 if [[ "${SAPI_PROTO_MODE}" == "true" ]]; then
     # During setup/bootstrapping, we do not expect binder to be available, and
     # rely on the pre-allocated IPs. We grab all the config from the

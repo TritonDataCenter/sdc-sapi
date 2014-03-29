@@ -17,7 +17,7 @@
 	<service_fmri value="svc:/system/filesystem/local" />
 </dependency>
 
-<exec_method type="method" name="start" exec="@@NODE@@ @@PREFIX@@/server.js -f @@PREFIX@@/etc/config.json &amp;" timeout_seconds="30" />
+<exec_method type="method" name="start" exec="@@NODE@@ --abort-on-uncaught-exception @@PREFIX@@/server.js -f @@PREFIX@@/etc/config.json &amp;" timeout_seconds="30" />
 <exec_method type="method" name="stop" exec=":kill" timeout_seconds="30" />
 
 <instance name="default" enabled="true" />

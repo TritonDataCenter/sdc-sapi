@@ -11,3 +11,4 @@ smf/manifests/*.xml
 sapi-pkg-master-*.tar.bz2
 config-agent-*.tar.bz2
 test/tests.log
+abandoned

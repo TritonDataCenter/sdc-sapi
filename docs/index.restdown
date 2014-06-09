@@ -1,6 +1,6 @@
 ---
 title: Services API
-apisections: Service Configuration, Amon Configuration, Applications, Services, Instances, Manifests, Images, Modes, Configs
+apisections: Service Configuration, Amon Configuration, Applications, Services, Instances, Manifests, Images, Modes, Configs, Cache
 markdown2extras: wiki-tables, code-friendly
 ---
 

@@ -7,6 +7,9 @@
 export PS4='[\D{%FT%TZ}] ${BASH_SOURCE}:${LINENO}: ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
 set -o xtrace
 
+SAPI_ROOT=/sapi
+ZONE_UUID=$(zonename)
+ZONE_DATASET=zones/$ZONE_UUID/data
 PATH=/opt/local/bin:/opt/local/sbin:/usr/bin:/usr/sbin
 role=sapi
 
@@ -23,6 +26,18 @@ source /opt/smartdc/boot/lib/util.sh
 CONFIG_AGENT_LOCAL_MANIFESTS_DIRS=/opt/smartdc/sapi
 SAPI_PROTO_MODE=$(mdata-get SAPI_PROTO_MODE || true)
 sdc_common_setup
+
+# If there's a zfs dataset, make the mount point /sapi
+zfs list $ZONE_DATASET && rc=$? || rc=$?
+if [[ $rc == 0 ]]; then
+    mkdir -p $SAPI_ROOT
+
+    mountpoint=$(zfs get -H -o value mountpoint $ZONE_DATASET)
+    if [[ $mountpoint != $SAPI_ROOT ]]; then
+        zfs set mountpoint=$SAPI_ROOT $ZONE_DATASET || \
+            fatal "failed to set mountpoint"
+    fi
+fi
 
 if [[ "${SAPI_PROTO_MODE}" == "true" ]]; then
     # During setup/bootstrapping, we do not expect binder to be available, and

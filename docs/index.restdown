@@ -743,3 +743,23 @@ determined by taking the union of the application's, service's, and instance's
 data.  Any data which collides (e.g. two manifests with the same name, or two
 metadata values with the same key) will be preferentially selected first from
 the instance, then from the service, and finally from the application.
+
+
+
+# Cache
+
+## SyncCache (POST /cache)
+
+With the introduction of a local cache in SAPI to offset the problems that occur
+in SAPI when Moray is down, there may be times when an operator wants to ensure
+that the local cache of the SDC application and its services, instances, and
+manifests are up to date.  This API will sync all SDC-application moray objects
+into the local, on disk, cache (located at `/sapi` in the zone).  Otherwise, the
+cache gets automatically refreshed every hour.
+
+Note that this API would needs to be called for each SAPI individually to ensure
+that they all have the most up-to-date objects.
+
+```
+sdc-sapi /cache -X POST
+```

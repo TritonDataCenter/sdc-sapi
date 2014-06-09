@@ -760,6 +760,4 @@ cache gets automatically refreshed every hour.
 Note that this API would needs to be called for each SAPI individually to ensure
 that they all have the most up-to-date objects.
 
-```
-sdc-sapi /cache -X POST
-```
+    sdc-sapi /cache -X POST

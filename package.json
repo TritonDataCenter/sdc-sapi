@@ -25,7 +25,7 @@
 		"vasync": "1.5.0"
 	},
 	"devDependencies": {
-		"nodeunit": "0.7.4",
+		"nodeunit": "0.9.0",
 		"rimraf": "2.1.4"
 	},
 	"scripts": {

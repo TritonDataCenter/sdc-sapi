@@ -24,6 +24,9 @@ To run this test you must create the file:
     /lib/sdc/.sdc-test-no-production-data
 
 after ensuring you have no production data on this SDC.
+
+Also, make sure that the sapi and imgapi zones have external nics.  See the
+README for more detail.
 EOF
     exit 2
 fi
@@ -63,7 +66,7 @@ function usage
 start_time=$(date +%s)
 
 # Options.
-opt_test_pattern=
+opt_test_pattern='*'
 while getopts "hf:" opt
 do
     case "$opt" in
@@ -72,7 +75,7 @@ do
             exit 0
             ;;
         f)
-            opt_test_pattern=$OPTARG
+            opt_test_pattern="*${OPTARG}*"
             ;;
         *)
             usage
@@ -94,10 +97,10 @@ svcadm disable -s sapi
 
 cd ${TOP}
 TEST_SAPI_PROTO_MODE=true ./node_modules/.bin/nodeunit \
-    ./test/*.test.js --reporter tap \
+    ./test/${opt_test_pattern}.test.js --reporter tap \
     | tee ${OUTPUT_DIR}/proto.tap
 TEST_SAPI_PROTO_MODE=false ./node_modules/.bin/nodeunit \
-    ./test/*.test.js --reporter tap \
+    ./test/${opt_test_pattern}.test.js --reporter tap \
     | tee ${OUTPUT_DIR}/full.tap
 
 svcadm enable -s sapi

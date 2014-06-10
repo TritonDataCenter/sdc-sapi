@@ -90,13 +90,9 @@ test('create w/ invalid owner_uuid', function (t) {
 	};
 
 	this.client.post(URI, app, function (err, req, res, obj) {
-		if (process.env.TEST_SAPI_PROTO_MODE === 'true') {
-			t.ifError(err);
-			t.equal(res.statusCode, 200);
-		} else {
-			t.ok(err);
-			t.equal(res.statusCode, 404);
-		}
+		// Since we don't consult ufds anymore, this will succeed.
+		t.ifError(err);
+		t.equal(res.statusCode, 200);
 		t.end();
 	});
 });

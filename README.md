@@ -57,3 +57,8 @@ have an external nic:
 
     /usbkey/scripts/add_external_nic.sh $(vmadm lookup -1 alias=~sapi)
     /usbkey/scripts/add_external_nic.sh $(vmadm lookup -1 alias=~imgapi)
+
+To run a single test (for example):
+
+    TEST_SAPI_PROTO_MODE=false ./node_modules/.bin/nodeunit \
+        ./test/mode.test.js -t 'upgrade to full mode'

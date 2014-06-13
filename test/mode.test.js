@@ -34,11 +34,19 @@ helper.before(function (cb) {
 
 	async.waterfall([
 		function (subcb) {
-			var dir = '/opt/smartdc/sapi/storage';
+			var dirs = [
+				'/opt/smartdc/sapi/storage',
+				'/sapi/sapi_applications',
+				'/sapi/sapi_instances',
+				'/sapi/sapi_manifests',
+				'/sapi/sapi_services'
+			];
 
-			// Remove any previous objects
-			rimraf(dir, function (err) {
-				subcb(err);
+			async.forEach(dirs, function (dir, scb) {
+				// Remove any previous objects
+				rimraf(dir, function (err) {
+					scb(err);
+				});
 			});
 		},
 		function (subcb) {

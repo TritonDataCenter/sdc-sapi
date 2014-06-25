@@ -59,7 +59,9 @@ async.waterfall([
 			if (err)
 				log.error(err, 'failed to determine zone name');
 
-			config.zonename = zonename;
+			if (zonename !== 'global') {
+				config.instances = [ zonename ];
+			} // else TODO AGENT-732
 			return (cb(err));
 		});
 	},

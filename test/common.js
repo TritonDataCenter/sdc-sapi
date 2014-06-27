@@ -34,7 +34,7 @@ function createApplication(uuid, cb) {
 		opts.params.image_uuid = process.env['IMAGE_UUID'];
 
 	this.sapi.createApplication(name, process.env.ADMIN_UUID, opts,
-	    function (err, app) {
+		function (err, app) {
 		return (cb(err));
 	});
 }
@@ -101,8 +101,7 @@ function testUpdates(t, uri, cb) {
 			changes.metadata = {};
 			changes.metadata.foo = 'bar';
 
-			self.client.put(uri, changes,
-			    function (err, _, res, obj) {
+			self.client.put(uri, changes, function (err, _, res, obj) {
 				t.ifError(err);
 				t.equal(res.statusCode, 200);
 
@@ -120,8 +119,7 @@ function testUpdates(t, uri, cb) {
 			changes.metadata = {};
 			changes.metadata.foo = ' ';
 
-			self.client.put(uri, changes,
-			    function (err, _, res, obj) {
+			self.client.put(uri, changes, function (err, _, res, obj) {
 				t.ifError(err);
 				t.equal(res.statusCode, 200);
 
@@ -139,8 +137,7 @@ function testUpdates(t, uri, cb) {
 			changes.metadata = {};
 			changes.metadata.oldmd = 'oldvalue';
 
-			self.client.put(uri, changes,
-			    function (err, _, res, obj) {
+			self.client.put(uri, changes, function (err, _, res, obj) {
 				t.ifError(err);
 				t.equal(res.statusCode, 200);
 
@@ -158,8 +155,7 @@ function testUpdates(t, uri, cb) {
 			changes.metadata = {};
 			changes.metadata.newmd = 'newvalue';
 
-			self.client.put(uri, changes,
-			    function (err, _, res, obj) {
+			self.client.put(uri, changes, function (err, _, res, obj) {
 				t.ifError(err);
 				t.equal(res.statusCode, 200);
 

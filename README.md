@@ -62,3 +62,8 @@ To run a single test (for example):
 
     TEST_SAPI_PROTO_MODE=false ./node_modules/.bin/nodeunit \
         ./test/mode.test.js -t 'upgrade to full mode'
+
+When running tests, the SAPI SMF service will be disabled so the server logs
+will be rewritten by nodeunit on a separate file located at:
+
+    /opt/smartdc/sapi/test/tests.log

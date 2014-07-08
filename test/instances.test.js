@@ -753,6 +753,7 @@ test('invalid zone parameters', function (t) {
 	 * validation but ultimately cause VMAPI.createVm() to fail.
 	 */
 	inst.params.ram = 10 * 1024 * 1024 * 1024 * 1024;  // 10 TB
+	inst.params.networks = [ { name: 'admin', ip: '192.168.1.1'} ];
 
 	var uri_inst = '/instances/' + inst.uuid;
 

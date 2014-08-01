@@ -80,6 +80,7 @@ service: all $(SMF_MANIFESTS)
 	@mkdir -p $(SVC_INSTDIR)/lib
 	@mkdir -p $(SVC_INSTDIR)/smf/manifests
 	@mkdir -p $(SVC_INSTDIR)/test
+	@mkdir -p $(SVC_INSTDIR)/tools
 	@touch $(SVC_PKGDIR)/site/.do-not-delete-me
 	cp -r $(TOP)/server.js \
 		$(TOP)/node_modules \

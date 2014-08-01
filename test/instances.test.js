@@ -379,12 +379,12 @@ test('put/get/del agent instance', function (t) {
 		t.ok(found, 'found service' + inst.uuid);
 	};
 
-	var createService = function (app_uuid, uuid, cb) {
+	var createService = function (the_app_uuid, uuid, cb) {
 		var name = 'empty_agent_service';
 
 		var opts = { uuid: uuid, type: 'agent' };
 
-		self.sapi.createService(name, app_uuid, opts, function (err, svc) {
+		self.sapi.createService(name, the_app_uuid, opts, function (err, svc) {
 			return (cb(err));
 		});
 	};

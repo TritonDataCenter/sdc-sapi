@@ -88,6 +88,8 @@ service: all $(SMF_MANIFESTS)
 	cp -r $(TOP)/lib/common \
 		$(TOP)/lib/server \
 		$(SVC_INSTDIR)/lib
+	cp -r $(TOP)/tools/sapi-backfill-service-type.js \
+		$(SVC_INSTDIR)/tools/
 	mkdir -p $(TOP)/build/service/root/opt/smartdc/boot
 	cp -R $(TOP)/deps/sdc-scripts/* \
 	    $(TOP)/build/service/root/opt/smartdc/boot/

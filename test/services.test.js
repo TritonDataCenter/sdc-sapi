@@ -135,7 +135,8 @@ test('create w/ other invalid inputs', function (t) {
 				 * mode, so there's no validation of the
 				 * image_uuid.
 				 */
-				if (process.env.TEST_SAPI_PROTO_MODE === 'true') {
+				if (process.env.TEST_SAPI_PROTO_MODE ===
+				    'true') {
 					t.ifError(err);
 					t.equal(res.statusCode, 200);
 				} else {
@@ -309,7 +310,9 @@ test('put/get/del service', function (t) {
 			common.createManifest.call(self, function (err, cfg) {
 				if (cfg) {
 					cfg_uuid = cfg.uuid;
-					svc.manifests = { my_service: cfg_uuid };
+					svc.manifests = {
+						my_service: cfg_uuid
+					};
 				}
 				cb(err);
 			});
@@ -366,7 +369,8 @@ test('put/get/del service', function (t) {
 			});
 		},
 		function (cb) {
-			var uri = '/services?application_uuid=' + svc.application_uuid;
+			var uri = '/services?application_uuid=' +
+				svc.application_uuid;
 
 			self.client.get(uri, function (err, _, res, obj) {
 				t.ifError(err);
@@ -451,17 +455,20 @@ test('test 1100 services', function (t) {
 				return (svcs.length < 1100);
 			}, function (subcb) {
 				var svc = {};
-				svc.name = '1100services_' + node_uuid.v4().substr(0, 8);
+				svc.name = '1100services_' +
+					node_uuid.v4().substr(0, 8);
 				svc.application_uuid = app_uuid;
 
-				self.client.post(URI, svc, function (err, _, res, obj) {
+				function onPost(err, _, res, obj) {
 					t.ifError(err);
 					t.equal(res.statusCode, 200);
 
 					svcs.push(obj);
 
 					subcb();
-				});
+				}
+
+				self.client.post(URI, svc, onPost);
 			}, function (err) {
 				cb();
 			});

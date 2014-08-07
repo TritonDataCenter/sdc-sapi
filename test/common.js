@@ -101,7 +101,7 @@ function testUpdates(t, uri, cb) {
 			changes.metadata = {};
 			changes.metadata.foo = 'bar';
 
-			self.client.put(uri, changes, function (err, _, res, obj) {
+			function onPut(err, _, res, obj) {
 				t.ifError(err);
 				t.equal(res.statusCode, 200);
 
@@ -109,7 +109,9 @@ function testUpdates(t, uri, cb) {
 				t.equal(obj.metadata.foo, 'bar');
 
 				subcb(null);
-			});
+			}
+
+			self.client.put(uri, changes, onPut);
 		},
 		function (subcb) {
 			var changes = {};
@@ -119,7 +121,7 @@ function testUpdates(t, uri, cb) {
 			changes.metadata = {};
 			changes.metadata.foo = ' ';
 
-			self.client.put(uri, changes, function (err, _, res, obj) {
+			function onPut(err, _, res, obj) {
 				t.ifError(err);
 				t.equal(res.statusCode, 200);
 
@@ -127,7 +129,9 @@ function testUpdates(t, uri, cb) {
 				t.ok(!obj.metadata.foo);
 
 				subcb(null);
-			});
+			}
+
+			self.client.put(uri, changes, onPut);
 		},
 		function (subcb) {
 			var changes = {};
@@ -137,7 +141,7 @@ function testUpdates(t, uri, cb) {
 			changes.metadata = {};
 			changes.metadata.oldmd = 'oldvalue';
 
-			self.client.put(uri, changes, function (err, _, res, obj) {
+			function onPut(err, _, res, obj) {
 				t.ifError(err);
 				t.equal(res.statusCode, 200);
 
@@ -145,7 +149,9 @@ function testUpdates(t, uri, cb) {
 				t.equal(obj.metadata.oldmd, 'oldvalue');
 
 				subcb(null);
-			});
+			}
+
+			self.client.put(uri, changes, onPut);
 		},
 		function (subcb) {
 			var changes = {};
@@ -155,7 +161,7 @@ function testUpdates(t, uri, cb) {
 			changes.metadata = {};
 			changes.metadata.newmd = 'newvalue';
 
-			self.client.put(uri, changes, function (err, _, res, obj) {
+			function onPut(err, _, res, obj) {
 				t.ifError(err);
 				t.equal(res.statusCode, 200);
 
@@ -165,7 +171,9 @@ function testUpdates(t, uri, cb) {
 				t.equal(Object.keys(obj.metadata).length, 1);
 
 				subcb(null);
-			});
+			}
+
+			self.client.put(uri, changes, onPut);
 		}
 	], cb);
 }

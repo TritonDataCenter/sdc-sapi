@@ -159,7 +159,8 @@ test('put/get/del vm instance', function (t) {
 		t.equal(obj.uuid, inst.uuid);
 		t.equal(obj.service_uuid, inst.service_uuid);
 		if (obj.params)
-			t.equal(obj.params.server_uuid, process.env.SERVER_UUID);
+			t.equal(obj.params.server_uuid,
+				process.env.SERVER_UUID);
 		else
 			t.fail('obj.params is undefined');
 		t.deepEqual(obj.metadata, inst.metadata);
@@ -194,7 +195,9 @@ test('put/get/del vm instance', function (t) {
 			common.createManifest.call(self, function (err, cfg) {
 				if (cfg) {
 					cfg_uuid = cfg.uuid;
-					inst.manifests = { my_service: cfg_uuid };
+					inst.manifests = {
+						my_service: cfg_uuid
+					};
 				}
 
 				cb(err);
@@ -241,7 +244,8 @@ test('put/get/del vm instance', function (t) {
 			});
 		},
 		function (cb) {
-			var uri = '/instances?service_uuid=' + inst.service_uuid;
+			var uri = '/instances?service_uuid=' +
+				inst.service_uuid;
 
 			client.get(uri, function (err, _, res, obj) {
 				t.ifError(err);
@@ -283,8 +287,10 @@ test('put/get/del vm instance', function (t) {
 
 				t.ok(obj);
 				if (obj.metadata) {
-					t.equal(obj.metadata.ZONE_UUID, inst.uuid);
-					t.equal(obj.metadata.SERVER_UUID, process.env.SERVER_UUID);
+					t.equal(obj.metadata.ZONE_UUID,
+						inst.uuid);
+					t.equal(obj.metadata.SERVER_UUID,
+						process.env.SERVER_UUID);
 				} else {
 					t.fail('obj.METADATA is null');
 				}
@@ -341,8 +347,8 @@ test('put/get/del agent instance', function (t) {
 	var svc_uuid = node_uuid.v4();
 
 	/*
-	 * params can be set but they won't have any effect because agent instances
-	 * are not vms
+	 * params can be set but they won't have any effect because agent
+	 * instances are not vms
 	 */
 	var inst = {};
 	inst.uuid = node_uuid.v4();
@@ -384,9 +390,10 @@ test('put/get/del agent instance', function (t) {
 
 		var opts = { uuid: uuid, type: 'agent' };
 
-		self.sapi.createService(name, the_app_uuid, opts, function (err, svc) {
-			return (cb(err));
-		});
+		self.sapi.createService(name, the_app_uuid, opts,
+					function (err, svc) {
+						return (cb(err));
+					});
 	};
 
 	var uri_inst = '/instances/' + inst.uuid;
@@ -402,7 +409,9 @@ test('put/get/del agent instance', function (t) {
 			common.createManifest.call(self, function (err, cfg) {
 				if (cfg) {
 					cfg_uuid = cfg.uuid;
-					inst.manifests = { my_service: cfg_uuid };
+					inst.manifests = {
+						my_service: cfg_uuid
+					};
 				}
 
 				cb(err);
@@ -447,7 +456,8 @@ test('put/get/del agent instance', function (t) {
 			});
 		},
 		function (cb) {
-			var uri = '/instances?service_uuid=' + inst.service_uuid;
+			var uri = '/instances?service_uuid=' +
+				inst.service_uuid;
 
 			client.get(uri, function (err, _, res, obj) {
 				t.ifError(err);
@@ -489,9 +499,13 @@ test('put/get/del agent instance', function (t) {
 
 				t.ok(obj);
 				if (obj.metadata) {
-					t.equal(obj.metadata.ZONE_UUID, inst.uuid); // deprecated
-					t.equal(obj.metadata.INSTANCE_UUID, inst.uuid);
-					t.equal(obj.metadata.SERVER_UUID, process.env.SERVER_UUID);
+					// deprecated
+					t.equal(obj.metadata.ZONE_UUID,
+						inst.uuid);
+					t.equal(obj.metadata.INSTANCE_UUID,
+						inst.uuid);
+					t.equal(obj.metadata.SERVER_UUID,
+						process.env.SERVER_UUID);
 				} else {
 					t.fail('obj.METADATA is null');
 				}
@@ -872,7 +886,8 @@ test('upgrading a zone', function (t) {
 				t.ifError(err);
 				t.equal(res.statusCode, 200);
 				if (obj && obj.params) {
-					t.equal(obj.params.image_uuid, OLD_IMAGE);
+					t.equal(obj.params.image_uuid,
+						OLD_IMAGE);
 				}
 
 				cb();
@@ -893,7 +908,8 @@ test('upgrading a zone', function (t) {
 				 * params.image_uuid.
 				 */
 				if (obj && obj.params) {
-					t.equal(obj.params.image_uuid, OLD_IMAGE);
+					t.equal(obj.params.image_uuid,
+						OLD_IMAGE);
 				}
 
 				cb();
@@ -1077,7 +1093,8 @@ test('teardown hooks', function (t) {
 			client.put(uri_inst, opts, function (err, _, res, obj) {
 				t.ifError(err);
 				t.equal(res.statusCode, 200);
-				t.equal(obj.params['teardown-hook'], '/bin/true');
+				t.equal(obj.params['teardown-hook'],
+					'/bin/true');
 				cb(null);
 			});
 		},
@@ -1098,7 +1115,8 @@ test('teardown hooks', function (t) {
 			client.put(uri_svc, opts, function (err, _, res, obj) {
 				t.ifError(err);
 				t.equal(res.statusCode, 200);
-				t.equal(obj.params['teardown-hook'], '/bin/false');
+				t.equal(obj.params['teardown-hook'],
+					'/bin/false');
 				cb(null);
 			});
 		},
@@ -1135,7 +1153,8 @@ test('teardown hooks', function (t) {
 			client.put(uri_svc, opts, function (err, _, res, obj) {
 				t.ifError(err);
 				t.equal(res.statusCode, 200);
-				t.equal(obj.params['teardown-hook'], '/bin/true');
+				t.equal(obj.params['teardown-hook'],
+					'/bin/true');
 				cb(null);
 			});
 		},

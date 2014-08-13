@@ -382,7 +382,7 @@ test('put/get/del agent instance', function (t) {
 			}
 		}
 
-		t.ok(found, 'found service' + inst.uuid);
+		t.ok(found, 'found service ' + inst.uuid);
 	};
 
 	var createService = function (the_app_uuid, uuid, cb) {
@@ -469,7 +469,7 @@ test('put/get/del agent instance', function (t) {
 			});
 		},
 		function (cb) {
-			client.get(URI, function (err, _, res, obj) {
+			client.get(URI + '?type=agent', function (err, _, res, obj) {
 				t.ifError(err);
 				t.equal(res.statusCode, 200);
 

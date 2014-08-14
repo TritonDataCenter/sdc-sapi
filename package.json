@@ -20,7 +20,7 @@
 		"optimist": "0.3.5",
 		"restify": "2.4.1",
 		"sdc-clients": "git+ssh://git@git.joyent.com:node-sdc-clients.git#337662c",
-		"semver": "1.1.4",
+		"semver": "3.0.1",
 		"sprintf-js": "0.0.7",
 		"vasync": "1.5.0"
 	},

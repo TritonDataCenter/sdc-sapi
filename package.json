@@ -15,7 +15,7 @@
 		"ldapjs": "git://github.com/mcavage/node-ldapjs.git#0a88109",
 		"lru-cache": "2.3.0",
 		"mkdirp": "0.3.4",
-		"moray": "git+ssh://git@git.joyent.com:node-moray.git#93e1648",
+		"moray": "git+ssh://git@github.com:joyent/node-moray.git#93e1648",
 		"node-uuid": "1.4.0",
 		"once": "1.3.0",
 		"optimist": "0.3.5",

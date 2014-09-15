@@ -8,30 +8,28 @@
     Copyright (c) 2014, Joyent, Inc.
 -->
 
-# Services API (SAPI)
+# sdc-sapi
 
-Repository: <git@git.joyent.com:sapi.git>
-Browsing: <https://mo.joyent.com/sapi>
-Who: Bill Pijewski
-Docs: <https://mo.joyent.com/docs/sapi/master>
-Tickets/bugs: <https://devhub.joyent.com/jira/browse/SAPI>
+This repository is part of the Joyent SmartDataCenter project (SDC).  For
+contribution guidelines, issues, and general documentation, visit the main
+[SDC](http://github.com/joyent/sdc) project page.
 
-
-# Overview
-
-See <https://mo.joyent.com/docs/sapi/master/#overview>.
-
+SAPI is the Services API.  This API allows operators to configure, deploy, and
+upgrade software using a set of loosely-coupled federated services.
 
 # Repository
 
+    bin/            Commands available in $PATH.
+    boot/           Configuration scripts on zone setup.
+    cmd/            Top-level commands.
     deps/           Git submodules and/or commited 3rd-party deps should go
                     here. See "node_modules/" for node.js deps.
     docs/           Project docs (restdown)
     etc/            Test configuration files for running SAPI locally
     lib/            Source files.
     node_modules/   Node.js dependencies
+    sapi_manifests/ SAPI manifests for zone configuration.
     smf/manifests   SMF manifests
-    smf/methods     SMF method scripts
     test/           Test suite (using nodeunit)
     tools/          Miscellaneous dev/upgrade/deployment tools and data.
     Makefile
@@ -43,7 +41,7 @@ See <https://mo.joyent.com/docs/sapi/master/#overview>.
 
 To run a SAPI server locally:
 
-    git clone git@git.joyent.com:sapi.git
+    git clone git@github.com:joyent/sdc-sapi.git
     cd sapi
     git submodule update --init
     make all

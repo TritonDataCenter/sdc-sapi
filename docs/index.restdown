@@ -18,9 +18,7 @@ markdown2extras: wiki-tables, code-friendly
 This API allows operators to configure, deploy, and upgrade software using a
 set of loosely-coupled federated services.
 
-SAPI is the next iteration of the manta.git deployment tools.  In short, it's
-trying to bring to SDC some of the deployment software already developed for
-manta.  It has several goals:
+It has several goals:
 
 * Provide clean, unified deployment semantics
 * Enable auto-discovery of SDC and manta services

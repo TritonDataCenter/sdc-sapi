@@ -1,7 +1,7 @@
 ---
 title: Services API
 apisections: Service Configuration, Amon Configuration, Applications, Services, Instances, Manifests, Images, Modes, Configs, Cache
-markdown2extras: wiki-tables, code-friendly
+markdown2extras: tables, code-friendly
 ---
 <!--
     This Source Code Form is subject to the terms of the Mozilla Public
@@ -255,17 +255,19 @@ Creates a new application.  An application must have a name and an owner_uuid.
 
 ### Inputs
 
-||**Param**||**Type**||**Description**||**Required?**||
-|| name || string || Name of application || yes ||
-|| owner_uuid || UUID || Owner's UUID || yes ||
-|| params || object || zone parameters || no ||
-|| metadata || object || zone metadata || no ||
-|| manifests || array of UUIDs || configuration manifests || no ||
+| Param      | Type           | Description             | Required? |
+| ---------- | -------------- | ----------------------- | --------- |
+| name       | string         | Name of application     | yes       |
+| owner_uuid | UUID           | Owner's UUID            | yes       |
+| params     | object         | zone parameters         | no        |
+| metadata   | object         | zone metadata           | no        |
+| manifests  | array of UUIDs | configuration manifests | no        |
 
 ### Responses
 
-||**Code**||**Description**||**Response**||
-|| 204 || Application successfully created || Application object ||
+| Code | Description                      | Response           |
+| ---- | -------------------------------- | ------------------ |
+| 204  | Application successfully created | Application object |
 
 ### Example
 
@@ -284,15 +286,17 @@ Returns a list of all applications.
 
 ### Inputs
 
-||**Param**||**Type**||**Description**||**Required?**||
-|| name || string || Name of application || no ||
-|| owner_uuid || UUID || Owner's UUID || no ||
+| Param      | Type   | Description         | Required? |
+| ---------- | ------ | ------------------- | --------- |
+| name       | string | Name of application | no        |
+| owner_uuid | UUID   | Owner's UUID        | no        |
 
 ### Responses
 
-||**Code**||**Description**||**Response**||
-|| 200 || Found one or more applications || List of application objects ||
-|| 404 || No applications found || none ||
+| Code | Description                    | Response                    |
+| ---- | ------------------------------ | --------------------------- |
+| 200  | Found one or more applications | List of application objects |
+| 404  | No applications found          | none                        |
 
 ### Example
 
@@ -323,14 +327,16 @@ Get an application by UUID.
 
 ### Inputs
 
-||**Param**||**Type**||**Description**||**Required?**||
-|| uuid || UUID || UUID of application || yes ||
+| Param | Type | Description         | Required? |
+| ----- | ---- | ------------------- | --------- |
+| uuid  | UUID | UUID of application | yes       |
 
 ### Responses
 
-||**Code**||**Description**||**Response**||
-|| 200 || Application found || Application object ||
-|| 404 || No applications found || none ||
+| Code | Description           | Response           |
+| ---- | --------------------- | ------------------ |
+| 200  | Application found     | Application object |
+| 404  | No applications found | none               |
 
 ### Example
 
@@ -343,19 +349,21 @@ Updates an application.
 
 ### Inputs
 
-||**Param**||**Type**||**Description**||**Required?**||
-|| uuid || UUID || UUID of application || yes ||
-|| action || string || One of 'update', 'replace', 'delete'. Default is update. || no ||
-|| params || object || zone parameters || no ||
-|| metadata || object || zone metadata || no ||
-|| manifests || array of UUIDs || configuration manifests || no ||
-|| owner_uuid || UUID || application's new owner || no ||
+| Param      | Type           | Description                                              | Required? |
+| ---------- | -------------- | -------------------------------------------------------- | --------- |
+| uuid       | UUID           | UUID of application                                      | yes       |
+| action     | string         | One of 'update', 'replace', 'delete'. Default is update. | no        |
+| params     | object         | zone parameters                                          | no        |
+| metadata   | object         | zone metadata                                            | no        |
+| manifests  | array of UUIDs | configuration manifests                                  | no        |
+| owner_uuid | UUID           | application's new owner                                  | no        |
 
 ### Responses
 
-||**Code**||**Description**||**Response**||
-|| 200 || Updates completed || Updated application object ||
-|| 404 || No application found || none ||
+| Code | Description          | Response                   |
+| ---- | -------------------- | -------------------------- |
+| 200  | Updates completed    | Updated application object |
+| 404  | No application found | none                       |
 
 ### Example
 
@@ -373,13 +381,15 @@ Deletes an application.
 
 ### Inputs
 
-||**Param**||**Type**||**Description**||**Required?**||
-|| uuid || UUID || UUID of application || yes||
+| Param | Type | Description         | Required? |
+| ----- | ---- | ------------------- | --------- |
+| uuid  | UUID | UUID of application | yes       |
 
 ### Responses
 
-||**Code**||**Description**||**Response**||
-|| 204 || Application was deleted || none  ||
+| Code | Description             | Response |
+| ---- | ----------------------- | -------- |
+| 204  | Application was deleted | none     |
 
 
 
@@ -391,27 +401,30 @@ Create a service.
 
 ### Inputs
 
-||**Param**||**Type**||**Description**||**Required?**||
-|| name || string || Name of service || yes ||
-|| application_uuid || UUID || Application's UUID || yes ||
-|| params || object || zone parameters || no ||
-|| metadata || object || zone metadata || no ||
-|| manifests || array of UUIDs || configuration manifests || no ||
+| Param            | Type           | Description             | Required? |
+| ---------------- | -------------- | ----------------------- | --------- |
+| name             | string         | Name of service         | yes       |
+| application_uuid | UUID           | Application's UUID      | yes       |
+| params           | object         | zone parameters         | no        |
+| metadata         | object         | zone metadata           | no        |
+| manifests        | array of UUIDs | configuration manifests | no        |
 
 
 ## ListServices (GET /services)
 
 Returns the list of all services.
 
-||**Param**||**Type**||**Description**||**Required?**||
-|| name || string || Name of service || no ||
-|| application_uuid || UUID || Application's UUID || no ||
+| Param            | Type   | Description        | Required? |
+| ---------------- | ------ | ------------------ | --------- |
+| name             | string | Name of service    | no        |
+| application_uuid | UUID   | Application's UUID | no        |
 
 ### Responses
 
-||**Code**||**Description**||**Response**||
-|| 200 || Found one or more services || List of service objects ||
-|| 404 || No services found || none ||
+| Code | Description                | Response                |
+| ---- | -------------------------- | ----------------------- |
+| 200  | Found one or more services | List of service objects |
+| 404  | No services found          | none                    |
 
 ### Example
 
@@ -442,14 +455,16 @@ Return a particular service.
 
 ### Inputs
 
-||**Param**||**Type**||**Description**||**Required?**||
-|| uuid || UUID || UUID of service || yes||
+| Param | Type | Description     | Required? |
+| ----- | ---- | --------------- | --------- |
+| uuid  | UUID | UUID of service | yes       |
 
 ### Responses
 
-||**Code**||**Description**||**Response**||
-|| 200 || Service found || Service object ||
-|| 404 || No service found || none ||
+| Code | Description      | Response       |
+| ---- | ---------------- | -------------- |
+| 200  | Service found    | Service object |
+| 404  | No service found | none           |
 
 ### Example
 
@@ -462,18 +477,20 @@ Updates an service.
 
 ### Inputs
 
-||**Param**||**Type**||**Description**||**Required?**||
-|| uuid || UUID || UUID of service || yes ||
-|| action || string || One of 'update', 'replace', 'delete'. Default is update. || no ||
-|| params || object || zone parameters || no ||
-|| metadata || object || zone metadata || no ||
-|| manifests || array of UUIDs || configuration manifests || no ||
+| Param     | Type           | Description                                              | Required? |
+| --------- | -------------- | -------------------------------------------------------- | --------- |
+| uuid      | UUID           | UUID of service                                          | yes       |
+| action    | string         | One of 'update', 'replace', 'delete'. Default is update. | no        |
+| params    | object         | zone parameters                                          | no        |
+| metadata  | object         | zone metadata                                            | no        |
+| manifests | array of UUIDs | configuration manifests                                  | no        |
 
 ### Responses
 
-||**Code**||**Description**||**Response**||
-|| 200 || Updates completed || Updated service object ||
-|| 404 || No service found || none ||
+| Code | Description       | Response               |
+| ---- | ----------------- | ---------------------- |
+| 200  | Updates completed | Updated service object |
+| 404  | No service found  | none                   |
 
 ### Example
 
@@ -491,13 +508,15 @@ Delete a particular service.
 
 ### Inputs
 
-||**Param**||**Type**||**Description**||**Required?**||
-|| uuid || UUID || UUID of service || yes||
+| Param | Type | Description     | Required? |
+| ----- | ---- | --------------- | --------- |
+| uuid  | UUID | UUID of service | yes       |
 
 ### Responses
 
-||**Code**||**Description**||**Response**||
-|| 204 || Service was deleted || none  ||
+| Code | Description         | Response |
+| ---- | ------------------- | -------- |
+| 204  | Service was deleted | none     |
 
 
 
@@ -509,17 +528,19 @@ Create and deploy an instance.
 
 ### Inputs
 
-||**Param**||**Type**||**Description**||**Required?**||
-|| service_uuid || UUID || Service's UUID || yes ||
-|| uuid || UUID || UUID to use for the new instance || no ||
-|| params || object || zone parameters || no ||
-|| metadata || object || zone metadata || no ||
-|| manifests || array of UUIDs || configuration manifests || no ||
+| Param        | Type           | Description                      | Required? |
+| ------------ | -------------- | -------------------------------- | --------- |
+| service_uuid | UUID           | Service's UUID                   | yes       |
+| uuid         | UUID           | UUID to use for the new instance | no        |
+| params       | object         | zone parameters                  | no        |
+| metadata     | object         | zone metadata                    | no        |
+| manifests    | array of UUIDs | configuration manifests          | no        |
 
 ### Responses
 
-||**Code**||**Description**||**Response**||
-|| 204 || Instance successfully created || Instance object ||
+| Code | Description                   | Response        |
+| ---- | ----------------------------- | --------------- |
+| 204  | Instance successfully created | Instance object |
 
 ### Example
 
@@ -539,13 +560,15 @@ List all instances, with an optional service_uuid filter.
 
 ### Inputs
 
-||**Param**||**Type**||**Description**||**Required?**||
-|| service_uuid || UUID || service_uuid to filter by || no ||
+| Param        | Type | Description               | Required? |
+| ------------ | ---- | ------------------------- | --------- |
+| service_uuid | UUID | service_uuid to filter by | no        |
 
 ### Responses
 
-||**Code**||**Description**||**Response**||
-|| 200 || All instances, or instances which match filter || Array of instance objects (possibly empty) ||
+| Code | Description                                    | Response                                   |
+| ---- | ---------------------------------------------- | ------------------------------------------ |
+| 200  | All instances, or instances which match filter | Array of instance objects (possibly empty) |
 
 Note that in the case that no instances match the service_uuid filter, this
 endpoint will still return 200, only with an empty array.
@@ -579,14 +602,16 @@ Get a particular instance by UUID.
 
 ### Inputs
 
-||**Param**||**Type**||**Description**||**Required?**||
-|| uuid || UUID || UUID of instance || yes ||
+| Param | Type | Description      | Required? |
+| ----- | ---- | ---------------- | --------- |
+| uuid  | UUID | UUID of instance | yes       |
 
 ### Responses
 
-||**Code**||**Description**||**Response**||
-|| 200 || Instance found || Instance object ||
-|| 404 || Instance not found || none ||
+| Code | Description        | Response        |
+| ---- | ------------------ | --------------- |
+| 200  | Instance found     | Instance object |
+| 404  | Instance not found | none            |
 
 ### Example
 
@@ -610,14 +635,16 @@ Get the actual payload passed to VMAPI.createVm() for this instance.
 
 ### Inputs
 
-||**Param**||**Type**||**Description**||**Required?**||
-|| uuid || UUID || UUID of instance || yes||
+| Param | Type | Description      | Required? |
+| ----- | ---- | ---------------- | --------- |
+| uuid  | UUID | UUID of instance | yes       |
 
 ### Responses
 
-||**Code**||**Description**||**Response**||
-|| 200 || Payload provided to VMAPI.createVm() || Payload object ||
-|| 404 || Instance not found || none ||
+| Code | Description                          | Response       |
+| ---- | ------------------------------------ | -------------- |
+| 200  | Payload provided to VMAPI.createVm() | Payload object |
+| 404  | Instance not found                   | none           |
 
 ### Example
 
@@ -645,18 +672,20 @@ Updates an instance.
 
 ### Inputs
 
-||**Param**||**Type**||**Description**||**Required?**||
-|| uuid || UUID || UUID of instance || yes ||
-|| action || string || One of 'update', 'replace', 'delete'. Default is update. || no ||
-|| params || object || zone parameters || no ||
-|| metadata || object || zone metadata || no ||
-|| manifests || array of UUIDs || configuration manifests || no ||
+| Param     | Type           | Description                                              | Required? |
+| --------- | -------------- | -------------------------------------------------------- | --------- |
+| uuid      | UUID           | UUID of instance                                         | yes       |
+| action    | string         | One of 'update', 'replace', 'delete'. Default is update. | no        |
+| params    | object         | zone parameters                                          | no        |
+| metadata  | object         | zone metadata                                            | no        |
+| manifests | array of UUIDs | configuration manifests                                  | no        |
 
 ### Responses
 
-||**Code**||**Description**||**Response**||
-|| 200 || Updates completed || Updated instance object ||
-|| 404 || No instance found || none ||
+| Code | Description       | Response                |
+| ---- | ----------------- | ----------------------- |
+| 200  | Updates completed | Updated instance object |
+| 404  | No instance found | none                    |
 
 ### Example
 
@@ -675,15 +704,17 @@ VMAPI.reprovisionVm() endpoint.
 
 ### Inputs
 
-||**Param**||**Type**||**Description**||**Required?**||
-|| uuid || UUID || UUID of instance || yes ||
-|| image_uuid || UUID || UUID of new image || yes ||
+| Param      | Type | Description       | Required? |
+| ---------- | ---- | ----------------- | --------- |
+| uuid       | UUID | UUID of instance  | yes       |
+| image_uuid | UUID | UUID of new image | yes       |
 
 ### Responses
 
-||**Code**||**Description**||**Response**||
-|| 200 || Updates completed || Updated instance object ||
-|| 404 || No instance found || none ||
+| Code | Description       | Response                |
+| ---- | ----------------- | ----------------------- |
+| 200  | Updates completed | Updated instance object |
+| 404  | No instance found | none                    |
 
 ### Example
 
@@ -696,13 +727,15 @@ VMAPI.reprovisionVm() endpoint.
 
 ### Inputs
 
-||**Param**||**Type**||**Description**||**Required?**||
-|| uuid || UUID || UUID of instance || yes||
+| Param | Type | Description      | Required? |
+| ----- | ---- | ---------------- | --------- |
+| uuid  | UUID | UUID of instance | yes       |
 
 ### Responses
 
-||**Code**||**Description**||**Response**||
-|| 204 || Instance was deleted || none  ||
+| Code | Description          | Response |
+| ---- | -------------------- | -------- |
+| 204  | Instance was deleted | none     |
 
 
 

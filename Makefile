@@ -30,7 +30,7 @@ JSSTYLE_FILES	 = $(JS_FILES)
 JSSTYLE_FLAGS    = -o doxygen
 SMF_MANIFESTS_IN = smf/manifests/sapi.xml.in
 
-NODE_PREBUILT_VERSION=v0.10.26
+NODE_PREBUILT_VERSION=v0.11.14
 ifeq ($(shell uname -s),SunOS)
 	NODE_PREBUILT_TAG=zone
 	# Allow building on a SmartOS image other than sdc-smartos/1.6.3.

@@ -25,49 +25,49 @@ optimist.usage('Usage: mdata-update <key> <value>');
 var ARGV = optimist.options({}).argv;
 
 if (ARGV._.length !== 2) {
-	optimist.showHelp();
-	process.exit(1);
+    optimist.showHelp();
+    process.exit(1);
 }
 
 var LOG = new Logger({
-	name: __filename,
-	serializers: Logger.stdSerializers
+    name: __filename,
+    serializers: Logger.stdSerializers
 });
 
 var CFG = '/opt/smartdc/config-agent/etc/config.json';
 var config = JSON.parse(fs.readFileSync(CFG, 'utf8'));
 
 var SAPI = new sdc.SAPI({
-	url: config.sapi.url,
-	log: LOG,
-	agent: false
+    url: config.sapi.url,
+    log: LOG,
+    agent: false
 });
 
 var ZONENAME;
 
 async.waterfall([
-	function (cb) {
-		cp.exec('/usr/bin/zonename', function (err, stdout) {
-			if (err)
-				throw (err);
-			ZONENAME = stdout.trim();
-			cb();
-		});
-	},
-	function (cb) {
-		var opts = {};
-		opts.metadata = {};
-		opts.metadata[ARGV._[0]] = ARGV._[1];
+    function (cb) {
+        cp.exec('/usr/bin/zonename', function (err, stdout) {
+            if (err)
+                throw (err);
+            ZONENAME = stdout.trim();
+            cb();
+        });
+    },
+    function (cb) {
+        var opts = {};
+        opts.metadata = {};
+        opts.metadata[ARGV._[0]] = ARGV._[1];
 
-		opts.action = 'update';
+        opts.action = 'update';
 
-		SAPI.updateInstance(ZONENAME, opts, function (err) {
-			if (err)
-				throw (err);
-			cb();
-		});
-	}
+        SAPI.updateInstance(ZONENAME, opts, function (err) {
+            if (err)
+                throw (err);
+            cb();
+        });
+    }
 ], function () {
-	console.log('Updated metadata key "' + ARGV._[0] + '"');
-	process.exit(0);
+    console.log('Updated metadata key "' + ARGV._[0] + '"');
+    process.exit(0);
 });

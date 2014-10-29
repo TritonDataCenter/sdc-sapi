@@ -23,10 +23,10 @@ var SAPI = require('./lib/server/sapi');
 
 optimist.usage('Usage:\t node server.js [ -f <config file> ]');
 var ARGV = optimist.options({
-	'f': {
-		'alias': 'file',
-		'describe': 'location of configuration file'
-	}
+    'f': {
+        'alias': 'file',
+        'describe': 'location of configuration file'
+    }
 }).argv;
 
 var file = ARGV.f ? ARGV.f : './etc/config.json';
@@ -42,8 +42,8 @@ config.log = log;
 var sapi = new SAPI(config);
 
 sapi.start(function (err) {
-	if (err) {
-		log.fatal(err, 'failure to start SAPI');
-		process.exit(1);
-	}
+    if (err) {
+        log.fatal(err, 'failure to start SAPI');
+        process.exit(1);
+    }
 });

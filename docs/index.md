@@ -933,3 +933,23 @@ Deletes an history item.
 | Code | Description                | Response |
 | ---- | -------------------------- | -------- |
 | 204  | History record was deleted | none     |
+
+# API Versions
+
+## 1.0.0
+
+Original SAPI version, including:
+
+- [Applications](#applications)
+- [Services](#services)
+- [Instances](#instances)
+- [Manifests](#manifests)
+- [Modes](#modes)
+- [Configs](#configs)
+- [Cache](#cache)
+
+## 2.0.0
+
+- [History](#history) end-point added
+- Added support for `type` field on SAPI instances. Added `type` as a supported
+  search filter for instances.

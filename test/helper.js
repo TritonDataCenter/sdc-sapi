@@ -42,7 +42,7 @@ function createLogger(name, stream) {
     return (log);
 }
 
-function createJsonClient() {
+function createJsonClient(opts) {
     var log = createLogger();
     var client = restify.createJsonClient({
         agent: false,
@@ -50,19 +50,21 @@ function createJsonClient() {
         log: log,
         retry: false,
         type: 'http',
-        url: process.env.SAPI_URL || 'http://localhost:80'
+        url: process.env.SAPI_URL || 'http://localhost:80',
+        version: (opts && opts.version) ? opts.version : '*'
     });
 
     return (client);
 }
 
-function createSapiClient() {
+function createSapiClient(opts) {
     var log = createLogger();
 
     var client = new sdc.SAPI({
         agent: false,
         log: log,
-        url: process.env.SAPI_URL || 'http://localhost:80'
+        url: process.env.SAPI_URL || 'http://localhost:80',
+        version: (opts && opts.version) ? opts.version : '*'
     });
 
     return (client);

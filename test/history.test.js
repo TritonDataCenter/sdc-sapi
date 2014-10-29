@@ -15,6 +15,7 @@
 var async = require('async');
 var common = require('./common');
 var node_uuid = require('node-uuid');
+var util = require('util');
 
 if (require.cache[__dirname + '/helper.js']) {
     delete require.cache[__dirname + '/helper.js'];
@@ -32,11 +33,16 @@ var server;
 var tests_run = 0;
 
 helper.before(function (cb) {
-    this.client = helper.createJsonClient();
-    this.sapi = helper.createSapiClient();
+    this.client = helper.createJsonClient({
+        version: '2.0.0'
+    });
+    this.sapi = helper.createSapiClient({
+        version: '2.0.0'
+    });
 
-    if (server)
+    if (server) {
         return (cb(null));
+    }
 
     helper.startSapiServer(function (err, res) {
         server = res;
@@ -190,6 +196,35 @@ test('update history item', function (t) {
 
 test('list history', function (t) {
     this.client.get(URI, function (err, req, res, obj) {
+        t.ifError(err);
+        t.equal(res.statusCode, 200);
+        t.ok(Array.isArray(obj));
+        t.ok(obj[0].started);
+        t.ok(obj[0].changes.foo);
+        t.ok(obj[0].uuid);
+        t.end();
+    });
+});
+
+
+test('history exists since v2.0.0', function (t) {
+    var sapi = helper.createSapiClient({
+        version: '1.0.0'
+    });
+    sapi.get(URI, function (err, req, res, obj) {
+        t.ok(err);
+        t.equal(err.statusCode, 400);
+        t.equal(err.name, 'InvalidVersionError');
+        t.end();
+    });
+});
+
+
+test('history works with version \'*\'', function (t) {
+    var sapi = helper.createJsonClient({
+        version: '*'
+    });
+    sapi.get(URI, function (err, req, res, obj) {
         t.ifError(err);
         t.equal(res.statusCode, 200);
         t.ok(Array.isArray(obj));

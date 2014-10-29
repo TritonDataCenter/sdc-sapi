@@ -27,7 +27,7 @@ JS_FILES	:= $(shell ls *.js) $(shell find cmd lib test -name '*.js')
 JSL_CONF_NODE	 = tools/jsl.node.conf
 JSL_FILES_NODE   = $(JS_FILES)
 JSSTYLE_FILES	 = $(JS_FILES)
-JSSTYLE_FLAGS    = -o doxygen
+JSSTYLE_FLAGS    = -o indent=4,doxygen
 SMF_MANIFESTS_IN = smf/manifests/sapi.xml.in
 
 NODE_PREBUILT_VERSION=v0.10.26

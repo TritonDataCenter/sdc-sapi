@@ -149,16 +149,23 @@ function loadServices(cb) {
 
 function listInstances(cb) {
     var instances = [];
-    var req = morayClient.findObjects(INSTANCES_BUCKET, '(uuid=*)');
+    var req = morayClient.sql('select * from ' + INSTANCES_BUCKET);
 
     req.once('error', cb);
 
     req.on('record', function (object) {
-        instances.push(object.value);
+        var value = JSON.parse(object._value);
+        // push every instance uuid that does not have a type yet
+        if (object.type === null || object.type === undefined) {
+            instances.push(object.uuid);
+        } else {
+            log.info('Instance %s already has type=%s', object.uuid,
+                object.type);
+        }
     });
 
-    return req.once('end', function () {
-        cb(null, instances);
+    req.once('end', function () {
+        return cb(null, instances);
     });
 }
 
@@ -166,25 +173,28 @@ function updateInstances(instances, cb) {
     async.forEach(instances, updateInstance, cb);
 }
 
-function updateInstance(instance, cb) {
-    var uuid = instance.uuid;
+function updateInstance(uuid, cb) {
+    morayClient.getObject(INSTANCES_BUCKET, uuid, function (getErr, object) {
+        if (getErr) {
+            cb(getErr);
+            return;
+        }
 
-    if (instance.type === undefined) {
+        var instance = object.value;
         instance.type = services[instance.service_uuid] || 'vm';
-        morayClient.putObject(INSTANCES_BUCKET, uuid, instance, function (err) {
-            if (err) {
-                log.error(err, 'Could not update instance %s', uuid);
-                cb(err);
-                return;
-            }
 
-            log.info('Instance %s has ben updated', uuid);
-            cb();
+        morayClient.putObject(INSTANCES_BUCKET, uuid, instance,
+            { noBucketCache: true }, function (err) {
+                if (err) {
+                    log.error(err, 'Could not update instance %s', uuid);
+                    cb(err);
+                    return;
+                }
+
+                log.info('Instance %s has ben updated', uuid);
+                cb();
         });
-    } else {
-        log.info('Instance %s already has a type %s', uuid, instance.type);
-        process.nextTick(cb);
-    }
+    });
 }
 
 function onVerifyBucket(bucketErr) {

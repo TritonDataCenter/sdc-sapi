@@ -135,8 +135,14 @@ function updateService(service, cb) {
     var uuid = service.uuid;
 
     if (service.type === undefined) {
-        service.type = 'vm';
-        morayClient.putObject(SERVICES_BUCKET, uuid, service, function (err) {
+        if (service.name === 'vm-agent' || service.name === 'net-agent') {
+            service.type = 'agent';
+        } else {
+            service.type = 'vm';
+        }
+
+        morayClient.putObject(SERVICES_BUCKET, uuid, service,
+            { noBucketCache: true }, function (err) {
             if (err) {
                 log.error(err, 'Could not update service %s', uuid);
                 cb(err);

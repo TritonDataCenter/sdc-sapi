@@ -179,7 +179,6 @@ configuration manifest:
           "port": 2020
         },
         "objectRoot": "{{DATA_DIR}}",
-        "zone_uuid": "{{ZONE_UUID}}",
         "interval": 5000
       }
     }
@@ -210,13 +209,9 @@ SMF service.
         "port": 2020
       },
       "objectRoot": "/manta",
-      "zone_uuid": "ed23ee9a-808d-11e2-9046-db0663155996",
       "interval": 5000
     }
 
-The `{{ZONE_UUID}}` variable was rendered with the zone's UUID; SAPI provides
-certain variables like ZONE_UUID, SERVER_UUID, etc. based on the zone's
-attributes.
 
 
 # Proto Mode
@@ -780,10 +775,46 @@ Changes the current mode to the specified one.
 
 Gets the full set of metadata and manifests for a given instance.  This set is
 determined by taking the union of the application's, service's, and instance's
-data.  Any data which collides (e.g. two manifests with the same name, or two
-metadata values with the same key) will be preferentially selected first from
-the instance, then from the service, and finally from the application.
+data (last one wins).
 
+In addition, there are a few instance-specific metadata keys that are added.
+Note: As of [SAPI-248] **these are all deprecated.** Do not use them in new
+code.
+
+| Key           | Description |
+| ZONE_UUID     | The zonename of that instance. New SAPI templates should use `{{{auto.ZONENAME}}}`. |
+| SERVER_UUID   | The server (CN) UUID on which the instance is running. New SAPI templates should use `{{{auto.SERVER_UUID}}}`. |
+| INSTANCE_UUID | The instance UUID (same as the zonename). New SAPI templates should use `{{{auto.ZONENAME}}}`. |
+
+
+### Example
+
+    $ sdc-sapi /configs/$(vmadm lookup -1 alias=vmapi0)
+    HTTP/1.1 200 OK
+    Etag: c05101e85b6e49d231fa4c076edb6149508e831c
+    Content-Type: application/json
+    Content-Length: 11147
+    Date: Tue, 27 Jan 2015 00:55:07 GMT
+    Connection: keep-alive
+
+    {
+      "manifests": [
+        {
+          "uuid": "3f92e01b-3880-41d4-a024-fcdbb88d1771",
+          "name": "registrar",
+          "path": "/opt/smartdc/registrar/etc/config.json",
+          "template": "{\n  \"registration\": {\n    \"domain\": \"{{...",
+          "version": "1.0.0"
+        },
+        ...
+      ],
+      "metadata": {
+        ...
+        "datacenter_name": "coal",
+        "pkg_3": "sdc_512:512:1024:25600:200:1000:10:5dd022c8-5388-43e3-9fdd-536df4ea4f9f",
+        ...
+      }
+    }
 
 
 # Cache
@@ -801,6 +832,7 @@ Note that this API would needs to be called for each SAPI individually to ensure
 that they all have the most up-to-date objects.
 
     sdc-sapi /cache -X POST
+
 
 # History
 

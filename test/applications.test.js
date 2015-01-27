@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright (c) 2014, Joyent, Inc.
+ * Copyright (c) 2015, Joyent, Inc.
  */
 
 /*
@@ -25,6 +25,31 @@ var test = helper.test;
 var URI = '/applications';
 var APP_UUID;
 
+/*
+ * Two schemas, one which allows additional properties, one which does not.
+ */
+var soft_schema = {
+    'type': 'object',
+    'properties': {
+        'foo': {
+            'type': 'string',
+            'minLength': 1,
+            'required': true
+        }
+    }
+};
+
+var hard_schema = {
+    'type': 'object',
+    'properties': {
+        'foo': {
+            'type': 'string',
+            'minLength': 1,
+            'required': true
+        }
+    },
+    'additionalProperties': true
+};
 
 // -- Boilerplate
 
@@ -448,6 +473,182 @@ test('updating owner_uuid', function (t) {
         }
     ], function (err) {
         t.ifError(err);
+        t.end();
+    });
+});
+
+/* Create application with metadata that doesn't match schema */
+test('create application with schema mismatch', function (t) {
+    var app = {
+        name: 'badschema',
+        owner_uuid: process.env.ADMIN_UUID,
+        metadata: {},
+        metadata_schema: soft_schema
+    };
+
+    this.client.post(URI, app, function (err, req, res, obj) {
+        t.ok(err);
+        t.equal(err.name, 'SchemaValidationError');
+        t.equal(res.statusCode, 409);
+        t.end();
+    });
+});
+
+/*
+ * Create application with valid schema
+ *   o Verify requiring additional properties properly passes and fails
+ *   o Update metadata that matches schema passes
+ *   o Update metadata that doesn't match schema fails
+ *   o Update schema and metadata matches new schema
+ */
+test('create application with valid schema', function (t) {
+    var data, app;
+    data = { 'foo': 'bar' };
+    app = {
+        name: 'schema',
+        owner_uuid: process.env.ADMIN_UUID,
+        metadata: data,
+        metadata_schema: soft_schema
+    };
+
+    this.client.post(URI, app, function (err, req, res, obj) {
+        t.ifError(err);
+        t.equal(res.statusCode, 200);
+        t.equal(obj.name, 'schema');
+        t.equal(obj.owner_uuid, process.env.ADMIN_UUID);
+        t.deepEqual(obj.metadata, data);
+        t.deepEqual(obj.metadata_schema, soft_schema);
+        APP_UUID = obj.uuid;
+        t.end();
+    });
+});
+
+test('put that matches schema', function (t) {
+    var uri_app = '/applications/' + APP_UUID;
+    var data = { 'foo': 'baz' };
+    var self = this;
+
+    self.client.put(uri_app, { 'metadata': data },
+        function (err, _, res, obj) {
+        t.ifError(err);
+        t.equal(res.statusCode, 200);
+        t.deepEqual(obj.metadata, data);
+        t.end();
+    });
+});
+
+test('put that fails schema', function (t) {
+    var uri_app = '/applications/' + APP_UUID;
+    var data = { 'bad_key': 'baz' };
+    var self = this;
+
+    self.client.put(uri_app, { 'action': 'replace', 'metadata': data },
+        function (err, _, res, obj) {
+        t.ok(err);
+        t.equal(err.name, 'SchemaValidationError');
+        t.equal(res.statusCode, 409);
+        t.end();
+    });
+
+});
+
+test('delete application with schema', function (t) {
+    var self = this;
+
+    var uri_app = '/applications/' + APP_UUID;
+
+    this.client.del(uri_app, function (err, req, res, obj) {
+        t.ifError(err);
+        t.equal(res.statusCode, 204);
+
+        self.client.get(uri_app, function (suberr, _, subres) {
+            t.ok(suberr);
+            t.equal(suberr.statusCode, 404);
+            t.end();
+        });
+    });
+});
+
+/*
+ * Create application without schema:
+ *   o Verify adding mismatching schema fails
+ *   o Verify adding matching schema passes
+ */
+test('create application for eventual schema', function (t) {
+    var data, app;
+    data = { 'hello': 'world' };
+    app = {
+        name: 'schema',
+        owner_uuid: process.env.ADMIN_UUID,
+        metadata: data
+    };
+
+    this.client.post(URI, app, function (err, req, res, obj) {
+        t.ifError(err);
+        t.equal(res.statusCode, 200);
+        t.equal(obj.name, 'schema');
+        t.equal(obj.owner_uuid, process.env.ADMIN_UUID);
+        t.deepEqual(obj.metadata, data);
+        APP_UUID = obj.uuid;
+        t.end();
+    });
+});
+
+test('put with mis-matching schema', function (t) {
+    var uri_app = '/applications/' + APP_UUID;
+    var self = this;
+
+    self.client.put(uri_app, { 'metadata_schema': soft_schema },
+        function (err, _, res, obj) {
+        t.ok(err);
+        t.equal(err.name, 'SchemaValidationError');
+        t.equal(res.statusCode, 409);
+        t.end();
+    });
+
+});
+
+test('put with failing hard schema', function (t) {
+    var uri_app = '/applications/' + APP_UUID;
+    var data = { 'foo': 'bar' };
+    var self = this;
+
+    self.client.put(uri_app, { 'metadata_schema': hard_schema,
+        'metadata': data },
+        function (err, _, res, obj) {
+        t.ok(err);
+        t.equal(err.name, 'SchemaValidationError');
+        t.equal(res.statusCode, 409);
+        t.end();
+    });
+});
+
+test('put adding valid schema', function (t) {
+    var uri_app = '/applications/' + APP_UUID;
+    var data = { 'foo': 'bar' };
+    var self = this;
+
+    self.client.put(uri_app, { 'metadata_schema': soft_schema,
+        'metadata': data },
+        function (err, _, res, obj) {
+        t.ifError(err);
+        t.equal(res.statusCode, 200);
+        t.deepEqual(obj.metadata_schema, soft_schema);
+        t.end();
+    });
+});
+
+test('replacing metadata and schema', function (t) {
+    var uri_app = '/applications/' + APP_UUID;
+    var data = { 'foo': 'bar' };
+    var self = this;
+
+    self.client.put(uri_app, { 'action': 'replace',
+        'metadata_schema': hard_schema, 'metadata': data },
+        function (err, _, res, obj) {
+        t.ifError(err);
+        t.equal(res.statusCode, 200);
+        t.deepEqual(obj.metadata_schema, hard_schema);
         t.end();
     });
 });

@@ -10,7 +10,7 @@ markdown2extras: tables, code-friendly
 -->
 
 <!--
-    Copyright (c) 2014, Joyent, Inc.
+    Copyright (c) 2015, Joyent, Inc.
 -->
 
 # Services API
@@ -244,25 +244,66 @@ Once SAPI is in full mode, downgrading to proto mode is not supported.
 
 # Applications
 
+## Application Schema Validation
+
+An application may have a schema associated with it which covers its metadata or
+some portion of it. A schema is described based on [JSON
+Schema](http://json-schema.org/). A schema may be provided at creation time or
+when updating an application. The following rules govern how metadata is checked
+against its schema:
+
+* If a schema is provided as part of CreateApplication and the metadata does not
+  match it, the create will fail.
+
+* If an application has a schema and the metadata is updated, the new metadata
+  must match that schema, or the update will fail.
+
+* If an update is being made that modifies the schema, whether adding or
+  modifying it, then if the existing metadata does not match the new schema,
+  then the update will fail.
+
+* If an update is being made that modifies both the schema and the metadata,
+  only the new metadata is checked against the new schema. If it matches the
+  schema, then it will pass.
+
+As part of putting together a schema, one should carefully consider whether or
+not fields that are not a part of the schema are allowed. One challenge around
+having a strict schema is that it makes it harder to cross flag days where the
+set of valid fields in the schema change. In addition, one must consider that
+historically many of the applications have no schema associated with them, and
+therefore we need to move slowly to allow SAPI applications to be updated.
+
+### Schema Checking Limitations
+
+At this time, we only support and validate a schema for the metadata of an
+application. Instances and services can override that metadata; however, those
+changes are not checked against it at this time. In the future, we would like to
+allow a service or instance to override or add additions to the schema such that
+this checking can be extended to all services and instances.
+
 ## CreateApplication (POST /applications)
 
-Creates a new application.  An application must have a name and an owner_uuid.
+Creates a new application.  An application must have a name and an
+owner_uuid.  If an application specifies any schema for it's metadata, the
+metadata must honor that schema.
 
 ### Inputs
 
-| Param      | Type           | Description             | Required? |
-| ---------- | -------------- | ----------------------- | --------- |
-| name       | string         | Name of application     | yes       |
-| owner_uuid | UUID           | Owner's UUID            | yes       |
-| params     | object         | zone parameters         | no        |
-| metadata   | object         | zone metadata           | no        |
-| manifests  | array of UUIDs | configuration manifests | no        |
+| Param           | Type           | Description                    | Required? |
+| --------------- | -------------- | ------------------------------ | --------- |
+| name            | string         | Name of application            | yes       |
+| owner_uuid      | UUID           | Owner's UUID                   | yes       |
+| params          | object         | zones's parameters             | no        |
+| metadata        | object         | zone's metadata                | no        |
+| metadata_schema | object         | validation schema for metadata | no        |
+| manifests       | array of UUIDs | configuration manifests        | no        |
 
 ### Responses
 
-| Code | Description                      | Response           |
-| ---- | -------------------------------- | ------------------ |
-| 204  | Application successfully created | Application object |
+| Code | Description                      | Response                       |
+| ---- | -------------------------------- | ------------------------------ |
+| 204  | Application successfully created | Application object             |
+| 409  | Conflict Detected                | Metadata does not match schema |
 
 ### Example
 
@@ -344,21 +385,23 @@ Updates an application.
 
 ### Inputs
 
-| Param      | Type           | Description                                              | Required? |
-| ---------- | -------------- | -------------------------------------------------------- | --------- |
-| uuid       | UUID           | UUID of application                                      | yes       |
-| action     | string         | One of 'update', 'replace', 'delete'. Default is update. | no        |
-| params     | object         | zone parameters                                          | no        |
-| metadata   | object         | zone metadata                                            | no        |
-| manifests  | array of UUIDs | configuration manifests                                  | no        |
-| owner_uuid | UUID           | application's new owner                                  | no        |
+| Param           | Type           | Description                                              | Required? |
+| --------------- | -------------- | -------------------------------------------------------- | --------- |
+| uuid            | UUID           | UUID of application                                      | yes       |
+| action          | string         | One of 'update', 'replace', 'delete'. Default is update. | no        |
+| params          | object         | zone parameters                                          | no        |
+| metadata        | object         | zone metadata                                            | no        |
+| metadata_schema | object         | schema for the zone metadata                             | no        |
+| manifests       | array of UUIDs | configuration manifests                                  | no        |
+| owner_uuid      | UUID           | application's new owner                                  | no        |
 
 ### Responses
 
-| Code | Description          | Response                   |
-| ---- | -------------------- | -------------------------- |
-| 200  | Updates completed    | Updated application object |
-| 404  | No application found | none                       |
+| Code | Description          | Response                       |
+| ---- | -------------------- | ------------------------------ |
+| 200  | Updates completed    | Updated application object     |
+| 404  | No application found | none                           |
+| 409  | Conflict Detected    | Metadata does not match schema |
 
 ### Example
 

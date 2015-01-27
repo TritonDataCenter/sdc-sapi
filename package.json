@@ -11,7 +11,7 @@
 		"bunyan": "0.21.3",
 		"cmdln": "1.2.0",
 		"hogan.js": "2.0.0",
-		"jsprim": "0.3.1",
+		"jsprim": "0.6.1",
 		"ldapjs": "git://github.com/mcavage/node-ldapjs.git#0a88109",
 		"lru-cache": "2.3.0",
 		"mkdirp": "0.3.4",

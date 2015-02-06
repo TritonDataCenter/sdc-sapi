@@ -11,7 +11,10 @@
 /*
  * test/instances.test.js: test /instances endpoints
  */
-//
+
+var debug = console.error;
+//var debug = function () {};
+
 var async = require('async');
 var common = require('./common');
 var jsprim = require('jsprim');
@@ -1041,6 +1044,7 @@ test('teardown hooks', function (t) {
     var uri_svc = '/services/' + svc_uuid;
     var uri_inst = '/instances/' + inst.uuid;
 
+    debug('SAPI-254: env:', env)
     /*
      * In proto mode, the teardown-hook can't run (since CNAPI is
      * unavailable), so don't run this test.
@@ -1052,12 +1056,15 @@ test('teardown hooks', function (t) {
 
     async.waterfall([
         function (cb) {
+            debug('SAPI-254: createApplication')
             common.createApplication.call(self, app_uuid, cb);
         },
         function (cb) {
+            debug('SAPI-254: createService')
             common.createService.call(self, app_uuid, svc_uuid, cb);
         },
         function (cb) {
+            debug('SAPI-254: post inst')
             client.post(URI, inst, function (err, _, res, obj) {
                 t.ifError(err);
                 t.equal(res.statusCode, 200);
@@ -1065,6 +1072,7 @@ test('teardown hooks', function (t) {
             });
         },
         function (cb) {
+            debug('SAPI-254: del inst')
             /*
              * Both destroying and reprovisioning an instance should
              * fail when the teardown-hook fails.
@@ -1076,6 +1084,7 @@ test('teardown hooks', function (t) {
             });
         },
         function (cb) {
+            debug('SAPI-254: upgrade')
             var uri = sprintf('/instances/%s/upgrade', inst.uuid);
 
             var opts = {};
@@ -1088,6 +1097,7 @@ test('teardown hooks', function (t) {
             });
         },
         function (cb) {
+            debug('SAPI-254: get inst')
             self.client.get(uri_inst, function (err, _, res, obj) {
                 t.ifError(err);
                 t.equal(res.statusCode, 200);
@@ -1095,6 +1105,7 @@ test('teardown hooks', function (t) {
             });
         },
         function (cb) {
+            debug('SAPI-254: update with teardown-hook')
             var opts = {};
             opts.params = {};
             opts.params['teardown-hook'] = '/bin/true';
@@ -1108,6 +1119,7 @@ test('teardown hooks', function (t) {
             });
         },
         function (cb) {
+            debug('SAPI-254: post inst without teardown-hook')
             delete inst.params['teardown-hook'];
 
             client.post(URI, inst, function (err, _, res, obj) {
@@ -1117,6 +1129,7 @@ test('teardown hooks', function (t) {
             });
         },
         function (cb) {
+            debug('SAPI-254: update with teardown-hook=/bin/false')
             var opts = {};
             opts.params = {};
             opts.params['teardown-hook'] = '/bin/false';
@@ -1130,6 +1143,7 @@ test('teardown hooks', function (t) {
             });
         },
         function (cb) {
+            debug('SAPI-254: del inst')
             /*
              * Both destroying and reprovisioning an instance should
              * fail when the teardown-hook fails.  Note that in this
@@ -1143,6 +1157,7 @@ test('teardown hooks', function (t) {
             });
         },
         function (cb) {
+            debug('SAPI-254: upgrade inst')
             var uri = sprintf('/instances/%s/upgrade', inst.uuid);
 
             var opts = {};
@@ -1155,6 +1170,7 @@ test('teardown hooks', function (t) {
             });
         },
         function (cb) {
+            debug('SAPI-254: update inst teardown-hook=/bin/true')
             var opts = {};
             opts.params = {};
             opts.params['teardown-hook'] = '/bin/true';
@@ -1168,6 +1184,7 @@ test('teardown hooks', function (t) {
             });
         },
         function (cb) {
+            debug('SAPI-254: upgrade inst to NEW_IMAGE')
             var uri = sprintf('/instances/%s/upgrade', inst.uuid);
 
             var opts = {};
@@ -1180,6 +1197,7 @@ test('teardown hooks', function (t) {
             });
         },
         function (cb) {
+            debug('SAPI-254: del inst')
             self.client.del(uri_inst, function (err, _, res, obj) {
                 t.ifError(err);
                 t.equal(res.statusCode, 204);
@@ -1187,11 +1205,13 @@ test('teardown hooks', function (t) {
             });
         },
         function (cb) {
+            debug('SAPI-254: deleteService')
             self.sapi.deleteService(svc_uuid, function (err) {
                 cb(err);
             });
         },
         function (cb) {
+            debug('SAPI-254: deleteApplication')
             self.sapi.deleteApplication(app_uuid, function (err) {
                 cb(err);
             });

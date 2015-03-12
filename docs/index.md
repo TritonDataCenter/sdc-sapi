@@ -591,6 +591,63 @@ Create and deploy an instance.
     }'
 
 
+### Customer metadata
+
+By default, SAPI removes all keys from the `customer_metadata` parameters
+passed to VMAPI for zone creation, other than the following:
+
+- SAPI_URL
+- sapi_url
+- SAPI-URL
+- sapi-url
+- user-script
+- assets-ip
+
+To allow other customer metadata keys to be passed to VMAPI, set the
+`pass_vmapi_metadata_keys` array in the `metadata` object, as in this example,
+where `com.joyent:ipnat_subnet` will be added to the VMAPI VM object's
+customer metadata:
+
+
+    POST /instances -d '{
+      "name": "nat",
+      "owner_uuid": "930896af-bf8c-48d4-885c-6573a94b1853",
+      "metadata" {
+        "pass_vmapi_metadata_keys": [ "com.joyent:ipnat_subnet" ],
+        "com.joyent:ipnat_subnet": "192.168.42.1/24"
+      }
+    }'
+
+
+## CreateInstanceAsync (POST /instances?async=true)
+
+Create and deploy an instance asynchronously. This accepts the same parameters
+as [CreateInstance](#CreateInstance), but does not wait to return the final
+created instance object. It instead returns th
+
+### Inputs
+
+See [CreateInstance](#CreateInstance) above.
+
+### Responses
+
+See [CreateInstance](#CreateInstance) above.  The created instance object has
+one additional field: `job_uuid`, which is the
+[Workflow API](https://github.com/joyent/sdc-workflow) job for the created
+instance.
+
+
+### Example
+
+    POST /instances?async=true -d '{
+      "name": "sdc",
+      "owner_uuid": "930896af-bf8c-48d4-885c-6573a94b1853",
+      "params" {
+        "delegate_dataset": true
+      }
+    }'
+
+
 
 ## ListInstances (GET /instances)
 

@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright (c) 2014, Joyent, Inc.
+ * Copyright (c) 2015, Joyent, Inc.
  */
 
 /*
@@ -239,7 +239,8 @@ function consVmParams(cb) {
             });
         },
         function (subcb) {
-            resolveNetwork('admin', function (err, uuid) {
+            resolveNetwork('admin', process.env.ADMIN_UUID,
+            function (err, uuid) {
                 if (err)
                     return (subcb(err));
                 params.networks = [ { uuid: uuid } ];
@@ -254,9 +255,10 @@ function consVmParams(cb) {
 /*
  * Resolve a network name to its NAPI UUID.
  */
-function resolveNetwork(name, cb) {
+function resolveNetwork(name, owner, cb) {
     var napi = createNapiClient();
-    napi.listNetworks({ name: name }, function (err, networks) {
+    napi.listNetworks({ name: name, owner_uuid: owner },
+        function (err, networks) {
         if (err)
             return (cb(err));
         return (cb(null, networks[0].uuid));

@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright (c) 2014, Joyent, Inc.
+ * Copyright (c) 2015, Joyent, Inc.
  */
 
 /*
@@ -987,7 +987,8 @@ test('create instance with NAPI networks', function (t) {
             common.createService.call(self, app_uuid, svc_uuid, cb);
         },
         function (cb) {
-            helper.resolveNetwork('admin', function (err, uuid) {
+            helper.resolveNetwork('admin', process.env.ADMIN_UUID,
+                function (err, uuid) {
                 inst.params = {};
                 inst.params.networks = [ { uuid: uuid } ];
                 cb(err);

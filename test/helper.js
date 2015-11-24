@@ -226,6 +226,15 @@ function startSapiServer(mode, cb) {
                 next();
             });
         },
+        function getOriginImage(next) {
+            var cmd = 'curl -sf $(json -f /opt/smartdc/sapi/etc/config.json imgapi.url)/images/$(mdata-get sdc:image_uuid) | json origin';
+            exec(cmd, function (err, stdout) {
+                if (err)
+                    return (next(err));
+                process.env.IMAGE_UUID = stdout.trim();
+                next();
+            });
+        },
         function getAdminUuid(next) {
             var cmd = '/usr/sbin/mdata-get sdc:owner_uuid';
             exec(cmd, function (err, stdout) {
@@ -260,7 +269,7 @@ function shutdownSapiServer(sapi, cb) {
 function consVmParams(cb) {
     var params = {};
     params.brand = 'joyent-minimal';
-    params.image_uuid = common.IMAGE_UUID;
+    params.image_uuid = process.env.IMAGE_UUID;
     params.owner_uuid = process.env.ADMIN_UUID;
     params.server_uuid = process.env.SERVER_UUID;
     params.ram = 256;

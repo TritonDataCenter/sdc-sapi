@@ -47,7 +47,7 @@ var URI = '/instances';
  *
  * Also note there this comment and another image uuid in common.js.
  */
-var OLD_IMAGE = 'daffafa6-081c-4732-8419-0a572f7fee10';
+var OLD_IMAGE = process.env.IMAGE_UUID;
 var NEW_IMAGE = 'ee88648a-9327-cfc5-d0e9-ffcd407cbdbc';
 
 

@@ -31,7 +31,6 @@ var util = require('util');
  * Also note there is this same comment and other image uuids in
  * instances.test.js
  */
-var IMAGE_UUID = 'daffafa6-081c-4732-8419-0a572f7fee10';
 
 function createApplication(uuid, cb) {
     var name = 'empty_test_application';
@@ -55,7 +54,7 @@ function createService(app_uuid, uuid, cb) {
     opts.params = {};
     opts.params.ram = 256;
     opts.params.networks = [ 'admin' ];
-    opts.params.image_uuid = IMAGE_UUID;
+    opts.params.image_uuid = process.env.IMAGE_UUID;
 
     if (arguments.length === 2)
         cb = uuid;
@@ -188,7 +187,7 @@ function testUpdates(t, uri, cb) {
 }
 
 
-exports.IMAGE_UUID = IMAGE_UUID;
+exports.IMAGE_UUID = process.env.IMAGE_UUID;
 
 exports.createApplication = createApplication;
 exports.createService = createService;

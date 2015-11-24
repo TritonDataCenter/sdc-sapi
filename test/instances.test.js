@@ -21,6 +21,7 @@ var jsprim = require('jsprim');
 var node_uuid = require('node-uuid');
 var sdc = require('sdc-clients');
 var vasync = require('vasync');
+var util = require('util');
 
 var VMAPIPlus = require('../lib/server/vmapiplus');
 
@@ -87,6 +88,7 @@ test('create w/ invalid inputs', function (t) {
     var app_uuid = node_uuid.v4();
     var svc_uuid = node_uuid.v4();
 
+
     var inst = {};
     inst.uuid = node_uuid.v4();
     inst.service_uuid = svc_uuid;
@@ -141,7 +143,6 @@ test('create w/ invalid inputs', function (t) {
     });
 });
 
-
 // -- Test a standard put/get/del vm instance
 
 test('put/get/del vm instance', function (t) {
@@ -155,6 +156,7 @@ test('put/get/del vm instance', function (t) {
     inst.uuid = node_uuid.v4();
     inst.service_uuid = svc_uuid;
     inst.params = {};
+    inst.params.billing_id = process.env.BILLING_ID;
     inst.params.alias = 'sapitest-normal-instance';
     inst.metadata = {
         string_val: 'my string',
@@ -169,11 +171,11 @@ test('put/get/del vm instance', function (t) {
     var check = function (obj) {
         t.equal(obj.uuid, inst.uuid);
         t.equal(obj.service_uuid, inst.service_uuid);
-        if (obj.params)
-            t.equal(obj.params.server_uuid,
-                process.env.SERVER_UUID);
-        else
+        t.ok(obj.params);
+        t.ok(Object.keys(obj.params).length);
+        if (!obj.params) {
             t.fail('obj.params is undefined');
+        }
         t.deepEqual(obj.metadata, inst.metadata);
         t.deepEqual(obj.manifests, { my_service: cfg_uuid });
     };
@@ -297,12 +299,7 @@ test('put/get/del vm instance', function (t) {
                 t.equal(res.statusCode, 200);
 
                 t.ok(obj);
-                if (obj.metadata) {
-                    t.equal(obj.metadata.ZONE_UUID,
-                        inst.uuid);
-                    t.equal(obj.metadata.SERVER_UUID,
-                        process.env.SERVER_UUID);
-                } else {
+                if (!obj.metadata) {
                     t.fail('obj.METADATA is null');
                 }
 
@@ -510,15 +507,7 @@ test('put/get/del agent instance', function (t) {
                 t.equal(res.statusCode, 200);
 
                 t.ok(obj);
-                if (obj.metadata) {
-                    // deprecated
-                    t.equal(obj.metadata.ZONE_UUID,
-                        inst.uuid);
-                    t.equal(obj.metadata.INSTANCE_UUID,
-                        inst.uuid);
-                    t.equal(obj.metadata.SERVER_UUID,
-                        process.env.SERVER_UUID);
-                } else {
+                if (!obj.metadata) {
                     t.fail('obj.METADATA is null');
                 }
 
@@ -569,7 +558,7 @@ function createVm(uuid, cb) {
     helper.consVmParams(function (err, params) {
         params.uuid = uuid;
 
-        vmapiplus.createVm(params, cb);
+        vmapiplus.createVm(params, {}, cb);
     });
 }
 
@@ -670,6 +659,7 @@ test('delete instance with no VM', function (t) {
     inst.uuid = node_uuid.v4();
     inst.service_uuid = svc_uuid;
     inst.params = {};
+    inst.params.billing_id = process.env.BILLING_ID;
     inst.params.alias = 'sapitest-missingvm';
 
     var check = function (obj) {
@@ -974,8 +964,6 @@ test('create instance with NAPI networks', function (t) {
     var inst = {};
     inst.uuid = node_uuid.v4();
     inst.service_uuid = svc_uuid;
-    inst.params = {};
-    inst.params.alias = 'sapitest-napi-networks';
 
     var uri_inst = '/instances/' + inst.uuid;
 
@@ -990,7 +978,9 @@ test('create instance with NAPI networks', function (t) {
             helper.resolveNetwork('admin', process.env.ADMIN_UUID,
                 function (err, uuid) {
                 inst.params = {};
+                inst.params.billing_id = process.env.BILLING_ID;
                 inst.params.networks = [ { uuid: uuid } ];
+                inst.params.alias = 'sapitest-napi-networks';
                 cb(err);
             });
         },
@@ -1039,6 +1029,7 @@ test('teardown hooks', function (t) {
     inst.service_uuid = svc_uuid;
     inst.params = {};
     inst.params.alias = 'sapitest-teardown-' + node_uuid.v4().substr(0, 8);
+    inst.params.billing_id = process.env.BILLING_ID;
     inst.params.image_uuid = OLD_IMAGE;
     inst.params['teardown-hook'] = '/bin/false';
 
@@ -1114,6 +1105,7 @@ test('teardown hooks', function (t) {
             client.put(uri_inst, opts, function (err, _, res, obj) {
                 t.ifError(err);
                 t.equal(res.statusCode, 200);
+
                 t.equal(obj.params['teardown-hook'],
                     '/bin/true');
                 cb(null);

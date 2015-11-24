@@ -199,9 +199,10 @@ test('list history', function (t) {
         t.ifError(err);
         t.equal(res.statusCode, 200);
         t.ok(Array.isArray(obj));
-        t.ok(obj[0].started);
-        t.ok(obj[0].changes.foo);
-        t.ok(obj[0].uuid);
+        var idx = obj.length - 1;
+        t.ok(obj[idx].started);
+        t.ok(obj[idx].changes.foo);
+        t.ok(obj[idx].uuid);
         t.end();
     });
 });
@@ -228,9 +229,10 @@ test('history works with version \'*\'', function (t) {
         t.ifError(err);
         t.equal(res.statusCode, 200);
         t.ok(Array.isArray(obj));
-        t.ok(obj[0].started);
-        t.ok(obj[0].changes.foo);
-        t.ok(obj[0].uuid);
+        var idx = obj.length - 1;
+        t.ok(obj[idx].started);
+        t.ok(obj[idx].changes.foo);
+        t.ok(obj[idx].uuid);
         t.end();
     });
 });

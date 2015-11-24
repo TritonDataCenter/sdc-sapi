@@ -15,6 +15,7 @@
 var assert = require('assert-plus');
 var async = require('async');
 var node_uuid = require('node-uuid');
+var util = require('util');
 
 /*
  * These images are manta-storage zones.  Not sure why those were picked, but

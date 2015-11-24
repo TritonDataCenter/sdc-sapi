@@ -21,6 +21,7 @@ var once = require('once');
 var path = require('path');
 var sdc = require('sdc-clients');
 var restify = require('restify');
+var util = require('util');
 
 var Logger = require('bunyan');
 var SAPI = require('../lib/server/sapi');
@@ -125,6 +126,26 @@ function createImgapiClient() {
 }
 
 
+function createPapiClient() {
+    var log = createLogger();
+
+    var client = new sdc.PAPI({
+        agent: false,
+        log: log,
+        url: process.env.PAPI_URL || 'http://10.2.206.29'
+    });
+
+    return (client);
+}
+
+
+function getPapiSamplePackages(opts, callback) {
+    var papi = createPapiClient();
+
+    papi.list('name=sample-*', {}, function (err, pkgs, count) {
+        callback(err, pkgs);
+    });
+}
 function startSapiServer(mode, cb) {
     if (arguments.length === 1) {
         cb = mode;
@@ -140,6 +161,7 @@ function startSapiServer(mode, cb) {
     config.cnapi.agent = false;
     config.napi.agent = false;
     config.imgapi.agent = false;
+    config.papi.agent = false;
 
     /*
      * First, check the mode argument to this function.  If that's not
@@ -172,6 +194,7 @@ function startSapiServer(mode, cb) {
     process.env.VMAPI_URL = config.vmapi.url;
     process.env.NAPI_URL = config.napi.url;
     process.env.IMGAPI_URL = config.imgapi.url;
+    process.env.PAPI_URL = config.papi.url;
 
     async.series([
         function getServerUuid(next) {
@@ -180,6 +203,26 @@ function startSapiServer(mode, cb) {
                 if (err)
                     return (next(err));
                 process.env.SERVER_UUID = stdout.trim();
+                next();
+            });
+        },
+        function getPackage(next) {
+            getPapiSamplePackages({}, function (err, pkgs) {
+                if (err) {
+                    return (next(err));
+                }
+
+                pkgs.sort(function (a, b) {
+                    return a.max_physical_memory < b.max_physical_memory
+                        ? -1
+                        : (a.max_physical_memory > b.max_physical_memory
+                          ? 1
+                          : 0);
+                });
+
+                assert.ok(pkgs.length);
+
+                process.env.BILLING_ID = pkgs[0].uuid;
                 next();
             });
         },
@@ -228,9 +271,7 @@ function consVmParams(cb) {
 
             imgapi.adminImportRemoteImageAndWait(
                 params.image_uuid, 'https://updates.joyent.com',
-                {
-                skipOwnerCheck: true
-                },
+                { skipOwnerCheck: true },
                 function (err) {
                 if (err && err.name ===
                     'ImageUuidAlreadyExistsError')
@@ -264,6 +305,8 @@ function resolveNetwork(name, owner, cb) {
         return (cb(null, networks[0].uuid));
     });
 }
+
+
 
 
 // -- Exports
@@ -321,9 +364,11 @@ module.exports = {
     createVmapiPlusClient: createVmapiPlusClient,
     createNapiClient: createNapiClient,
     createImgapiClient: createImgapiClient,
+    createPapiClient: createPapiClient,
 
     startSapiServer: startSapiServer,
     shutdownSapiServer: shutdownSapiServer,
+    getPapiSamplePackages: getPapiSamplePackages,
 
     consVmParams: consVmParams,
     resolveNetwork: resolveNetwork,

@@ -227,7 +227,9 @@ function startSapiServer(mode, cb) {
             });
         },
         function getOriginImage(next) {
-            var cmd = 'curl -sf $(json -f /opt/smartdc/sapi/etc/config.json imgapi.url)/images/$(mdata-get sdc:image_uuid) | json origin';
+            var cmd = 'curl -sf $(json -f /opt/smartdc/sapi/etc/config.json ' +
+                      'imgapi.url)/images/$(mdata-get sdc:image_uuid) ' +
+                      '| json origin';
             exec(cmd, function (err, stdout) {
                 if (err)
                     return (next(err));

@@ -199,6 +199,13 @@ test('list history', function (t) {
         t.ifError(err);
         t.equal(res.statusCode, 200);
         t.ok(Array.isArray(obj));
+        obj.sort(function (a, b) {
+            return a.started < b.started
+                ? -1
+                : (a.started > b.started
+                  ? 1
+                  : 0);
+        });
         var idx = obj.length - 1;
         t.ok(obj[idx].started);
         t.ok(obj[idx].changes.foo);
@@ -230,6 +237,14 @@ test('history works with version \'*\'', function (t) {
         t.equal(res.statusCode, 200);
         t.ok(Array.isArray(obj));
         var idx = obj.length - 1;
+
+        obj.sort(function (a, b) {
+            return a.started < b.started
+                ? -1
+                : (a.started > b.started
+                  ? 1
+                  : 0);
+        });
         t.ok(obj[idx].started);
         t.ok(obj[idx].changes.foo);
         t.ok(obj[idx].uuid);

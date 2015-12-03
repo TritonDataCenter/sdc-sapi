@@ -226,14 +226,23 @@ function startSapiServer(mode, cb) {
                 next();
             });
         },
-        function getOriginImage(next) {
+        function setSapiTestImageUuid(next) {
+            /*
+             * We need a image with which to test SAPI services and instances.
+             * We don't want to use this zone's image (the sapi zone), because
+             * creating a second SAPI instance could very likely cause
+             * troubles. Instead, we'll use SAPI's origin image, which we
+             * know will already be installed.
+             *
+             * This is somewhat lamely "passed" around to tests via an envvar.
+             */
             var cmd = 'curl -sf $(json -f /opt/smartdc/sapi/etc/config.json ' +
                       'imgapi.url)/images/$(mdata-get sdc:image_uuid) ' +
                       '| json origin';
             exec(cmd, function (err, stdout) {
                 if (err)
                     return (next(err));
-                process.env.IMAGE_UUID = stdout.trim();
+                process.env.SAPI_TEST_IMAGE_UUID = stdout.trim();
                 next();
             });
         },
@@ -271,7 +280,9 @@ function shutdownSapiServer(sapi, cb) {
 function consVmParams(cb) {
     var params = {};
     params.brand = 'joyent-minimal';
-    params.image_uuid = process.env.IMAGE_UUID;
+    assert.string(process.env.SAPI_TEST_IMAGE_UUID,
+        'process.env.SAPI_TEST_IMAGE_UUID');
+    params.image_uuid = process.env.SAPI_TEST_IMAGE_UUID;
     params.owner_uuid = process.env.ADMIN_UUID;
     params.server_uuid = process.env.SERVER_UUID;
     params.ram = 256;

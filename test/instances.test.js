@@ -16,21 +16,23 @@ var debug = console.error;
 // var debug = function () {};
 
 var async = require('async');
-var common = require('./common');
 var jsprim = require('jsprim');
 var node_uuid = require('node-uuid');
-var sdc = require('sdc-clients');
-var vasync = require('vasync');
-var util = require('util');
-
-var VMAPIPlus = require('../lib/server/vmapiplus');
-
+var sdcClients = require('sdc-clients');
 var sprintf = require('util').format;
+var vasync = require('vasync');
+
+var common = require('./common');
+var VMAPIPlus = require('../lib/server/vmapiplus');
 
 if (require.cache[__dirname + '/helper.js'])
     delete require.cache[__dirname + '/helper.js'];
 var helper = require('./helper.js');
 var test = helper.test;
+
+
+
+// ---- globals
 
 var URI = '/instances';
 
@@ -44,15 +46,12 @@ var URI = '/instances';
  * Perhaps the long term solution here is to have the tests create their own
  * images somewhere.  If we could rely on a some sort of tag to find them, we
  * can determine if they are already there or need to be created.
- *
- * Also note there this comment and another image uuid in common.js.
  */
-var OLD_IMAGE = process.env.IMAGE_UUID;
 var NEW_IMAGE = 'ee88648a-9327-cfc5-d0e9-ffcd407cbdbc';
 
 
 
-// -- Boilerplate
+// -- Setup a separate SAPI server instance
 
 var server;
 var tests_run = 0;
@@ -88,35 +87,30 @@ test('create w/ invalid inputs', function (t) {
     var app_uuid = node_uuid.v4();
     var svc_uuid = node_uuid.v4();
 
-
     var inst = {};
     inst.uuid = node_uuid.v4();
     inst.service_uuid = svc_uuid;
 
-    function check409(err, res) {
-        t.ok(err);
-        t.equal(err.name, 'MissingParameterError');
-        t.equal(res.statusCode, 409);
-    }
-
-    async.waterfall([
-        function (cb) {
-            common.createApplication.call(self, app_uuid, cb);
+    vasync.pipeline({funcs: [
+        function (_, cb) {
+            common.createApplication({sapi: self.sapi, uuid: app_uuid}, cb);
         },
-        function (cb) {
+        function (_, cb) {
             common.createService.call(self, app_uuid, svc_uuid, cb);
         },
-        function (cb) {
+        function (_, cb) {
             // missing service_uuid
             var badinst  = jsprim.deepCopy(inst);
             delete badinst.service_uuid;
 
             self.client.post(URI, badinst, function (err, _, res) {
-                check409(err, res);
+                t.ok(err);
+                t.equal(err.name, 'MissingParameterError');
+                t.equal(res.statusCode, 409);
                 cb();
             });
         },
-        function (cb) {
+        function (_, cb) {
             // invalid service_uuid
             var badinst  = jsprim.deepCopy(inst);
             badinst.service_uuid = node_uuid.v4();
@@ -127,21 +121,22 @@ test('create w/ invalid inputs', function (t) {
                 cb();
             });
         },
-        function (cb) {
+        function (_, cb) {
             self.sapi.deleteService(svc_uuid, function (err) {
                 cb(err);
             });
         },
-        function (cb) {
+        function (_, cb) {
             self.sapi.deleteApplication(app_uuid, function (err) {
                 cb(err);
             });
         }
-    ], function (err) {
+    ]}, function (err) {
         t.ifError(err);
         t.end();
     });
 });
+
 
 // -- Test a standard put/get/del vm instance
 
@@ -172,9 +167,10 @@ test('put/get/del vm instance', function (t) {
         t.equal(obj.uuid, inst.uuid);
         t.equal(obj.service_uuid, inst.service_uuid);
         t.ok(obj.params);
-        t.ok(Object.keys(obj.params).length);
         if (!obj.params) {
             t.fail('obj.params is undefined');
+        } else {
+            t.ok(Object.keys(obj.params).length);
         }
         t.deepEqual(obj.metadata, inst.metadata);
         t.deepEqual(obj.manifests, { my_service: cfg_uuid });
@@ -197,14 +193,18 @@ test('put/get/del vm instance', function (t) {
 
     var uri_inst = '/instances/' + inst.uuid;
 
-    async.waterfall([
-        function (cb) {
-            common.createApplication.call(self, app_uuid, cb);
+    t.ok(app_uuid, 'app uuid ' + app_uuid);
+    t.ok(svc_uuid, 'svc uuid ' + svc_uuid);
+    t.ok(inst.uuid, 'inst uuid ' + inst.uuid);
+
+    vasync.pipeline({funcs: [
+        function (_, cb) {
+            common.createApplication({sapi: self.sapi, uuid: app_uuid}, cb);
         },
-        function (cb) {
+        function (_, cb) {
             common.createService.call(self, app_uuid, svc_uuid, cb);
         },
-        function (cb) {
+        function (_, cb) {
             common.createManifest.call(self, function (err, cfg) {
                 if (cfg) {
                     cfg_uuid = cfg.uuid;
@@ -216,7 +216,7 @@ test('put/get/del vm instance', function (t) {
                 cb(err);
             });
         },
-        function (cb) {
+        function (_, cb) {
             client.get(uri_inst, function (err, _, res, obj) {
                 t.ok(err);
                 t.equal(res.statusCode, 404);
@@ -224,7 +224,7 @@ test('put/get/del vm instance', function (t) {
                 cb(null);
             });
         },
-        function (cb) {
+        function (_, cb) {
             // test invalid config manifest
             var badinst = jsprim.deepCopy(inst);
             badinst.manifests = { my_service: node_uuid.v4() };
@@ -236,7 +236,7 @@ test('put/get/del vm instance', function (t) {
                 cb(null);
             });
         },
-        function (cb) {
+        function (_, cb) {
             client.post(URI, inst, function (err, _, res, obj) {
                 t.ifError(err);
                 t.equal(res.statusCode, 200);
@@ -246,7 +246,7 @@ test('put/get/del vm instance', function (t) {
                 cb(null);
             });
         },
-        function (cb) {
+        function (_, cb) {
             client.get(uri_inst, function (err, _, res, obj) {
                 t.ifError(err);
                 t.equal(res.statusCode, 200);
@@ -256,7 +256,7 @@ test('put/get/del vm instance', function (t) {
                 cb(null);
             });
         },
-        function (cb) {
+        function (_, cb) {
             var uri = '/instances?service_uuid=' +
                 inst.service_uuid;
 
@@ -269,7 +269,7 @@ test('put/get/del vm instance', function (t) {
                 cb(null);
             });
         },
-        function (cb) {
+        function (_, cb) {
             client.get(URI, function (err, _, res, obj) {
                 t.ifError(err);
                 t.equal(res.statusCode, 200);
@@ -279,7 +279,7 @@ test('put/get/del vm instance', function (t) {
                 cb(null);
             });
         },
-        function (cb) {
+        function (_, cb) {
             var uri = sprintf('/instances/%s/payload', inst.uuid);
 
             client.get(uri, function (err, _, res, obj) {
@@ -291,7 +291,7 @@ test('put/get/del vm instance', function (t) {
                 cb(null);
             });
         },
-        function (cb) {
+        function (_, cb) {
             var uri = sprintf('/configs/%s', inst.uuid);
 
             client.get(uri, function (err, _, res, obj) {
@@ -306,39 +306,39 @@ test('put/get/del vm instance', function (t) {
                 cb(null);
             });
         },
-        function (cb) {
+        function (_, cb) {
             common.testUpdates.call(self, t, uri_inst, cb);
         },
-        function (cb) {
+        function (_, cb) {
             self.client.del(uri_inst, function (err, _, res, obj) {
                 t.ifError(err);
                 t.equal(res.statusCode, 204);
                 cb(null);
             });
         },
-        function (cb) {
+        function (_, cb) {
             self.client.get(uri_inst, function (err, _, res, obj) {
                 t.ok(err);
                 t.equal(res.statusCode, 404);
                 cb(null);
             });
         },
-        function (cb) {
+        function (_, cb) {
             self.sapi.deleteManifest(cfg_uuid, function (err) {
                 cb(err);
             });
         },
-        function (cb) {
+        function (_, cb) {
             self.sapi.deleteService(svc_uuid, function (err) {
                 cb(err);
             });
         },
-        function (cb) {
+        function (_, cb) {
             self.sapi.deleteApplication(app_uuid, function (err) {
                 cb(err);
             });
         }
-    ], function (err, results) {
+    ]}, function (err, results) {
         t.ifError(err);
         t.end();
     });
@@ -406,14 +406,14 @@ test('put/get/del agent instance', function (t) {
 
     var uri_inst = '/instances/' + inst.uuid;
 
-    async.waterfall([
-        function (cb) {
-            common.createApplication.call(self, app_uuid, cb);
+    vasync.pipeline({funcs: [
+        function (_, cb) {
+            common.createApplication({sapi: self.sapi, uuid: app_uuid}, cb);
         },
-        function (cb) {
+        function (_, cb) {
             createService(app_uuid, svc_uuid, cb);
         },
-        function (cb) {
+        function (_, cb) {
             common.createManifest.call(self, function (err, cfg) {
                 if (cfg) {
                     cfg_uuid = cfg.uuid;
@@ -425,7 +425,7 @@ test('put/get/del agent instance', function (t) {
                 cb(err);
             });
         },
-        function (cb) {
+        function (_, cb) {
             client.get(uri_inst, function (err, _, res, obj) {
                 t.ok(err);
                 t.equal(res.statusCode, 404);
@@ -433,7 +433,7 @@ test('put/get/del agent instance', function (t) {
                 cb(null);
             });
         },
-        function (cb) {
+        function (_, cb) {
             // test invalid config manifest
             var badinst = jsprim.deepCopy(inst);
             badinst.manifests = { my_service: node_uuid.v4() };
@@ -445,7 +445,7 @@ test('put/get/del agent instance', function (t) {
                 cb(null);
             });
         },
-        function (cb) {
+        function (_, cb) {
             client.post(URI, inst, function (err, _, res, obj) {
                 t.ifError(err);
                 t.equal(res.statusCode, 200);
@@ -454,7 +454,7 @@ test('put/get/del agent instance', function (t) {
                 cb(null);
             });
         },
-        function (cb) {
+        function (_, cb) {
             client.get(uri_inst, function (err, _, res, obj) {
                 t.ifError(err);
                 t.equal(res.statusCode, 200);
@@ -463,7 +463,7 @@ test('put/get/del agent instance', function (t) {
                 cb(null);
             });
         },
-        function (cb) {
+        function (_, cb) {
             var uri = '/instances?service_uuid=' +
                 inst.service_uuid;
 
@@ -476,7 +476,7 @@ test('put/get/del agent instance', function (t) {
                 cb(null);
             });
         },
-        function (cb) {
+        function (_, cb) {
             function onRes(err, _, res, obj) {
                 t.ifError(err);
                 t.equal(res.statusCode, 200);
@@ -487,7 +487,7 @@ test('put/get/del agent instance', function (t) {
             }
             client.get(URI + '?type=agent', onRes);
         },
-        function (cb) {
+        function (_, cb) {
             var uri = sprintf('/instances/%s/payload', inst.uuid);
 
             client.get(uri, function (err, _, res, obj) {
@@ -499,7 +499,7 @@ test('put/get/del agent instance', function (t) {
                 cb(null);
             });
         },
-        function (cb) {
+        function (_, cb) {
             var uri = sprintf('/configs/%s', inst.uuid);
 
             client.get(uri, function (err, _, res, obj) {
@@ -514,39 +514,39 @@ test('put/get/del agent instance', function (t) {
                 cb(null);
             });
         },
-        function (cb) {
+        function (_, cb) {
             common.testUpdates.call(self, t, uri_inst, cb);
         },
-        function (cb) {
+        function (_, cb) {
             self.client.del(uri_inst, function (err, _, res, obj) {
                 t.ifError(err);
                 t.equal(res.statusCode, 204);
                 cb(null);
             });
         },
-        function (cb) {
+        function (_, cb) {
             self.client.get(uri_inst, function (err, _, res, obj) {
                 t.ok(err);
                 t.equal(res.statusCode, 404);
                 cb(null);
             });
         },
-        function (cb) {
+        function (_, cb) {
             self.sapi.deleteManifest(cfg_uuid, function (err) {
                 cb(err);
             });
         },
-        function (cb) {
+        function (_, cb) {
             self.sapi.deleteService(svc_uuid, function (err) {
                 cb(err);
             });
         },
-        function (cb) {
+        function (_, cb) {
             self.sapi.deleteApplication(app_uuid, function (err) {
                 cb(err);
             });
         }
-    ], function (err, results) {
+    ]}, function (err, results) {
         t.ifError(err);
         t.end();
     });
@@ -585,14 +585,14 @@ test('create instance with VM aleady existing', function (t) {
 
     var uri_inst = '/instances/' + inst.uuid;
 
-    async.waterfall([
-        function (cb) {
-            common.createApplication.call(self, app_uuid, cb);
+    vasync.pipeline({funcs: [
+        function (_, cb) {
+            common.createApplication({sapi: self.sapi, uuid: app_uuid}, cb);
         },
-        function (cb) {
+        function (_, cb) {
             common.createService.call(self, app_uuid, svc_uuid, cb);
         },
-        function (cb) {
+        function (_, cb) {
             /*
              * This check doesn't apply to proto mode.
              */
@@ -601,7 +601,7 @@ test('create instance with VM aleady existing', function (t) {
 
             createVm(inst.uuid, cb);
         },
-        function (cb) {
+        function (_, cb) {
             client.post(URI, inst, function (err, _, res, obj) {
                 t.ifError(err);
                 t.equal(res.statusCode, 200);
@@ -611,7 +611,7 @@ test('create instance with VM aleady existing', function (t) {
                 cb(null);
             });
         },
-        function (cb) {
+        function (_, cb) {
             client.get(uri_inst, function (err, _, res, obj) {
                 t.ifError(err);
                 t.equal(res.statusCode, 200);
@@ -621,24 +621,24 @@ test('create instance with VM aleady existing', function (t) {
                 cb(null);
             });
         },
-        function (cb) {
+        function (_, cb) {
             self.client.del(uri_inst, function (err, _, res, obj) {
                 t.ifError(err);
                 t.equal(res.statusCode, 204);
                 cb();
             });
         },
-        function (cb) {
+        function (_, cb) {
             self.sapi.deleteService(svc_uuid, function (err) {
                 cb(err);
             });
         },
-        function (cb) {
+        function (_, cb) {
             self.sapi.deleteApplication(app_uuid, function (err) {
                 cb(err);
             });
         }
-    ], function (err, results) {
+    ]}, function (err, results) {
         t.ifError(err);
         t.end();
     });
@@ -669,14 +669,14 @@ test('delete instance with no VM', function (t) {
 
     var uri_inst = '/instances/' + inst.uuid;
 
-    async.waterfall([
-        function (cb) {
-            common.createApplication.call(self, app_uuid, cb);
+    vasync.pipeline({funcs: [
+        function (_, cb) {
+            common.createApplication({sapi: self.sapi, uuid: app_uuid}, cb);
         },
-        function (cb) {
+        function (_, cb) {
             common.createService.call(self, app_uuid, svc_uuid, cb);
         },
-        function (cb) {
+        function (_, cb) {
             client.post(URI, inst, function (err, _, res, obj) {
                 t.ifError(err);
                 t.equal(res.statusCode, 200);
@@ -686,7 +686,7 @@ test('delete instance with no VM', function (t) {
                 cb(null);
             });
         },
-        function (cb) {
+        function (_, cb) {
             client.get(uri_inst, function (err, _, res, obj) {
                 t.ifError(err);
                 t.equal(res.statusCode, 200);
@@ -696,7 +696,7 @@ test('delete instance with no VM', function (t) {
                 cb(null);
             });
         },
-        function (cb) {
+        function (_, cb) {
             /*
              * This check doesn't apply to proto mode.
              */
@@ -706,7 +706,7 @@ test('delete instance with no VM', function (t) {
 
             var url = process.env.VMAPI_URL || 'http://10.2.206.23';
 
-            var vmapi = new sdc.VMAPI({
+            var vmapi = new sdcClients.VMAPI({
                 url: url,
                 agent: false
             });
@@ -726,24 +726,24 @@ test('delete instance with no VM', function (t) {
                 cb();
             });
         },
-        function (cb) {
+        function (_, cb) {
             self.client.del(uri_inst, function (err, _, res, obj) {
                 t.ifError(err);
                 t.equal(res.statusCode, 204);
                 cb();
             });
         },
-        function (cb) {
+        function (_, cb) {
             self.sapi.deleteService(svc_uuid, function (err) {
                 cb(err);
             });
         },
-        function (cb) {
+        function (_, cb) {
             self.sapi.deleteApplication(app_uuid, function (err) {
                 cb(err);
             });
         }
-    ], function (err, results) {
+    ]}, function (err, results) {
         t.ifError(err);
         t.end();
     });
@@ -773,14 +773,14 @@ test('invalid zone parameters', function (t) {
 
     var uri_inst = '/instances/' + inst.uuid;
 
-    async.waterfall([
-        function (cb) {
-            common.createApplication.call(self, app_uuid, cb);
+    vasync.pipeline({funcs: [
+        function (_, cb) {
+            common.createApplication({sapi: self.sapi, uuid: app_uuid}, cb);
         },
-        function (cb) {
+        function (_, cb) {
             common.createService.call(self, app_uuid, svc_uuid, cb);
         },
-        function (cb) {
+        function (_, cb) {
             client.post(URI, inst, function (err, _, res, obj) {
                 if (process.env.TEST_SAPI_PROTO_MODE === 'true')
                     t.equal(res.statusCode, 200);
@@ -789,7 +789,7 @@ test('invalid zone parameters', function (t) {
                 cb();
             });
         },
-        function (cb) {
+        function (_, cb) {
             client.get(uri_inst, function (err, _, res, obj) {
                 if (process.env.TEST_SAPI_PROTO_MODE === 'true')
                     t.equal(res.statusCode, 200);
@@ -798,17 +798,17 @@ test('invalid zone parameters', function (t) {
                 cb();
             });
         },
-        function (cb) {
+        function (_, cb) {
             self.sapi.deleteService(svc_uuid, function (err) {
                 cb(err);
             });
         },
-        function (cb) {
+        function (_, cb) {
             self.sapi.deleteApplication(app_uuid, function (err) {
                 cb(err);
             });
         }
-    ], function (err, results) {
+    ]}, function (err, results) {
         t.ifError(err);
         t.end();
     });
@@ -831,18 +831,20 @@ test('upgrading a zone', function (t) {
     inst.params = {};
     inst.params.alias = 'sapitest-upgradevm';
 
-    async.waterfall([
-        function (cb) {
+    t.ok(process.env.SAPI_TEST_IMAGE_UUID, 'process.env.SAPI_TEST_IMAGE_UUID');
+    var oldImage = process.env.SAPI_TEST_IMAGE_UUID;
+
+    vasync.pipeline({funcs: [
+        function (_, cb) {
             // Before the test starts, download both images.
             if (process.env.TEST_SAPI_PROTO_MODE === 'true')
                 return (cb());
 
-            var images = [ OLD_IMAGE, NEW_IMAGE ];
+            var images = [ oldImage, NEW_IMAGE ];
 
             vasync.forEachParallel({
-                func: function (image, subcb) {
-                    var imgapi = self.imgapi;
-                    imgapi.adminImportRemoteImageAndWait(
+                func: function importOneImage(image, subcb) {
+                    self.imgapi.adminImportRemoteImageAndWait(
                         image,
                         'https://updates.joyent.com',
                         {skipOwnerCheck: true},
@@ -850,10 +852,12 @@ test('upgrading a zone', function (t) {
                 },
                 inputs: images
             }, function (err) {
+                // This sucks. An `err` here could be either "already have it"
+                // or some real error in attempting to import it.
                 cb();
             });
         },
-        function (cb) {
+        function (_, cb) {
             var uri = sprintf('/instances/%s/upgrade', inst.uuid);
 
             var opts = {};
@@ -864,38 +868,36 @@ test('upgrading a zone', function (t) {
                 cb();
             });
         },
-        function (cb) {
+        function (_, cb) {
             helper.consVmParams(function (err, params) {
                 if (err)
                     return (cb(err));
 
                 params.networks = [ 'admin' ];
-                params.image_uuid = OLD_IMAGE;
+                params.image_uuid = oldImage;
                 params.ram = 256;
 
                 inst.params = params;
                 cb();
             });
         },
-        function (cb) {
-            common.createApplication.call(self, app_uuid, cb);
+        function (_, cb) {
+            common.createApplication({sapi: self.sapi, uuid: app_uuid}, cb);
         },
-        function (cb) {
+        function (_, cb) {
             common.createService.call(self, app_uuid, svc_uuid, cb);
         },
-        function (cb) {
+        function (_, cb) {
             client.post(URI, inst, function (err, _, res, obj) {
                 t.ifError(err);
                 t.equal(res.statusCode, 200);
                 if (obj && obj.params) {
-                    t.equal(obj.params.image_uuid,
-                        OLD_IMAGE);
+                    t.equal(obj.params.image_uuid, oldImage);
                 }
-
                 cb();
             });
         },
-        function (cb) {
+        function (_, cb) {
             var uri = sprintf('/instances/%s/upgrade', inst.uuid);
 
             var opts = {};
@@ -910,14 +912,13 @@ test('upgrading a zone', function (t) {
                  * params.image_uuid.
                  */
                 if (obj && obj.params) {
-                    t.equal(obj.params.image_uuid,
-                        OLD_IMAGE);
+                    t.equal(obj.params.image_uuid, oldImage);
                 }
 
                 cb();
             });
         },
-        function (cb) {
+        function (_, cb) {
             if (process.env.TEST_SAPI_PROTO_MODE === 'true')
                 return (cb());
 
@@ -930,22 +931,22 @@ test('upgrading a zone', function (t) {
                 cb();
             });
         },
-        function (cb) {
+        function (_, cb) {
             self.sapi.deleteInstance(inst.uuid, function (err) {
                 cb(err);
             });
         },
-        function (cb) {
+        function (_, cb) {
             self.sapi.deleteService(svc_uuid, function (err) {
                 cb(err);
             });
         },
-        function (cb) {
+        function (_, cb) {
             self.sapi.deleteApplication(app_uuid, function (err) {
                 cb(err);
             });
         }
-    ], function (err, results) {
+    ]}, function (err, results) {
         t.ifError(err);
         t.end();
     });
@@ -967,14 +968,14 @@ test('create instance with NAPI networks', function (t) {
 
     var uri_inst = '/instances/' + inst.uuid;
 
-    async.waterfall([
-        function (cb) {
-            common.createApplication.call(self, app_uuid, cb);
+    vasync.pipeline({funcs: [
+        function (_, cb) {
+            common.createApplication({sapi: self.sapi, uuid: app_uuid}, cb);
         },
-        function (cb) {
+        function (_, cb) {
             common.createService.call(self, app_uuid, svc_uuid, cb);
         },
-        function (cb) {
+        function (_, cb) {
             helper.resolveNetwork('admin', process.env.ADMIN_UUID,
                 function (err, uuid) {
                 inst.params = {};
@@ -984,31 +985,31 @@ test('create instance with NAPI networks', function (t) {
                 cb(err);
             });
         },
-        function (cb) {
+        function (_, cb) {
             client.post(URI, inst, function (err, _, res, obj) {
                 t.ifError(err);
                 t.equal(res.statusCode, 200);
                 cb(null);
             });
         },
-        function (cb) {
+        function (_, cb) {
             self.client.del(uri_inst, function (err, _, res, obj) {
                 t.ifError(err);
                 t.equal(res.statusCode, 204);
                 cb(null);
             });
         },
-        function (cb) {
+        function (_, cb) {
             self.sapi.deleteService(svc_uuid, function (err) {
                 cb(err);
             });
         },
-        function (cb) {
+        function (_, cb) {
             self.sapi.deleteApplication(app_uuid, function (err) {
                 cb(err);
             });
         }
-    ], function (err, results) {
+    ]}, function (err, results) {
         t.ifError(err);
         t.end();
     });
@@ -1030,7 +1031,8 @@ test('teardown hooks', function (t) {
     inst.params = {};
     inst.params.alias = 'sapitest-teardown-' + node_uuid.v4().substr(0, 8);
     inst.params.billing_id = process.env.BILLING_ID;
-    inst.params.image_uuid = OLD_IMAGE;
+    t.ok(process.env.SAPI_TEST_IMAGE_UUID, 'process.env.SAPI_TEST_IMAGE_UUID');
+    inst.params.image_uuid = process.env.SAPI_TEST_IMAGE_UUID;
     inst.params['teardown-hook'] = '/bin/false';
 
     var uri_svc = '/services/' + svc_uuid;
@@ -1046,16 +1048,16 @@ test('teardown hooks', function (t) {
         return;
     }
 
-    async.waterfall([
-        function (cb) {
+    vasync.pipeline({funcs: [
+        function (_, cb) {
             debug('SAPI-254: createApplication');
-            common.createApplication.call(self, app_uuid, cb);
+            common.createApplication({sapi: self.sapi, uuid: app_uuid}, cb);
         },
-        function (cb) {
+        function (_, cb) {
             debug('SAPI-254: createService');
             common.createService.call(self, app_uuid, svc_uuid, cb);
         },
-        function (cb) {
+        function (_, cb) {
             debug('SAPI-254: post inst');
             client.post(URI, inst, function (err, _, res, obj) {
                 t.ifError(err);
@@ -1063,7 +1065,7 @@ test('teardown hooks', function (t) {
                 cb(null);
             });
         },
-        function (cb) {
+        function (_, cb) {
             debug('SAPI-254: del inst');
             /*
              * Both destroying and reprovisioning an instance should
@@ -1075,7 +1077,7 @@ test('teardown hooks', function (t) {
                 cb(null);
             });
         },
-        function (cb) {
+        function (_, cb) {
             debug('SAPI-254: upgrade');
             var uri = sprintf('/instances/%s/upgrade', inst.uuid);
 
@@ -1088,7 +1090,7 @@ test('teardown hooks', function (t) {
                 cb(null);
             });
         },
-        function (cb) {
+        function (_, cb) {
             debug('SAPI-254: get inst');
             self.client.get(uri_inst, function (err, _, res, obj) {
                 t.ifError(err);
@@ -1096,7 +1098,7 @@ test('teardown hooks', function (t) {
                 cb(null);
             });
         },
-        function (cb) {
+        function (_, cb) {
             debug('SAPI-254: update with teardown-hook');
             var opts = {};
             opts.params = {};
@@ -1111,7 +1113,7 @@ test('teardown hooks', function (t) {
                 cb(null);
             });
         },
-        function (cb) {
+        function (_, cb) {
             debug('SAPI-254: post inst without teardown-hook');
             delete inst.params['teardown-hook'];
 
@@ -1121,7 +1123,7 @@ test('teardown hooks', function (t) {
                 cb(null);
             });
         },
-        function (cb) {
+        function (_, cb) {
             debug('SAPI-254: update with teardown-hook=/bin/false');
             var opts = {};
             opts.params = {};
@@ -1135,7 +1137,7 @@ test('teardown hooks', function (t) {
                 cb(null);
             });
         },
-        function (cb) {
+        function (_, cb) {
             debug('SAPI-254: del inst');
             /*
              * Both destroying and reprovisioning an instance should
@@ -1149,7 +1151,7 @@ test('teardown hooks', function (t) {
                 cb(null);
             });
         },
-        function (cb) {
+        function (_, cb) {
             debug('SAPI-254: upgrade inst');
             var uri = sprintf('/instances/%s/upgrade', inst.uuid);
 
@@ -1162,7 +1164,7 @@ test('teardown hooks', function (t) {
                 cb(null);
             });
         },
-        function (cb) {
+        function (_, cb) {
             debug('SAPI-254: update inst teardown-hook=/bin/true');
             var opts = {};
             opts.params = {};
@@ -1176,7 +1178,7 @@ test('teardown hooks', function (t) {
                 cb(null);
             });
         },
-        function (cb) {
+        function (_, cb) {
             debug('SAPI-254: upgrade inst to NEW_IMAGE');
             var uri = sprintf('/instances/%s/upgrade', inst.uuid);
 
@@ -1189,7 +1191,7 @@ test('teardown hooks', function (t) {
                 cb(null);
             });
         },
-        function (cb) {
+        function (_, cb) {
             debug('SAPI-254: del inst');
             self.client.del(uri_inst, function (err, _, res, obj) {
                 t.ifError(err);
@@ -1197,19 +1199,19 @@ test('teardown hooks', function (t) {
                 cb(null);
             });
         },
-        function (cb) {
+        function (_, cb) {
             debug('SAPI-254: deleteService');
             self.sapi.deleteService(svc_uuid, function (err) {
                 cb(err);
             });
         },
-        function (cb) {
+        function (_, cb) {
             debug('SAPI-254: deleteApplication');
             self.sapi.deleteApplication(app_uuid, function (err) {
                 cb(err);
             });
         }
-    ], function (err, results) {
+    ]}, function (err, results) {
         t.ifError(err);
         t.end();
     });

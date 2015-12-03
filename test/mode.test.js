@@ -163,7 +163,7 @@ test('in full mode', function (t) {
 
 // -- Test failed upgrade
 
-test('upgrade to full mode with bogus IMAGE_UUID should fail', function (t) {
+test('upgrade to full mode with bogus image_uuid should fail', function (t) {
     var self = this;
 
     var man_uuid = node_uuid.v4();
@@ -191,15 +191,14 @@ test('upgrade to full mode with bogus IMAGE_UUID should fail', function (t) {
         },
         function (cb) {
             /*
-             * This UUID is a known bogus image, so the
-             * SAPI.setMode() call later will fail.
+             * This UUID is a known bogus image, so the SAPI.setMode() call
+             * later will fail.
              */
-            process.env['IMAGE_UUID'] =
-                '0ee75f7e-b5d8-11e2-8c16-bb0d1acfb63d';
-
-            common.createApplication.call(self, app_uuid,
-                function (err) {
-                delete process.env['IMAGE_UUID'];
+            common.createApplication({
+                sapi: self.sapi,
+                uuid: app_uuid,
+                image_uuid: '0ee75f7e-b5d8-11e2-8c16-bb0d1acfb63d'
+            }, function (err) {
                 cb(err);
             });
         },
@@ -305,8 +304,10 @@ test('upgrade to full mode', function (t) {
             });
         },
         function (cb) {
-            common.createApplication.call(self, app_uuid,
-                function (err) {
+            common.createApplication({
+                sapi: self.sapi,
+                uuid: app_uuid
+            }, function (err) {
                 cb(err);
             });
         },

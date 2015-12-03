@@ -16,6 +16,7 @@ var async = require('async');
 var common = require('./common');
 var jsprim = require('jsprim');
 var node_uuid = require('node-uuid');
+var vasync = require('vasync');
 
 if (require.cache[__dirname + '/helper.js'])
     delete require.cache[__dirname + '/helper.js'];
@@ -63,7 +64,8 @@ test('create w/ missing inputs', function (t) {
     svc.application_uuid = node_uuid.v4();
 
     svc.params = {};
-    svc.params.image_uuid = common.IMAGE_UUID;
+    t.ok(process.env.SAPI_TEST_IMAGE_UUID, 'process.env.SAPI_TEST_IMAGE_UUID');
+    svc.params.image_uuid = process.env.SAPI_TEST_IMAGE_UUID;
     svc.params.ram = 256;
     svc.params.networks = [ 'admin' ];
 
@@ -103,7 +105,8 @@ test('create w/ invalid application_uuid', function (t) {
     svc.application_uuid = node_uuid.v4();  // invalid
 
     svc.params = {};
-    svc.params.image_uuid = common.IMAGE_UUID;
+    t.ok(process.env.SAPI_TEST_IMAGE_UUID, 'process.env.SAPI_TEST_IMAGE_UUID');
+    svc.params.image_uuid = process.env.SAPI_TEST_IMAGE_UUID;
     svc.params.ram = 256;
     svc.params.networks = [ 'admin' ];
 
@@ -124,15 +127,16 @@ test('create w/ other invalid inputs', function (t) {
     svc.application_uuid = app_uuid;
 
     svc.params = {};
-    svc.params.image_uuid = common.IMAGE_UUID;
+    t.ok(process.env.SAPI_TEST_IMAGE_UUID, 'process.env.SAPI_TEST_IMAGE_UUID');
+    svc.params.image_uuid = process.env.SAPI_TEST_IMAGE_UUID;
     svc.params.ram = 256;
     svc.params.networks = [ 'admin' ];
 
-    async.waterfall([
-        function (cb) {
-            common.createApplication.call(self, app_uuid, cb);
+    vasync.pipeline({funcs: [
+        function (_, cb) {
+            common.createApplication({sapi: self.sapi, uuid: app_uuid}, cb);
         },
-        function (cb) {
+        function (_, cb) {
             // invalid image_uuid
             var badsvc = jsprim.deepCopy(svc);
             badsvc.params.image_uuid = node_uuid.v4();
@@ -154,7 +158,7 @@ test('create w/ other invalid inputs', function (t) {
                 cb();
             });
         },
-        function (cb) {
+        function (_, cb) {
             // invalid config manifest
             var badsvc = jsprim.deepCopy(svc);
             badsvc.manifests = { my_service: node_uuid.v4() };
@@ -165,10 +169,10 @@ test('create w/ other invalid inputs', function (t) {
                 cb();
             });
         },
-        function (cb) {
+        function (_, cb) {
             self.sapi.deleteApplication(app_uuid, cb);
         }
-    ], function (err) {
+    ]}, function (err) {
         t.ifError(err);
         t.end();
     });
@@ -183,11 +187,11 @@ test('create w/ invalid type', function (t) {
     svc.name = 'invalid inputs';
     svc.application_uuid = app_uuid;
 
-    async.waterfall([
-        function (cb) {
-            common.createApplication.call(self, app_uuid, cb);
+    vasync.pipeline({funcs: [
+        function (_, cb) {
+            common.createApplication({sapi: self.sapi, uuid: app_uuid}, cb);
         },
-        function (cb) {
+        function (_, cb) {
             // invalid type
             var badsvc = jsprim.deepCopy(svc);
             badsvc.type = 'superagent';
@@ -198,10 +202,10 @@ test('create w/ invalid type', function (t) {
                 cb();
             });
         },
-        function (cb) {
+        function (_, cb) {
             self.sapi.deleteApplication(app_uuid, cb);
         }
-    ], function (err) {
+    ]}, function (err) {
         t.ifError(err);
         t.end();
     });
@@ -220,28 +224,28 @@ test('create w/ an agent service', function (t) {
 
     var uri_svc = '/services/' + svc.uuid;
 
-    async.waterfall([
-        function (cb) {
-            common.createApplication.call(self, app_uuid, cb);
+    vasync.pipeline({funcs: [
+        function (_, cb) {
+            common.createApplication({sapi: self.sapi, uuid: app_uuid}, cb);
         },
-        function (cb) {
+        function (_, cb) {
             self.client.post(URI, svc, function (err, _, res) {
                 t.ifError(err);
                 t.equal(res.statusCode, 200);
                 cb();
             });
         },
-        function (cb) {
+        function (_, cb) {
             self.client.del(uri_svc, function (err, _, res, obj) {
                 t.ifError(err);
                 t.equal(res.statusCode, 204);
                 cb();
             });
         },
-        function (cb) {
+        function (_, cb) {
             self.sapi.deleteApplication(app_uuid, cb);
         }
-    ], function (err) {
+    ]}, function (err) {
         t.ifError(err);
         t.end();
     });
@@ -271,7 +275,8 @@ test('put/get/del service', function (t) {
     svc.application_uuid = app_uuid;
 
     svc.params = {};
-    svc.params.image_uuid = common.IMAGE_UUID;
+    t.ok(process.env.SAPI_TEST_IMAGE_UUID, 'process.env.SAPI_TEST_IMAGE_UUID');
+    svc.params.image_uuid = process.env.SAPI_TEST_IMAGE_UUID;
     svc.params.ram = 256;
     svc.params.networks = [ 'admin' ];
 
@@ -310,11 +315,11 @@ test('put/get/del service', function (t) {
 
     var uri_svc = '/services/' + svc.uuid;
 
-    async.waterfall([
-        function (cb) {
-            common.createApplication.call(self, app_uuid, cb);
+    vasync.pipeline({funcs: [
+        function (_, cb) {
+            common.createApplication({sapi: self.sapi, uuid: app_uuid}, cb);
         },
-        function (cb) {
+        function (_, cb) {
             common.createManifest.call(self, function (err, cfg) {
                 if (cfg) {
                     cfg_uuid = cfg.uuid;
@@ -325,14 +330,14 @@ test('put/get/del service', function (t) {
                 cb(err);
             });
         },
-        function (cb) {
+        function (_, cb) {
             self.client.get(uri_svc, function (err, _, res, obj) {
                 t.ok(err);
                 t.equal(res.statusCode, 404);
                 cb();
             });
         },
-        function (cb) {
+        function (_, cb) {
             self.client.post(URI, svc, function (err, _, res, obj) {
                 t.ifError(err);
                 t.equal(res.statusCode, 200);
@@ -342,7 +347,7 @@ test('put/get/del service', function (t) {
                 cb();
             });
         },
-        function (cb) {
+        function (_, cb) {
             self.client.get(uri_svc, function (err, _, res, obj) {
                 t.ifError(err);
                 t.equal(res.statusCode, 200);
@@ -352,7 +357,7 @@ test('put/get/del service', function (t) {
                 cb();
             });
         },
-        function (cb) {
+        function (_, cb) {
             // Check to make sure the service object is not
             // available through /applications -- this was a bug in
             // the moray cache looking in the wrong bucket.
@@ -364,7 +369,7 @@ test('put/get/del service', function (t) {
             });
         },
 
-        function (cb) {
+        function (_, cb) {
             var uri = '/services?name=' + svc.name;
 
             self.client.get(uri, function (err, _, res, obj) {
@@ -376,7 +381,7 @@ test('put/get/del service', function (t) {
                 cb();
             });
         },
-        function (cb) {
+        function (_, cb) {
             var uri = '/services?application_uuid=' +
                 svc.application_uuid;
 
@@ -389,7 +394,7 @@ test('put/get/del service', function (t) {
                 cb();
             });
         },
-        function (cb) {
+        function (_, cb) {
             var uri = '/services?type=vm';
 
             self.client.get(uri, function (err, _, res, obj) {
@@ -401,7 +406,7 @@ test('put/get/del service', function (t) {
                 cb();
             });
         },
-        function (cb) {
+        function (_, cb) {
             self.client.get(URI, function (err, _, res, obj) {
                 t.ifError(err);
                 t.equal(res.statusCode, 200);
@@ -411,34 +416,34 @@ test('put/get/del service', function (t) {
                 cb();
             });
         },
-        function (cb) {
+        function (_, cb) {
             common.testUpdates.call(self, t, uri_svc, cb);
         },
-        function (cb) {
+        function (_, cb) {
             self.client.del(uri_svc, function (err, _, res, obj) {
                 t.ifError(err);
                 t.equal(res.statusCode, 204);
                 cb();
             });
         },
-        function (cb) {
+        function (_, cb) {
             self.client.get(uri_svc, function (err, _, res, obj) {
                 t.ok(err);
                 t.equal(res.statusCode, 404);
                 cb();
             });
         },
-        function (cb) {
+        function (_, cb) {
             self.sapi.deleteManifest(cfg_uuid, function (err) {
                 cb(err);
             });
         },
-        function (cb) {
+        function (_, cb) {
             self.sapi.deleteApplication(app_uuid, function (err) {
                 cb(err);
             });
         }
-    ], function (err, results) {
+    ]}, function (err, results) {
         t.ifError(err);
         t.end();
     });
@@ -453,11 +458,11 @@ test('test 1100 services', function (t) {
 
     var svcs = [];
 
-    async.waterfall([
-        function (cb) {
-            common.createApplication.call(self, app_uuid, cb);
+    vasync.pipeline({funcs: [
+        function (_, cb) {
+            common.createApplication({sapi: self.sapi, uuid: app_uuid}, cb);
         },
-        function (cb) {
+        function (_, cb) {
             async.whilst(
             function () {
                 return (svcs.length < 1100);
@@ -481,7 +486,7 @@ test('test 1100 services', function (t) {
                 cb();
             });
         },
-        function (cb) {
+        function (_, cb) {
             var uri = '/services?application_uuid=' + app_uuid;
 
             self.client.get(uri, function (err, _, res, obj) {
@@ -497,7 +502,7 @@ test('test 1100 services', function (t) {
                 cb();
             });
         },
-        function (cb) {
+        function (_, cb) {
             async.forEachSeries(svcs, function (svc, subcb) {
                 var uri = '/services/' + svc.uuid;
 
@@ -510,7 +515,7 @@ test('test 1100 services', function (t) {
                 cb();
             });
         }
-    ], function (err) {
+    ]}, function (err) {
         t.ifError(err);
         t.end();
     });

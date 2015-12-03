@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright (c) 2014, Joyent, Inc.
+ * Copyright (c) 2015, Joyent, Inc.
  */
 
 /*
@@ -17,34 +17,33 @@ var async = require('async');
 var node_uuid = require('node-uuid');
 var util = require('util');
 
-/*
- * These images are manta-storage zones.  Not sure why those were picked, but
- * that's that.  If these are ever deleted from imgapi on updates.joyent.com,
- * then find two later ones, replace and go.  I fould these by:
+
+/**
+ * Create a test SAPI application.
  *
- * [root@headnode (us-east-3) ~]# sdc-imgadm list | grep manta-storage | tail -2
- *
- * Perhaps the long term solution here is to have the tests create their own
- * images somewhere.  If we could rely on a some sort of tag to find them, we
- * can determine if they are already there or need to be created.
- *
- * Also note there is this same comment and other image uuids in
- * instances.test.js
+ * ...
+ * @param cb {Function} `function (err, app)`
  */
+function createApplication(opts, cb) {
+    assert.object(opts, 'opts');
+    assert.object(opts.sapi, 'opts.sapi');  // SAPI client
+    assert.uuid(opts.uuid, 'opts.uuid');
+    assert.optionalString(opts.name, 'opts.name');
+    assert.optionalUuid(opts.image_uuid, 'opts.image_uuid');
+    assert.func(cb, 'cb');
+    assert.uuid(process.env.ADMIN_UUID, 'process.env.ADMIN_UUID');
 
-function createApplication(uuid, cb) {
-    var name = 'empty_test_application';
+    var name = opts.name || 'empty_test_application';
+    var createOpts = {
+        uuid: opts.uuid
+    };
+    if (opts.image_uuid) {
+        createOpts.params = {
+            image_uuid: opts.image_uuid
+        };
+    }
 
-    var opts = {};
-    opts.uuid = uuid;
-    opts.params = {};
-    if (process.env['IMAGE_UUID'])
-        opts.params.image_uuid = process.env['IMAGE_UUID'];
-
-    this.sapi.createApplication(name, process.env.ADMIN_UUID, opts,
-        function (err, app) {
-        return (cb(err));
-    });
+    opts.sapi.createApplication(name, process.env.ADMIN_UUID, createOpts, cb);
 }
 
 function createService(app_uuid, uuid, cb) {
@@ -54,7 +53,9 @@ function createService(app_uuid, uuid, cb) {
     opts.params = {};
     opts.params.ram = 256;
     opts.params.networks = [ 'admin' ];
-    opts.params.image_uuid = process.env.IMAGE_UUID;
+    assert.string(process.env.SAPI_TEST_IMAGE_UUID,
+        'process.env.SAPI_TEST_IMAGE_UUID');
+    opts.params.image_uuid = process.env.SAPI_TEST_IMAGE_UUID;
 
     if (arguments.length === 2)
         cb = uuid;
@@ -101,7 +102,7 @@ function testUpdates(t, uri, cb) {
     var self = this;
 
     async.waterfall([
-        function (subcb) {
+        function putUpdateChanges(subcb) {
             var changes = {};
             changes.action = 'update';
             changes.params = {};
@@ -112,16 +113,16 @@ function testUpdates(t, uri, cb) {
             function onPut(err, _, res, obj) {
                 t.ifError(err);
                 t.equal(res.statusCode, 200);
-
-                t.equal(obj.params.foo, 'baz');
-                t.equal(obj.metadata.foo, 'bar');
-
+                if (res.statusCode === 200) {
+                    t.equal(obj.params.foo, 'baz');
+                    t.equal(obj.metadata.foo, 'bar');
+                }
                 subcb(null);
             }
 
             self.client.put(uri, changes, onPut);
         },
-        function (subcb) {
+        function putDeleteChanges(subcb) {
             var changes = {};
             changes.action = 'delete';
             changes.params = {};
@@ -132,16 +133,16 @@ function testUpdates(t, uri, cb) {
             function onPut(err, _, res, obj) {
                 t.ifError(err);
                 t.equal(res.statusCode, 200);
-
-                t.ok(!obj.params.foo);
-                t.ok(!obj.metadata.foo);
-
+                if (res.statusCode === 200) {
+                    t.ok(!obj.params.foo);
+                    t.ok(!obj.metadata.foo);
+                }
                 subcb(null);
             }
 
             self.client.put(uri, changes, onPut);
         },
-        function (subcb) {
+        function putReplaceChanges1(subcb) {
             var changes = {};
             changes.action = 'update';
             changes.params = {};
@@ -152,16 +153,16 @@ function testUpdates(t, uri, cb) {
             function onPut(err, _, res, obj) {
                 t.ifError(err);
                 t.equal(res.statusCode, 200);
-
-                t.equal(obj.params.oldparam, 'oldvalue');
-                t.equal(obj.metadata.oldmd, 'oldvalue');
-
+                if (res.statusCode === 200) {
+                    t.equal(obj.params.oldparam, 'oldvalue');
+                    t.equal(obj.metadata.oldmd, 'oldvalue');
+                }
                 subcb(null);
             }
 
             self.client.put(uri, changes, onPut);
         },
-        function (subcb) {
+        function putReplaceChanges2(subcb) {
             var changes = {};
             changes.action = 'replace';
             changes.params = {};
@@ -172,12 +173,12 @@ function testUpdates(t, uri, cb) {
             function onPut(err, _, res, obj) {
                 t.ifError(err);
                 t.equal(res.statusCode, 200);
-
-                t.equal(obj.params.newparam, 'newvalue');
-                t.equal(obj.metadata.newmd, 'newvalue');
-                t.equal(Object.keys(obj.params).length, 1);
-                t.equal(Object.keys(obj.metadata).length, 1);
-
+                if (res.statusCode === 200) {
+                    t.equal(obj.params.newparam, 'newvalue');
+                    t.equal(obj.metadata.newmd, 'newvalue');
+                    t.equal(Object.keys(obj.params).length, 1);
+                    t.equal(Object.keys(obj.metadata).length, 1);
+                }
                 subcb(null);
             }
 
@@ -187,11 +188,8 @@ function testUpdates(t, uri, cb) {
 }
 
 
-exports.IMAGE_UUID = process.env.IMAGE_UUID;
-
 exports.createApplication = createApplication;
 exports.createService = createService;
 exports.createInstance = createInstance;
 exports.createManifest = createManifest;
-
 exports.testUpdates = testUpdates;

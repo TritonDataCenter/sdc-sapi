@@ -42,7 +42,8 @@ include ./tools/mk/Makefile.defs
 ifeq ($(shell uname -s),SunOS)
 	include ./tools/mk/Makefile.node_prebuilt.defs
 else
-	include ./tools/mk/Makefile.node.defs
+	NPM := $(shell which npm)
+	NPM_EXEC=$(NPM)
 endif
 include ./tools/mk/Makefile.smf.defs
 
@@ -128,8 +129,6 @@ publish: release
 include ./tools/mk/Makefile.deps
 ifeq ($(shell uname -s),SunOS)
 	include ./tools/mk/Makefile.node_prebuilt.targ
-else
-	include ./tools/mk/Makefile.node.targ
 endif
 include ./tools/mk/Makefile.smf.targ
 include ./tools/mk/Makefile.targ

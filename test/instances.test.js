@@ -103,7 +103,7 @@ test('create w/ invalid inputs', function (t) {
             var badinst  = jsprim.deepCopy(inst);
             delete badinst.service_uuid;
 
-            self.client.post(URI, badinst, function (err, _, res) {
+            self.client.post(URI, badinst, function (err, req, res) {
                 t.ok(err);
                 t.equal(err.name, 'MissingParameterError');
                 t.equal(res.statusCode, 409);
@@ -115,7 +115,7 @@ test('create w/ invalid inputs', function (t) {
             var badinst  = jsprim.deepCopy(inst);
             badinst.service_uuid = node_uuid.v4();
 
-            self.client.post(URI, badinst, function (err, _, res) {
+            self.client.post(URI, badinst, function (err, req, res) {
                 t.ok(err);
                 t.equal(res.statusCode, 404);
                 cb();
@@ -217,7 +217,7 @@ test('put/get/del vm instance', function (t) {
             });
         },
         function (_, cb) {
-            client.get(uri_inst, function (err, _, res, obj) {
+            client.get(uri_inst, function (err, req, res, obj) {
                 t.ok(err);
                 t.equal(res.statusCode, 404);
 
@@ -229,7 +229,7 @@ test('put/get/del vm instance', function (t) {
             var badinst = jsprim.deepCopy(inst);
             badinst.manifests = { my_service: node_uuid.v4() };
 
-            client.post(URI, badinst, function (err, _, res, obj) {
+            client.post(URI, badinst, function (err, req, res, obj) {
                 t.ok(err);
                 t.equal(res.statusCode, 500);
 
@@ -237,7 +237,7 @@ test('put/get/del vm instance', function (t) {
             });
         },
         function (_, cb) {
-            client.post(URI, inst, function (err, _, res, obj) {
+            client.post(URI, inst, function (err, req, res, obj) {
                 t.ifError(err);
                 t.equal(res.statusCode, 200);
 
@@ -247,7 +247,7 @@ test('put/get/del vm instance', function (t) {
             });
         },
         function (_, cb) {
-            client.get(uri_inst, function (err, _, res, obj) {
+            client.get(uri_inst, function (err, req, res, obj) {
                 t.ifError(err);
                 t.equal(res.statusCode, 200);
 
@@ -260,7 +260,7 @@ test('put/get/del vm instance', function (t) {
             var uri = '/instances?service_uuid=' +
                 inst.service_uuid;
 
-            client.get(uri, function (err, _, res, obj) {
+            client.get(uri, function (err, req, res, obj) {
                 t.ifError(err);
                 t.equal(res.statusCode, 200);
 
@@ -270,7 +270,7 @@ test('put/get/del vm instance', function (t) {
             });
         },
         function (_, cb) {
-            client.get(URI, function (err, _, res, obj) {
+            client.get(URI, function (err, req, res, obj) {
                 t.ifError(err);
                 t.equal(res.statusCode, 200);
 
@@ -282,7 +282,7 @@ test('put/get/del vm instance', function (t) {
         function (_, cb) {
             var uri = sprintf('/instances/%s/payload', inst.uuid);
 
-            client.get(uri, function (err, _, res, obj) {
+            client.get(uri, function (err, req, res, obj) {
                 t.ifError(err);
                 t.equal(res.statusCode, 200);
 
@@ -294,7 +294,7 @@ test('put/get/del vm instance', function (t) {
         function (_, cb) {
             var uri = sprintf('/configs/%s', inst.uuid);
 
-            client.get(uri, function (err, _, res, obj) {
+            client.get(uri, function (err, req, res, obj) {
                 t.ifError(err);
                 t.equal(res.statusCode, 200);
 
@@ -310,14 +310,14 @@ test('put/get/del vm instance', function (t) {
             common.testUpdates.call(self, t, uri_inst, cb);
         },
         function (_, cb) {
-            self.client.del(uri_inst, function (err, _, res, obj) {
+            self.client.del(uri_inst, function (err, req, res, obj) {
                 t.ifError(err);
                 t.equal(res.statusCode, 204);
                 cb(null);
             });
         },
         function (_, cb) {
-            self.client.get(uri_inst, function (err, _, res, obj) {
+            self.client.get(uri_inst, function (err, req, res, obj) {
                 t.ok(err);
                 t.equal(res.statusCode, 404);
                 cb(null);
@@ -426,7 +426,7 @@ test('put/get/del agent instance', function (t) {
             });
         },
         function (_, cb) {
-            client.get(uri_inst, function (err, _, res, obj) {
+            client.get(uri_inst, function (err, req, res, obj) {
                 t.ok(err);
                 t.equal(res.statusCode, 404);
 
@@ -438,7 +438,7 @@ test('put/get/del agent instance', function (t) {
             var badinst = jsprim.deepCopy(inst);
             badinst.manifests = { my_service: node_uuid.v4() };
 
-            client.post(URI, badinst, function (err, _, res, obj) {
+            client.post(URI, badinst, function (err, req, res, obj) {
                 t.ok(err);
                 t.equal(res.statusCode, 500);
 
@@ -446,7 +446,7 @@ test('put/get/del agent instance', function (t) {
             });
         },
         function (_, cb) {
-            client.post(URI, inst, function (err, _, res, obj) {
+            client.post(URI, inst, function (err, req, res, obj) {
                 t.ifError(err);
                 t.equal(res.statusCode, 200);
                 check(obj);
@@ -455,7 +455,7 @@ test('put/get/del agent instance', function (t) {
             });
         },
         function (_, cb) {
-            client.get(uri_inst, function (err, _, res, obj) {
+            client.get(uri_inst, function (err, req, res, obj) {
                 t.ifError(err);
                 t.equal(res.statusCode, 200);
                 check(obj);
@@ -467,7 +467,7 @@ test('put/get/del agent instance', function (t) {
             var uri = '/instances?service_uuid=' +
                 inst.service_uuid;
 
-            client.get(uri, function (err, _, res, obj) {
+            client.get(uri, function (err, req, res, obj) {
                 t.ifError(err);
                 t.equal(res.statusCode, 200);
 
@@ -477,7 +477,7 @@ test('put/get/del agent instance', function (t) {
             });
         },
         function (_, cb) {
-            function onRes(err, _, res, obj) {
+            function onRes(err, req, res, obj) {
                 t.ifError(err);
                 t.equal(res.statusCode, 200);
 
@@ -490,7 +490,7 @@ test('put/get/del agent instance', function (t) {
         function (_, cb) {
             var uri = sprintf('/instances/%s/payload', inst.uuid);
 
-            client.get(uri, function (err, _, res, obj) {
+            client.get(uri, function (err, req, res, obj) {
                 t.ifError(err);
                 t.equal(res.statusCode, 200);
 
@@ -502,7 +502,7 @@ test('put/get/del agent instance', function (t) {
         function (_, cb) {
             var uri = sprintf('/configs/%s', inst.uuid);
 
-            client.get(uri, function (err, _, res, obj) {
+            client.get(uri, function (err, req, res, obj) {
                 t.ifError(err);
                 t.equal(res.statusCode, 200);
 
@@ -518,14 +518,14 @@ test('put/get/del agent instance', function (t) {
             common.testUpdates.call(self, t, uri_inst, cb);
         },
         function (_, cb) {
-            self.client.del(uri_inst, function (err, _, res, obj) {
+            self.client.del(uri_inst, function (err, req, res, obj) {
                 t.ifError(err);
                 t.equal(res.statusCode, 204);
                 cb(null);
             });
         },
         function (_, cb) {
-            self.client.get(uri_inst, function (err, _, res, obj) {
+            self.client.get(uri_inst, function (err, req, res, obj) {
                 t.ok(err);
                 t.equal(res.statusCode, 404);
                 cb(null);
@@ -602,7 +602,7 @@ test('create instance with VM aleady existing', function (t) {
             createVm(inst.uuid, cb);
         },
         function (_, cb) {
-            client.post(URI, inst, function (err, _, res, obj) {
+            client.post(URI, inst, function (err, req, res, obj) {
                 t.ifError(err);
                 t.equal(res.statusCode, 200);
 
@@ -612,7 +612,7 @@ test('create instance with VM aleady existing', function (t) {
             });
         },
         function (_, cb) {
-            client.get(uri_inst, function (err, _, res, obj) {
+            client.get(uri_inst, function (err, req, res, obj) {
                 t.ifError(err);
                 t.equal(res.statusCode, 200);
 
@@ -622,7 +622,7 @@ test('create instance with VM aleady existing', function (t) {
             });
         },
         function (_, cb) {
-            self.client.del(uri_inst, function (err, _, res, obj) {
+            self.client.del(uri_inst, function (err, req, res, obj) {
                 t.ifError(err);
                 t.equal(res.statusCode, 204);
                 cb();
@@ -677,7 +677,7 @@ test('delete instance with no VM', function (t) {
             common.createService.call(self, app_uuid, svc_uuid, cb);
         },
         function (_, cb) {
-            client.post(URI, inst, function (err, _, res, obj) {
+            client.post(URI, inst, function (err, req, res, obj) {
                 t.ifError(err);
                 t.equal(res.statusCode, 200);
 
@@ -687,7 +687,7 @@ test('delete instance with no VM', function (t) {
             });
         },
         function (_, cb) {
-            client.get(uri_inst, function (err, _, res, obj) {
+            client.get(uri_inst, function (err, req, res, obj) {
                 t.ifError(err);
                 t.equal(res.statusCode, 200);
 
@@ -727,7 +727,7 @@ test('delete instance with no VM', function (t) {
             });
         },
         function (_, cb) {
-            self.client.del(uri_inst, function (err, _, res, obj) {
+            self.client.del(uri_inst, function (err, req, res, obj) {
                 t.ifError(err);
                 t.equal(res.statusCode, 204);
                 cb();
@@ -781,7 +781,7 @@ test('invalid zone parameters', function (t) {
             common.createService.call(self, app_uuid, svc_uuid, cb);
         },
         function (_, cb) {
-            client.post(URI, inst, function (err, _, res, obj) {
+            client.post(URI, inst, function (err, req, res, obj) {
                 if (process.env.TEST_SAPI_PROTO_MODE === 'true')
                     t.equal(res.statusCode, 200);
                 else
@@ -790,7 +790,7 @@ test('invalid zone parameters', function (t) {
             });
         },
         function (_, cb) {
-            client.get(uri_inst, function (err, _, res, obj) {
+            client.get(uri_inst, function (err, req, res, obj) {
                 if (process.env.TEST_SAPI_PROTO_MODE === 'true')
                     t.equal(res.statusCode, 200);
                 else
@@ -863,7 +863,7 @@ test('upgrading a zone', function (t) {
             var opts = {};
             opts.image_uuid = NEW_IMAGE;
 
-            client.put(uri, opts, function (err, _, res, obj) {
+            client.put(uri, opts, function (err, req, res, obj) {
                 t.equal(res.statusCode, 404);
                 cb();
             });
@@ -888,7 +888,7 @@ test('upgrading a zone', function (t) {
             common.createService.call(self, app_uuid, svc_uuid, cb);
         },
         function (_, cb) {
-            client.post(URI, inst, function (err, _, res, obj) {
+            client.post(URI, inst, function (err, req, res, obj) {
                 t.ifError(err);
                 t.equal(res.statusCode, 200);
                 if (obj && obj.params) {
@@ -903,7 +903,7 @@ test('upgrading a zone', function (t) {
             var opts = {};
             opts.image_uuid = NEW_IMAGE;
 
-            client.put(uri, opts, function (err, _, res, obj) {
+            client.put(uri, opts, function (err, req, res, obj) {
                 t.ifError(err);
                 t.equal(res.statusCode, 200);
 
@@ -986,14 +986,14 @@ test('create instance with NAPI networks', function (t) {
             });
         },
         function (_, cb) {
-            client.post(URI, inst, function (err, _, res, obj) {
+            client.post(URI, inst, function (err, req, res, obj) {
                 t.ifError(err);
                 t.equal(res.statusCode, 200);
                 cb(null);
             });
         },
         function (_, cb) {
-            self.client.del(uri_inst, function (err, _, res, obj) {
+            self.client.del(uri_inst, function (err, req, res, obj) {
                 t.ifError(err);
                 t.equal(res.statusCode, 204);
                 cb(null);
@@ -1059,7 +1059,7 @@ test('teardown hooks', function (t) {
         },
         function (_, cb) {
             debug('SAPI-254: post inst');
-            client.post(URI, inst, function (err, _, res, obj) {
+            client.post(URI, inst, function (err, req, res, obj) {
                 t.ifError(err);
                 t.equal(res.statusCode, 200);
                 cb(null);
@@ -1071,7 +1071,7 @@ test('teardown hooks', function (t) {
              * Both destroying and reprovisioning an instance should
              * fail when the teardown-hook fails.
              */
-            self.client.del(uri_inst, function (err, _, res, obj) {
+            self.client.del(uri_inst, function (err, req, res, obj) {
                 t.ok(err);
                 t.equal(res.statusCode, 500);
                 cb(null);
@@ -1084,7 +1084,7 @@ test('teardown hooks', function (t) {
             var opts = {};
             opts.image_uuid = NEW_IMAGE;
 
-            client.put(uri, opts, function (err, _, res, obj) {
+            client.put(uri, opts, function (err, req, res, obj) {
                 t.ok(err);
                 t.equal(res.statusCode, 500);
                 cb(null);
@@ -1092,7 +1092,7 @@ test('teardown hooks', function (t) {
         },
         function (_, cb) {
             debug('SAPI-254: get inst');
-            self.client.get(uri_inst, function (err, _, res, obj) {
+            self.client.get(uri_inst, function (err, req, res, obj) {
                 t.ifError(err);
                 t.equal(res.statusCode, 200);
                 cb(null);
@@ -1104,7 +1104,7 @@ test('teardown hooks', function (t) {
             opts.params = {};
             opts.params['teardown-hook'] = '/bin/true';
 
-            client.put(uri_inst, opts, function (err, _, res, obj) {
+            client.put(uri_inst, opts, function (err, req, res, obj) {
                 t.ifError(err);
                 t.equal(res.statusCode, 200);
 
@@ -1117,7 +1117,7 @@ test('teardown hooks', function (t) {
             debug('SAPI-254: post inst without teardown-hook');
             delete inst.params['teardown-hook'];
 
-            client.post(URI, inst, function (err, _, res, obj) {
+            client.post(URI, inst, function (err, req, res, obj) {
                 t.ifError(err);
                 t.equal(res.statusCode, 200);
                 cb(null);
@@ -1129,7 +1129,7 @@ test('teardown hooks', function (t) {
             opts.params = {};
             opts.params['teardown-hook'] = '/bin/false';
 
-            client.put(uri_svc, opts, function (err, _, res, obj) {
+            client.put(uri_svc, opts, function (err, req, res, obj) {
                 t.ifError(err);
                 t.equal(res.statusCode, 200);
                 t.equal(obj.params['teardown-hook'],
@@ -1145,7 +1145,7 @@ test('teardown hooks', function (t) {
              * case, the instance is inheriting its teardown-hook
              * from the service.
              */
-            self.client.del(uri_inst, function (err, _, res, obj) {
+            self.client.del(uri_inst, function (err, req, res, obj) {
                 t.ok(err);
                 t.equal(res.statusCode, 500);
                 cb(null);
@@ -1158,7 +1158,7 @@ test('teardown hooks', function (t) {
             var opts = {};
             opts.image_uuid = NEW_IMAGE;
 
-            client.put(uri, opts, function (err, _, res, obj) {
+            client.put(uri, opts, function (err, req, res, obj) {
                 t.ok(err);
                 t.equal(res.statusCode, 500);
                 cb(null);
@@ -1170,7 +1170,7 @@ test('teardown hooks', function (t) {
             opts.params = {};
             opts.params['teardown-hook'] = '/bin/true';
 
-            client.put(uri_svc, opts, function (err, _, res, obj) {
+            client.put(uri_svc, opts, function (err, req, res, obj) {
                 t.ifError(err);
                 t.equal(res.statusCode, 200);
                 t.equal(obj.params['teardown-hook'],
@@ -1185,7 +1185,7 @@ test('teardown hooks', function (t) {
             var opts = {};
             opts.image_uuid = NEW_IMAGE;
 
-            client.put(uri, opts, function (err, _, res, obj) {
+            client.put(uri, opts, function (err, req, res, obj) {
                 t.ifError(err);
                 t.equal(res.statusCode, 200);
                 cb(null);
@@ -1193,7 +1193,7 @@ test('teardown hooks', function (t) {
         },
         function (_, cb) {
             debug('SAPI-254: del inst');
-            self.client.del(uri_inst, function (err, _, res, obj) {
+            self.client.del(uri_inst, function (err, req, res, obj) {
                 t.ifError(err);
                 t.equal(res.statusCode, 204);
                 cb(null);

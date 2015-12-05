@@ -80,7 +80,7 @@ test('create w/ missing inputs', function (t) {
             var badsvc = jsprim.deepCopy(svc);
             delete badsvc.name;
 
-            self.client.post(URI, badsvc, function (err, _, res) {
+            self.client.post(URI, badsvc, function (err, req, res) {
                 check409(err, res);
                 cb();
             });
@@ -89,7 +89,7 @@ test('create w/ missing inputs', function (t) {
             var badsvc = jsprim.deepCopy(svc);
             delete badsvc.application_uuid;
 
-            self.client.post(URI, badsvc, function (err, _, res) {
+            self.client.post(URI, badsvc, function (err, req, res) {
                 check409(err, res);
                 cb();
             });
@@ -141,7 +141,7 @@ test('create w/ other invalid inputs', function (t) {
             var badsvc = jsprim.deepCopy(svc);
             badsvc.params.image_uuid = node_uuid.v4();
 
-            self.client.post(URI, badsvc, function (err, _, res) {
+            self.client.post(URI, badsvc, function (err, req, res) {
                 /*
                  * There's no connection to IMGAPI in proto
                  * mode, so there's no validation of the
@@ -163,7 +163,7 @@ test('create w/ other invalid inputs', function (t) {
             var badsvc = jsprim.deepCopy(svc);
             badsvc.manifests = { my_service: node_uuid.v4() };
 
-            self.client.post(URI, badsvc, function (err, _, res) {
+            self.client.post(URI, badsvc, function (err, req, res) {
                 t.ok(err);
                 t.equal(res.statusCode, 500);
                 cb();
@@ -196,7 +196,7 @@ test('create w/ invalid type', function (t) {
             var badsvc = jsprim.deepCopy(svc);
             badsvc.type = 'superagent';
 
-            self.client.post(URI, badsvc, function (err, _, res) {
+            self.client.post(URI, badsvc, function (err, req, res) {
                 t.ok(err);
                 t.equal(res.statusCode, 500);
                 cb();
@@ -229,14 +229,14 @@ test('create w/ an agent service', function (t) {
             common.createApplication({sapi: self.sapi, uuid: app_uuid}, cb);
         },
         function (_, cb) {
-            self.client.post(URI, svc, function (err, _, res) {
+            self.client.post(URI, svc, function (err, req, res) {
                 t.ifError(err);
                 t.equal(res.statusCode, 200);
                 cb();
             });
         },
         function (_, cb) {
-            self.client.del(uri_svc, function (err, _, res, obj) {
+            self.client.del(uri_svc, function (err, req, res, obj) {
                 t.ifError(err);
                 t.equal(res.statusCode, 204);
                 cb();
@@ -331,14 +331,14 @@ test('put/get/del service', function (t) {
             });
         },
         function (_, cb) {
-            self.client.get(uri_svc, function (err, _, res, obj) {
+            self.client.get(uri_svc, function (err, req, res, obj) {
                 t.ok(err);
                 t.equal(res.statusCode, 404);
                 cb();
             });
         },
         function (_, cb) {
-            self.client.post(URI, svc, function (err, _, res, obj) {
+            self.client.post(URI, svc, function (err, req, res, obj) {
                 t.ifError(err);
                 t.equal(res.statusCode, 200);
 
@@ -348,7 +348,7 @@ test('put/get/del service', function (t) {
             });
         },
         function (_, cb) {
-            self.client.get(uri_svc, function (err, _, res, obj) {
+            self.client.get(uri_svc, function (err, req, res, obj) {
                 t.ifError(err);
                 t.equal(res.statusCode, 200);
 
@@ -362,7 +362,7 @@ test('put/get/del service', function (t) {
             // available through /applications -- this was a bug in
             // the moray cache looking in the wrong bucket.
             var uri = '/applications/' + svc.uuid;
-            self.client.get(uri, function (err, _, res, obj) {
+            self.client.get(uri, function (err, req, res, obj) {
                 t.ok(err);
                 t.equal(res.statusCode, 404);
                 cb();
@@ -372,7 +372,7 @@ test('put/get/del service', function (t) {
         function (_, cb) {
             var uri = '/services?name=' + svc.name;
 
-            self.client.get(uri, function (err, _, res, obj) {
+            self.client.get(uri, function (err, req, res, obj) {
                 t.ifError(err);
                 t.equal(res.statusCode, 200);
 
@@ -385,7 +385,7 @@ test('put/get/del service', function (t) {
             var uri = '/services?application_uuid=' +
                 svc.application_uuid;
 
-            self.client.get(uri, function (err, _, res, obj) {
+            self.client.get(uri, function (err, req, res, obj) {
                 t.ifError(err);
                 t.equal(res.statusCode, 200);
 
@@ -397,7 +397,7 @@ test('put/get/del service', function (t) {
         function (_, cb) {
             var uri = '/services?type=vm';
 
-            self.client.get(uri, function (err, _, res, obj) {
+            self.client.get(uri, function (err, req, res, obj) {
                 t.ifError(err);
                 t.equal(res.statusCode, 200);
 
@@ -407,7 +407,7 @@ test('put/get/del service', function (t) {
             });
         },
         function (_, cb) {
-            self.client.get(URI, function (err, _, res, obj) {
+            self.client.get(URI, function (err, req, res, obj) {
                 t.ifError(err);
                 t.equal(res.statusCode, 200);
 
@@ -420,14 +420,14 @@ test('put/get/del service', function (t) {
             common.testUpdates.call(self, t, uri_svc, cb);
         },
         function (_, cb) {
-            self.client.del(uri_svc, function (err, _, res, obj) {
+            self.client.del(uri_svc, function (err, req, res, obj) {
                 t.ifError(err);
                 t.equal(res.statusCode, 204);
                 cb();
             });
         },
         function (_, cb) {
-            self.client.get(uri_svc, function (err, _, res, obj) {
+            self.client.get(uri_svc, function (err, req, res, obj) {
                 t.ok(err);
                 t.equal(res.statusCode, 404);
                 cb();
@@ -472,7 +472,7 @@ test('test 1100 services', function (t) {
                     node_uuid.v4().substr(0, 8);
                 svc.application_uuid = app_uuid;
 
-                function onPost(err, _, res, obj) {
+                function onPost(err, req, res, obj) {
                     t.ifError(err);
                     t.equal(res.statusCode, 200);
 
@@ -489,7 +489,7 @@ test('test 1100 services', function (t) {
         function (_, cb) {
             var uri = '/services?application_uuid=' + app_uuid;
 
-            self.client.get(uri, function (err, _, res, obj) {
+            self.client.get(uri, function (err, req, res, obj) {
                 t.ifError(err);
 
                 if (res)
@@ -506,7 +506,7 @@ test('test 1100 services', function (t) {
             async.forEachSeries(svcs, function (svc, subcb) {
                 var uri = '/services/' + svc.uuid;
 
-                self.client.del(uri, function (err, _, res) {
+                self.client.del(uri, function (err, req, res) {
                     t.ifError(err);
                     t.equal(res.statusCode, 204);
                     subcb();

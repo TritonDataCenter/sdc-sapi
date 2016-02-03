@@ -69,7 +69,6 @@ function usage
 
 function cleanup () {
     local status=$?
-    svcadm enable -s sapi
     if [[ $status -ne 0 ]]; then
         echo "error $status (run 'TRACE=1 $0' for more info)"
     fi
@@ -110,8 +109,6 @@ mkdir -p $OUTPUT_DIR
 
 
 #---- start tests
-
-svcadm disable -s sapi
 
 cd ${TOP}
 TEST_SAPI_PROTO_MODE=true ./node_modules/.bin/nodeunit \

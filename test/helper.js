@@ -29,6 +29,7 @@ var VMAPIPlus = require('../lib/server/vmapiplus');
 
 var exec = require('child_process').exec;
 
+var SAPI_TEST_SERVER_PORT = 12345;
 
 // -- Helpers
 
@@ -51,7 +52,8 @@ function createJsonClient(opts) {
         log: log,
         retry: false,
         type: 'http',
-        url: process.env.SAPI_URL || 'http://localhost:80',
+        url: process.env.SAPI_URL || 'http://localhost:' +
+            SAPI_TEST_SERVER_PORT,
         version: (opts && opts.version) ? opts.version : '*'
     });
 
@@ -60,11 +62,11 @@ function createJsonClient(opts) {
 
 function createSapiClient(opts) {
     var log = createLogger();
-
     var client = new sdc.SAPI({
         agent: false,
         log: log,
-        url: process.env.SAPI_URL || 'http://localhost:80',
+        url: process.env.SAPI_URL || 'http://localhost:' +
+            SAPI_TEST_SERVER_PORT,
         version: (opts && opts.version) ? opts.version : '*'
     });
 
@@ -186,6 +188,8 @@ function startSapiServer(mode, cb) {
 
     var log = new Logger(log_options);
     config.log = log;
+
+    config.port = SAPI_TEST_SERVER_PORT;
 
     var sapi = new SAPI(config);
 

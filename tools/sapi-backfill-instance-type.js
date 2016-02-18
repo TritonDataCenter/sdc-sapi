@@ -124,7 +124,7 @@ function updateInstancesBucket(cb) {
             index: {
                 uuid: { type: 'string', unique: true },
                 service_uuid: { type: 'string' },
-                type: { type: "string" }
+                type: { type: 'string' }
             }
         };
         morayClient.updateBucket(INSTANCES_BUCKET, cfg, cb);
@@ -154,7 +154,6 @@ function listInstances(cb) {
     req.once('error', cb);
 
     req.on('record', function (object) {
-        var value = JSON.parse(object._value);
         // push every instance uuid that does not have a type yet
         if (object.type === null || object.type === undefined) {
             instances.push(object.uuid);
@@ -165,7 +164,7 @@ function listInstances(cb) {
     });
 
     req.once('end', function () {
-        return cb(null, instances);
+        return (cb(null, instances));
     });
 }
 

@@ -17,6 +17,7 @@ var async = require('async');
 var node_uuid = require('node-uuid');
 var util = require('util');
 
+var TEST_RESOURCES_NAME_PREFIX = 'sdc-sapitest';
 
 /**
  * Create a test SAPI application.
@@ -75,10 +76,8 @@ function createInstance(svc_uuid, uuid, cb) {
     else
         opts.uuid = uuid;
 
-    if (!opts.params)
-        opts.params = {};
-    if (!opts.params.alias)
-        opts.params.alias = 'sapitest-' + node_uuid.v4().substr(0, 8);
+    opts.params = {};
+    opts.params.alias = getUniqueTestResourceName();
 
     this.sapi.createInstance(svc_uuid, opts, cb);
 }
@@ -187,9 +186,31 @@ function testUpdates(t, uri, cb) {
     ], cb);
 }
 
+// Returns a string that identifies a test resource (such as a VM)
+// somewhat uniquely. The V4 UUID is truncated to 8 characters to make the
+// string not too long, while still allowing for a low collision ratio for the
+// purpose of running tests. 'debugName' is an optional string that can help
+// further identify a resource that belongs to a specific test.
+// All resource names share a common prefix: 'sdc-sapitest', so it's also
+// possible to search for any test resource.
+function getUniqueTestResourceName(debugName) {
+    assert.optionalString(debugName);
+
+    var resourceNameComponents = [ TEST_RESOURCES_NAME_PREFIX ];
+
+    if (debugName) {
+        resourceNameComponents.push(debugName);
+    }
+
+    resourceNameComponents.push(node_uuid.v4().substr(0, 8));
+
+    return (resourceNameComponents.join('-'));
+}
 
 exports.createApplication = createApplication;
 exports.createService = createService;
 exports.createInstance = createInstance;
 exports.createManifest = createManifest;
 exports.testUpdates = testUpdates;
+exports.getUniqueTestResourceName = getUniqueTestResourceName;
+exports.TEST_RESOURCES_NAME_PREFIX = TEST_RESOURCES_NAME_PREFIX;

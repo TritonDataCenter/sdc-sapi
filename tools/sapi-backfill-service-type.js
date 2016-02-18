@@ -105,7 +105,7 @@ function updateBucket(cb) {
                 uuid: { type: 'string', unique: true },
                 name: { type: 'string' },
                 application_uuid: { type: 'string' },
-                type: { type: "string" }
+                type: { type: 'string' }
             }
         };
         morayClient.updateBucket(SERVICES_BUCKET, cfg, cb);

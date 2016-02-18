@@ -39,7 +39,7 @@ var URI = '/instances';
 /*
  * These images are manta-storage zones.  Not sure why those were picked, but
  * that's that.  If these are ever deleted from imgapi on updates.joyent.com,
- * then find two later ones, replace and go.  I fould these by:
+ * then find two later ones, replace and go.  I found these by:
  *
  * [root@headnode (us-east-3) ~]# sdc-imgadm list | grep manta-storage | tail -2
  *
@@ -152,7 +152,7 @@ test('put/get/del vm instance', function (t) {
     inst.service_uuid = svc_uuid;
     inst.params = {};
     inst.params.billing_id = process.env.BILLING_ID;
-    inst.params.alias = 'sapitest-normal-instance';
+    inst.params.alias = common.getUniqueTestResourceName('normal-instance');
     inst.metadata = {
         string_val: 'my string',
         num_val: 123,
@@ -576,7 +576,7 @@ test('create instance with VM aleady existing', function (t) {
     inst.uuid = node_uuid.v4();
     inst.service_uuid = svc_uuid;
     inst.params = {};
-    inst.params.alias = 'sapitest-vmexists';
+    inst.params.alias = common.getUniqueTestResourceName('vmexists');
 
     var check = function (obj) {
         t.equal(obj.uuid, inst.uuid);
@@ -660,7 +660,7 @@ test('delete instance with no VM', function (t) {
     inst.service_uuid = svc_uuid;
     inst.params = {};
     inst.params.billing_id = process.env.BILLING_ID;
-    inst.params.alias = 'sapitest-missingvm';
+    inst.params.alias = common.getUniqueTestResourceName('missingvm');
 
     var check = function (obj) {
         t.equal(obj.uuid, inst.uuid);
@@ -829,7 +829,7 @@ test('upgrading a zone', function (t) {
     inst.uuid = node_uuid.v4();
     inst.service_uuid = svc_uuid;
     inst.params = {};
-    inst.params.alias = 'sapitest-upgradevm';
+    inst.params.alias = common.getUniqueTestResourceName('sapitest-upgradevm');
 
     t.ok(process.env.SAPI_TEST_IMAGE_UUID, 'process.env.SAPI_TEST_IMAGE_UUID');
     var oldImage = process.env.SAPI_TEST_IMAGE_UUID;
@@ -981,7 +981,8 @@ test('create instance with NAPI networks', function (t) {
                 inst.params = {};
                 inst.params.billing_id = process.env.BILLING_ID;
                 inst.params.networks = [ { uuid: uuid } ];
-                inst.params.alias = 'sapitest-napi-networks';
+                inst.params.alias =
+                    common.getUniqueTestResourceName('napi-networks');
                 cb(err);
             });
         },
@@ -1029,7 +1030,7 @@ test('teardown hooks', function (t) {
     inst.uuid = node_uuid.v4();
     inst.service_uuid = svc_uuid;
     inst.params = {};
-    inst.params.alias = 'sapitest-teardown-' + node_uuid.v4().substr(0, 8);
+    inst.params.alias = common.getUniqueTestResourceName('teardown');
     inst.params.billing_id = process.env.BILLING_ID;
     t.ok(process.env.SAPI_TEST_IMAGE_UUID, 'process.env.SAPI_TEST_IMAGE_UUID');
     inst.params.image_uuid = process.env.SAPI_TEST_IMAGE_UUID;

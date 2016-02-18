@@ -73,13 +73,15 @@ function createSapiClient(opts) {
     return (client);
 }
 
-function createVmapiClient() {
+function createVmapiClient(vmapiUrl) {
+    assert.optionalString(vmapiUrl);
+
     var log = createLogger();
 
     var client = new sdc.VMAPI({
         agent: false,
         log: log,
-        url: process.env.VMAPI_URL || 'http://10.2.206.23'
+        url: vmapiUrl || process.env.VMAPI_URL || 'http://10.2.206.23'
     });
 
     return (client);

@@ -30,7 +30,7 @@ JSSTYLE_FILES	 = $(JS_FILES)
 JSSTYLE_FLAGS    = -o indent=4,doxygen
 SMF_MANIFESTS_IN = smf/manifests/sapi.xml.in
 
-NODE_PREBUILT_VERSION=v0.10.26
+NODE_PREBUILT_VERSION=v0.10.48
 ifeq ($(shell uname -s),SunOS)
 	NODE_PREBUILT_TAG=zone
 	# This is sdc-minimal-multiarch-lts@15.4.1, compat with

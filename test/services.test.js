@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright (c) 2014, Joyent, Inc.
+ * Copyright (c) 2017, Joyent, Inc.
  */
 
 /*
@@ -135,28 +135,6 @@ test('create w/ other invalid inputs', function (t) {
     vasync.pipeline({funcs: [
         function (_, cb) {
             common.createApplication({sapi: self.sapi, uuid: app_uuid}, cb);
-        },
-        function (_, cb) {
-            // invalid image_uuid
-            var badsvc = jsprim.deepCopy(svc);
-            badsvc.params.image_uuid = node_uuid.v4();
-
-            self.client.post(URI, badsvc, function (err, req, res) {
-                /*
-                 * There's no connection to IMGAPI in proto
-                 * mode, so there's no validation of the
-                 * image_uuid.
-                 */
-                if (process.env.TEST_SAPI_PROTO_MODE ===
-                    'true') {
-                    t.ifError(err);
-                    t.equal(res.statusCode, 200);
-                } else {
-                    t.ok(err);
-                    t.equal(res.statusCode, 500);
-                }
-                cb();
-            });
         },
         function (_, cb) {
             // invalid config manifest

@@ -5,8 +5,10 @@
 	},
 	"datacenter_name": "{{{datacenter_name}}}",
 	"moray": {
-		"host": "{{{MORAY_SERVICE}}}",
-		"port": 2020,
+		"srvDomain": "{{MORAY_SERVICE}}",
+		"cueballOptions": {
+			"resolvers": ["{{{BINDER_SERVICE}}}"]
+		},
 		"master_host": "{{{MASTER_MORAY_IP}}}",
 		"master_port": "{{{MASTER_MORAY_PORT}}}"
 	},

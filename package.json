@@ -15,7 +15,7 @@
     "ldapjs": "git+https://github.com/mcavage/node-ldapjs.git#0a88109",
     "lru-cache": "2.3.0",
     "mkdirp": "0.3.4",
-    "moray": "git+https://github.com/joyent/node-moray.git#b84ef0e",
+    "moray": "3.2.1",
     "node-uuid": "1.4.0",
     "once": "1.3.0",
     "optimist": "0.3.5",
@@ -23,8 +23,8 @@
     "sdc-clients": "9.2.0",
     "semver": "3.0.1",
     "sprintf-js": "0.0.7",
-    "vasync": "1.5.0",
-    "verror": "^1.6.1"
+    "vasync": "^1.6.3",
+    "verror": "^1.10.0"
   },
   "devDependencies": {
     "nodeunit": "0.9.1",

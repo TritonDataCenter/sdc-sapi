@@ -648,6 +648,35 @@ instance.
     }'
 
 
+## AdoptInstance (POST /instances)
+
+Existing instances can be added to SAPI by adding `"exists": true` to the
+payload given to [CreateInstance](#CreateInstance). In this case, the `uuid`
+of the instance to be adopted is *mandatory*, not optional.
+
+When SAPI isn't in [Proto Mode](#proto-mode), the existence of the provided
+instance `uuid` will be verified through `VMAPI`. In case the instance cannot
+be found, an `Invalid Argument` error will be returned (`409` Status Code).
+
+### Inputs
+
+See [CreateInstance](#CreateInstance) above.
+
+### Responses
+
+See [CreateInstance](#CreateInstance) above.
+
+### Example
+
+    POST /instances -d '{
+      "name": "papi",
+      "service_uuid": "161f70c5-e18c-448e-bb33-a04142bfe5ea",
+      "params" {
+        "alias": "papi2"
+      },
+      "exists": true
+    }'
+
 
 ## ListInstances (GET /instances)
 

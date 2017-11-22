@@ -1095,6 +1095,66 @@ Deletes an history item.
 | ---- | -------------------------- | -------- |
 | 204  | History record was deleted | none     |
 
+
+# Multi DC mode
+
+SAPI supports a cross-DC configuration mode. This is intended to support
+multi-DC applications like Manta.
+In this mode, there are typically three DCs with three separate Triton
+deployments with [UFDS linked together](https://docs.joyent.com/private-cloud/install/headnode-installation/linked-data-centers).
+There are also cross-DC routes for the admin network, which enables
+cross-DC DNS to be setup.
+
+But there's only one "manta" application, and Manta-related deployment
+operations need to be operating on that one "manta" application object.
+
+Note that Triton itself, even with linked datacenters does not need linked
+sapi.
+
+Prerequisites:
+
+- Set up a multi-DC Triton deployment (with linked UFDS and inter-datacenter
+  routes) inside a single region.
+- Pick one of the DCs within the region to be the SAPI master. (The same
+  DC with the UFDS master if any; otherwise any of them)
+- Ensure cross-DC "admin" network routes are available, at least among the
+  SAPI zones and the Moray zones in the master's DC.
+- Ensure that cross-DC nameservices are working. This should happen
+  automatically with UFDS replication and routes set up.
+
+The steps needed to set this up are:
+
+- In the two non-master DCs, update the SAPI service's metadata so that
+  `MASTER_MORAY_IP` refers to the DNS domain of the Moray instance in the
+  master DC, and `MASTER_MORAY_PORT` should likely be `2020`.
+
+        sapi_svc=$(sdc-sapi /services?name=sapi | json -Ha uuid)
+        sapiadm update $sapi_svc metadata.MASTER_MORAY_IP=moray.<primary-datacenter>.<datacenter domain suffix>
+        sapiadm update $sapi_svc metadata.MASTER_MORAY_PORT=2020
+
+  Note that originally `MASTER_MORAY_IP` was intended to be an IP but
+  now it's recommended to use DNS names in order to prevent possible errors
+  in case the IP address of the SAPI master changes. (Either way, IP
+  addresses are still supported for backwards compatibility).
+- After that, you can proceed with the "manta-init" phases of Manta setup.
+
+Client `GET` requests to [List Applications](#ListApplications),
+[List Instances](#ListInstances), [List Manifests](#ListManifests) and
+[List Services](#ListServices) can specify `include_master=true`, in which case
+SAPI will fetch data from its master's Moray and will include both local and
+master data into the response.
+
+Client `POST` request to [Create Application](#CreateApplication),
+[Create Instance](#CreateInstance), [Create Manifest](#CreateManifest) and
+[Create Services](#CreateService) can specify `master=true`, in which case
+SAPI will store the data into its master's moray.
+
+Finally, any `DELETE` request made for any of these end-points will always
+try to delete the records from the local moray storage and, in case it's not
+found there, will attempt the deletion from its master's moray.
+
+Option `include_master` has no effect when requesting from the master.
+
 # API Versions
 
 ## 1.0.0

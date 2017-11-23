@@ -21,7 +21,7 @@
     "optimist": "0.3.5",
     "restify": "2.4.1",
     "sdc-clients": "9.2.0",
-    "semver": "3.0.1",
+    "semver": "5.4.1",
     "sprintf-js": "0.0.7",
     "vasync": "^1.6.3",
     "verror": "^1.10.0"

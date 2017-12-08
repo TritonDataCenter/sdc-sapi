@@ -955,7 +955,6 @@ test('upgrading a zone', function (t) {
 
 
 // -- Test passing NAPI-ifed networks
-
 test('create instance with NAPI networks', function (t) {
     var self = this;
     var client = this.client;
@@ -969,49 +968,91 @@ test('create instance with NAPI networks', function (t) {
 
     var uri_inst = '/instances/' + inst.uuid;
 
-    vasync.pipeline({funcs: [
-        function (_, cb) {
-            common.createApplication({sapi: self.sapi, uuid: app_uuid}, cb);
-        },
-        function (_, cb) {
-            common.createService.call(self, app_uuid, svc_uuid, cb);
-        },
-        function (_, cb) {
-            helper.resolveNetwork('admin', process.env.ADMIN_UUID,
-                function (err, uuid) {
+    var runone = function (net, pcb) {
+        vasync.pipeline({funcs: [
+            function (_, cb) {
+                common.createApplication({sapi: self.sapi, uuid: app_uuid}, cb);
+            },
+            function (_, cb) {
+                common.createService.call(self, app_uuid, svc_uuid, cb);
+            },
+            function (_, cb) {
                 inst.params = {};
                 inst.params.billing_id = process.env.BILLING_ID;
-                inst.params.networks = [ { uuid: uuid } ];
                 inst.params.alias =
-                    common.getUniqueTestResourceName('napi-networks');
-                cb(err);
-            });
-        },
-        function (_, cb) {
-            client.post(URI, inst, function (err, req, res, obj) {
-                t.ifError(err);
-                t.equal(res.statusCode, 200);
+                    common.getUniqueTestResourceName('napi-nets-' + inst.uuid);
+                inst.params.networks = net;
                 cb(null);
-            });
-        },
-        function (_, cb) {
-            self.client.del(uri_inst, function (err, req, res, obj) {
-                t.ifError(err);
-                t.equal(res.statusCode, 204);
-                cb(null);
-            });
-        },
-        function (_, cb) {
-            self.sapi.deleteService(svc_uuid, function (err) {
-                cb(err);
-            });
-        },
-        function (_, cb) {
-            self.sapi.deleteApplication(app_uuid, function (err) {
-                cb(err);
-            });
-        }
-    ]}, function (err, results) {
+            },
+            function (_, cb) {
+                client.post(URI, inst, function (err, req, res, obj) {
+                    t.ifError(err);
+                    t.equal(res.statusCode, 200);
+                    cb(err);
+                });
+            },
+            function (_, cb) {
+                self.client.del(uri_inst, function (err, req, res, obj) {
+                    t.ifError(err);
+                    t.equal(res.statusCode, 204);
+                    cb(err);
+                });
+            },
+            function (_, cb) {
+                self.sapi.deleteService(svc_uuid, function (err) {
+                    cb(err);
+                });
+            },
+            function (_, cb) {
+                self.sapi.deleteApplication(app_uuid, function (err) {
+                    cb(err);
+                });
+            }
+        ]}, function (err, results) {
+            t.ifError(err);
+            pcb(err);
+        });
+    };
+
+    /*
+     * Test that SAPI properly converts these 4 into valid VMAPI formats.
+     *
+     * [ { uuid: <uuid> }, ... ]
+     * [ <uuid>, ... ]
+     * [ { name: <name> }, ... ]
+     * [ <name>, ... ]
+     */
+    var resolveAdmin = function (is_obj, callback) {
+        helper.resolveNetwork('admin', process.env.ADMIN_UUID,
+            function (err, uuid) {
+                if (err) {
+                    callback(err);
+                    return;
+                }
+                if (is_obj) {
+                    runone([ { uuid: uuid } ], callback);
+                } else {
+                    runone([ uuid ], callback);
+                }
+        });
+    };
+
+    vasync.pipeline({
+        funcs: [
+            function (_, callback) {
+                resolveAdmin(true, callback);
+            },
+            function (_, callback) {
+                resolveAdmin(false, callback);
+            },
+            function (_, callback) {
+                runone([ { name: 'admin' } ], callback);
+            },
+            function (_, callback) {
+                runone([ 'admin' ], callback);
+            }
+        ]
+    }, function (err, results) {
         t.ifError(err);
         t.end();
     });

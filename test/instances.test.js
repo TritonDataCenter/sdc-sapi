@@ -188,7 +188,7 @@ test('put/get/del vm instance', function (t) {
             }
         }
 
-        t.ok(found, 'found service' + inst.uuid);
+        t.ok(found, 'found instance ' + inst.uuid);
     };
 
     var uri_inst = '/instances/' + inst.uuid;
@@ -770,6 +770,7 @@ test('invalid zone parameters', function (t) {
      */
     inst.params.ram = 10 * 1024 * 1024 * 1024 * 1024;  // 10 TB
     inst.params.networks = [ { name: 'admin', ip: '192.168.1.1'} ];
+    inst.params.alias = common.getUniqueTestResourceName('sapitest-invalidram');
 
     var uri_inst = '/instances/' + inst.uuid;
 

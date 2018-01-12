@@ -1,5 +1,5 @@
 {
 	"name": "sapi",
-	"path": "/opt/smartdc/sapi/etc/config.json",
+	"path": "/opt/smartdc/sapi/etc/sapi-master.config.json",
 	"post_cmd": "/usr/sbin/svcadm restart sapi"
 }

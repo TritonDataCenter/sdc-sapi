@@ -5,7 +5,7 @@
 #
 
 #
-# Copyright (c) 2014, Joyent, Inc.
+# Copyright (c) 2017, Joyent, Inc.
 #
 
 #
@@ -88,17 +88,14 @@ service: all $(SMF_MANIFESTS)
 	@rm -rf $(SVC_PKGDIR)
 	@mkdir -p $(SVC_PKGDIR)/site
 	@mkdir -p $(SVC_INSTDIR)/build
-	@mkdir -p $(SVC_INSTDIR)/lib
 	@mkdir -p $(SVC_INSTDIR)/smf/manifests
 	@mkdir -p $(SVC_INSTDIR)/test
 	@mkdir -p $(SVC_INSTDIR)/tools
 	@touch $(SVC_PKGDIR)/site/.do-not-delete-me
 	cp -r $(TOP)/server.js \
+		$(TOP)/lib \
 		$(TOP)/node_modules \
 		$(SVC_INSTDIR)/
-	cp -r $(TOP)/lib/common \
-		$(TOP)/lib/server \
-		$(SVC_INSTDIR)/lib
 	cp $(TOP)/tools/sapi-backfill-service-type.js \
 		$(SVC_INSTDIR)/tools/
 	cp $(TOP)/tools/sapi-backfill-instance-type.js \

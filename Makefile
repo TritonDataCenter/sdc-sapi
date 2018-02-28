@@ -95,6 +95,7 @@ service: all $(SMF_MANIFESTS)
 	@touch $(SVC_PKGDIR)/site/.do-not-delete-me
 	cp -r $(TOP)/server.js \
 		$(TOP)/node_modules \
+		$(TOP)/package.json \
 		$(SVC_INSTDIR)/
 	cp -r $(TOP)/lib/common \
 		$(TOP)/lib/server \

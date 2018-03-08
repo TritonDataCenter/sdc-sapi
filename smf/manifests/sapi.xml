@@ -7,7 +7,7 @@
 -->
 
 <!--
-    Copyright (c) 2014, Joyent, Inc.
+    Copyright (c) 2018, Joyent, Inc.
 -->
 
 <service_bundle type="manifest" name="smartdc-application-sapi">
@@ -20,7 +20,7 @@
 	<service_fmri value="svc:/system/filesystem/local" />
 </dependency>
 
-<exec_method type="method" name="start" exec="@@NODE@@ --abort-on-uncaught-exception @@PREFIX@@/server.js -f @@PREFIX@@/etc/config.json &amp;" timeout_seconds="30" />
+<exec_method type="method" name="start" exec="/opt/smartdc/sapi/build/node/bin/node --abort-on-uncaught-exception /opt/smartdc/sapi/server.js -f /opt/smartdc/sapi/etc/config.json &amp;" timeout_seconds="30" />
 <exec_method type="method" name="stop" exec=":kill" timeout_seconds="30" />
 
 <instance name="default" enabled="true" />

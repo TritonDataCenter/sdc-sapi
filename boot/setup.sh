@@ -7,7 +7,7 @@
 #
 
 #
-# Copyright (c) 2014, Joyent, Inc.
+# Copyright (c) 2018, Joyent, Inc.
 #
 
 export PS4='[\D{%FT%TZ}] ${BASH_SOURCE}:${LINENO}: ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
@@ -108,6 +108,8 @@ EOF
 HERE
 
 fi
+
+/usr/sbin/svccfg import /opt/smartdc/sapi/smf/manifests/sapi.xml
 
 echo "Adding log rotation"
 sdc_log_rotation_add amon-agent /var/svc/log/*amon-agent*.log 1g

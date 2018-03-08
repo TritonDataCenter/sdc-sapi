@@ -28,7 +28,7 @@ JSL_CONF_NODE	 = tools/jsl.node.conf
 JSL_FILES_NODE   = $(JS_FILES)
 JSSTYLE_FILES	 = $(JS_FILES)
 JSSTYLE_FLAGS    = -o indent=4,doxygen,unparenthesized-return=0
-SMF_MANIFESTS_IN = smf/manifests/sapi.xml.in
+SMF_MANIFESTS	 = smf/manifests/sapi.xml
 
 NODE_PREBUILT_VERSION=v4.8.7
 ifeq ($(shell uname -s),SunOS)

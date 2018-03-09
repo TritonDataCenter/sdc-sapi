@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright (c) 2015, Joyent, Inc.
+ * Copyright (c) 2018, Joyent, Inc.
  */
 
 /*
@@ -30,6 +30,7 @@ var VMAPIPlus = require('../lib/server/vmapiplus');
 var exec = require('child_process').exec;
 
 var SAPI_TEST_SERVER_PORT = 12345;
+var SAPI_TEST_METRICS_SERVER_PORT = 8882;
 
 // -- Helpers
 
@@ -192,6 +193,7 @@ function startSapiServer(mode, cb) {
     config.log = log;
 
     config.port = SAPI_TEST_SERVER_PORT;
+    config.metricsPort = SAPI_TEST_METRICS_SERVER_PORT;
 
     var sapi = new SAPI(config);
 

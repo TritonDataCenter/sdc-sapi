@@ -1155,6 +1155,12 @@ found there, will attempt the deletion from its master's moray.
 
 Option `include_master` has no effect when requesting from the master.
 
+
+# Metrics
+
+SAPI exposes metrics via [node-triton-metrics](https://github.com/joyent/node-triton-metrics) on `http://<ADMIN_IP>:8881/metrics`
+
+
 # API Versions
 
 ## 1.0.0

@@ -1,30 +1,34 @@
 {
-	"log_options": {
-		"name": "sapi",
-		"level": "info"
-	},
-	"datacenter_name": "{{{datacenter_name}}}",
-	"moray": {
-		"srvDomain": "{{MORAY_SERVICE}}",
-		"cueballOptions": {
-			"resolvers": ["{{{BINDER_SERVICE}}}"]
-		},
-		"master_host": "{{{MASTER_MORAY_IP}}}",
-		"master_port": "{{{MASTER_MORAY_PORT}}}"
-	},
-	"cnapi": {
-		"url": "http://{{{CNAPI_SERVICE}}}"
-	},
-	"vmapi": {
-		"url": "http://{{{VMAPI_SERVICE}}}"
-	},
-	"napi": {
-		"url": "http://{{{NAPI_SERVICE}}}"
-	},
-	"imgapi": {
-		"url": "http://{{{IMGAPI_SERVICE}}}"
-	},
-	"papi": {
-		"url": "http://{{{PAPI_SERVICE}}}"
-	}
+    "log_options": {
+        "name": "sapi",
+        "level": "info"
+    },
+    "datacenter_name": "{{{datacenter_name}}}",
+    "serviceName": "{{SERVICE_NAME}}",
+    "instanceUuid": "{{auto.ZONENAME}}",
+    "serverUuid": "{{auto.SERVER_UUID}}",
+    "adminIp": "{{auto.ADMIN_IP}}",
+    "moray": {
+        "srvDomain": "{{MORAY_SERVICE}}",
+        "cueballOptions": {
+            "resolvers": ["{{{BINDER_SERVICE}}}"]
+        },
+        "master_host": "{{{MASTER_MORAY_IP}}}",
+        "master_port": "{{{MASTER_MORAY_PORT}}}"
+    },
+    "cnapi": {
+        "url": "http://{{{CNAPI_SERVICE}}}"
+    },
+    "vmapi": {
+        "url": "http://{{{VMAPI_SERVICE}}}"
+    },
+    "napi": {
+        "url": "http://{{{NAPI_SERVICE}}}"
+    },
+    "imgapi": {
+        "url": "http://{{{IMGAPI_SERVICE}}}"
+    },
+    "papi": {
+        "url": "http://{{{PAPI_SERVICE}}}"
+    }
 }

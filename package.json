@@ -1,7 +1,7 @@
 {
   "name": "sapi",
   "description": "Triton Services and Configuration API",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "author": "Joyent (joyent.com)",
   "license": "MPL-2.0",
   "private": true,
@@ -22,6 +22,7 @@
     "sdc-clients": "10.5.0",
     "semver": "5.4.1",
     "sprintf-js": "0.0.7",
+    "triton-metrics": "0.1.0",
     "vasync": "2.2.0",
     "verror": "1.10.0"
   },

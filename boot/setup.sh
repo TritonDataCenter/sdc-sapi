@@ -66,6 +66,7 @@ MORAY_ADMIN_IPS=${moray_admin_ips}
 NAPI_ADMIN_IPS=${napi_admin_ips}
 VMAPI_ADMIN_IPS=${vmapi_admin_ips}
 CNAPI_ADMIN_IPS=${cnapi_admin_ips}
+SAPI_ADMIN_IP=${sapi_admin_ips}
 EOF
     )
 
@@ -88,6 +89,10 @@ EOF
     "level": "debug"
   },
   "datacenter_name": "$DATACENTER_NAME",
+  "serviceName": "{{SERVICE_NAME}}",
+  "instanceUuid": "{{auto.ZONENAME}}",
+  "serverUuid": "{{auto.SERVER_UUID}}",
+  "adminIp": "$SAPI_ADMIN_IP",
   "moray": {
     "host": "$MORAY_HOST",
     "port": 2020

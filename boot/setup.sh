@@ -75,6 +75,7 @@ EOF
     NAPI_URL=http://$(echo "${NAPI_ADMIN_IPS}" | cut -d',' -f1)
     CNAPI_URL=http://$(echo "${CNAPI_ADMIN_IPS}" | cut -d',' -f1)
     VMAPI_URL=http://$(echo "${VMAPI_ADMIN_IPS}" | cut -d',' -f1)
+    SERVER_UUID=$(mdata-get sdc:server_uuid)
 
     # This config file is used during setup to bootstrap SAPI. With the
     # exception that it requires IP addresses instead of DNS names (as binder is
@@ -89,9 +90,9 @@ EOF
     "level": "debug"
   },
   "datacenter_name": "$DATACENTER_NAME",
-  "serviceName": "{{SERVICE_NAME}}",
-  "instanceUuid": "{{auto.ZONENAME}}",
-  "serverUuid": "{{auto.SERVER_UUID}}",
+  "serviceName": "sapi",
+  "instanceUuid": "$ZONE_UUID",
+  "serverUuid": "$SERVER_UUID",
   "adminIp": "$SAPI_ADMIN_IP",
   "moray": {
     "host": "$MORAY_HOST",

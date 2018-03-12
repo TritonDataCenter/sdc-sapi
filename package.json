@@ -1,7 +1,7 @@
 {
   "name": "sapi",
   "description": "Triton Services and Configuration API",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "author": "Joyent (joyent.com)",
   "license": "MPL-2.0",
   "private": true,

@@ -5,15 +5,13 @@
  */
 
 /*
- * Copyright (c) 2014, Joyent, Inc.
+ * Copyright (c) 2018, Joyent, Inc.
  */
 
 /*
  * test/applications.test.js: test /applications endpoints
  */
 
-var async = require('async');
-var common = require('./common');
 var node_uuid = require('node-uuid');
 var util = require('util');
 
@@ -41,7 +39,8 @@ helper.before(function (cb) {
     });
 
     if (server) {
-        return (cb(null));
+        cb(null);
+        return;
     }
 
     helper.startSapiServer(function (err, res) {
@@ -113,7 +112,7 @@ test('create w/ invalid changes', function (t) {
 
     this.client.post(URI, app, function (err, req, res, obj) {
         t.ok(err);
-        t.equal(res.statusCode, 500);
+        t.equal(res.statusCode, 409);
         t.end();
     });
 });
@@ -128,7 +127,7 @@ test('create w/ invalid started', function (t) {
 
     this.client.post(URI, app, function (err, req, res, obj) {
         t.ok(err);
-        t.equal(res.statusCode, 500);
+        t.equal(res.statusCode, 409);
         t.end();
     });
 });

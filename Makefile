@@ -30,7 +30,7 @@ JSSTYLE_FILES	 = $(JS_FILES)
 JSSTYLE_FLAGS    = -o indent=4,doxygen,unparenthesized-return=0
 SMF_MANIFESTS	 = smf/manifests/sapi.xml
 
-NODE_PREBUILT_VERSION=v4.8.7
+NODE_PREBUILT_VERSION=v4.9.0
 ifeq ($(shell uname -s),SunOS)
 	NODE_PREBUILT_TAG=zone
 	# The sdcnode matching image for triton-origin-multiarch-15.4.1 images.

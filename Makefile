@@ -23,7 +23,7 @@ NODEUNIT	:= ./node_modules/.bin/nodeunit
 DOC_FILES	 = index.md
 RESTDOWN_FLAGS   = --brand-dir=deps/restdown-brand-remora
 EXTRA_DOC_DEPS += deps/restdown-brand-remora/.git
-JS_FILES	:= $(shell ls *.js) $(shell find cmd lib test tools -name '*.js')
+JS_FILES	:= $(shell ls *.js) $(shell find lib test tools -name '*.js')
 JSL_CONF_NODE	 = tools/jsl.node.conf
 JSL_FILES_NODE   = $(JS_FILES)
 JSSTYLE_FILES	 = $(JS_FILES)
@@ -58,15 +58,7 @@ all: $(SMF_MANIFESTS) | $(NODEUNIT) $(REPO_DEPS) sdc-scripts
 $(NODEUNIT): | $(NPM_EXEC)
 	$(NPM) install
 
-CLEAN_FILES += $(NODEUNIT) ./node_modules/tap ./test/tests.log
-
-#
-# Test SAPI in both modes: proto and full
-#
-.PHONY: test
-test: $(NODEUNIT)
-	MODE=proto $(NODEUNIT) test/*.test.js
-	MODE=full $(NODEUNIT) test/*.test.js
+CLEAN_FILES += ./node_modules
 
 
 #

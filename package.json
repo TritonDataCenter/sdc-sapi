@@ -13,7 +13,7 @@
     "jsprim": "2.0.0",
     "lru-cache": "2.3.0",
     "mkdirp": "0.3.4",
-    "moray": "3.4.2",
+    "moray": "3.5.0",
     "moray-filter": "1.0.0",
     "node-uuid": "1.4.0",
     "once": "1.3.0",

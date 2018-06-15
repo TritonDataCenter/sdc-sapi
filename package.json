@@ -22,7 +22,7 @@
     "sdc-clients": "10.5.0",
     "semver": "5.4.1",
     "sprintf-js": "0.0.7",
-    "triton-metrics": "0.1.0",
+    "triton-metrics": "0.1.1",
     "vasync": "2.2.0",
     "verror": "1.10.0"
   },

@@ -142,7 +142,6 @@ if [[ ! ${SAPI_PROTO_MODE} ]]; then
         exit 1
     fi
 fi
->>>>>>> SAPI-294 SAPI first boot (in non-proto mode) depends on SAPI
 
 # All done, run boilerplate end-of-setup
 sdc_setup_complete

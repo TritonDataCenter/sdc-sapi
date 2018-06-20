@@ -13,6 +13,34 @@
 export PS4='[\D{%FT%TZ}] ${BASH_SOURCE}:${LINENO}: ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
 set -o xtrace
 
+# Include common utility functions, we run "sdc_common_" functions below.
+source /opt/smartdc/boot/lib/util.sh
+
+
+# ---- support functions
+
+# Get a SAPI url with a few retries.
+function sapi_get
+{
+    local url=$1
+    local retry=3
+    local curlOpts="-sS -H 'Accept:application/json' -H 'Accept-Version:~1'"
+
+    while (( retry-- > 0 )); do
+        if ! curl $curlOpts "$url"; then
+            echo "could not get $url: retrying ..." >&2
+            sleep 3
+            continue
+        fi
+        break
+    done
+
+    return 0
+}
+
+
+# ---- mainline
+
 SAPI_ROOT=/sapi
 ZONE_UUID=$(zonename)
 ZONE_DATASET=zones/$ZONE_UUID/data
@@ -27,10 +55,6 @@ echo "" >>/root/.profile
 #XXX I don't love having node_modules/.bin in the PATH. Why was it added?
 echo "export PATH=\$PATH:/opt/smartdc/sapi/build/node/bin:/opt/smartdc/sapi/node_modules/.bin" >>/root/.profile
 
-# Include common utility functions (then run the boilerplate).
-source /opt/smartdc/boot/lib/util.sh
-CONFIG_AGENT_LOCAL_MANIFESTS_DIRS=/opt/smartdc/sapi
-SAPI_PROTO_MODE=$(mdata-get SAPI_PROTO_MODE || true)
 
 # If there's a zfs dataset, make the mount point /sapi
 zfs list $ZONE_DATASET && rc=$? || rc=$?
@@ -44,58 +68,103 @@ if [[ $rc == 0 ]]; then
     fi
 fi
 
-#XXX clarify this is because sdc-scripts use `mdata-get sapi-url` for queries.
-# We need to set the current sapi instance's admin IP as the url for the SAPI
-# service because we don't want to have dependencies between SAPI instances.
-# This way, can always create a new functional SAPI instance, even if there
-# aren't any more instances functional at that moment.
-ADMIN_IP=$(mdata-get sdc:nics | json -a -c 'this.nic_tag === "admin"' | json ip)
-mdata-put sapi-url http://$ADMIN_IP
+# Add metadata for cmon-agent discovery
+mdata-put metricPorts 8881
 
-#XXX could clarify the pref that it is "sdc:dns_domain" that we have, but
-#    that we deal with older versions by using "dns_domain" (sneakily pulling
-#    it from "usbkey_config" used for origin bootstrapping if possible/necessary).
-# Since 'dns_domain' usage from sapi's config library has been introduced by
-# SAPI-294, we need to make sure that, for instances running on systems created
-# before such change, we'll properly populate 'dns_domain' metadata variable.
-# Given that variable is used by the SAPI service, this variable must be set
-# before we import the manifest.
-DNS_DOMAIN=$(mdata-get sdc:dns_domain)
-if [[ -z "${DNS_DOMAIN}"  || "${DNS_DOMAIN}" == "local" ]]; then
-    DNS_DOMAIN=$(mdata-get dns_domain)
-    USBKEY_CONFIG=$(mdata-get usbkey_config)
-    if [[ -z "${DNS_DOMAIN}" && ! -z "${USBKEY_CONFIG}" ]]; then
-        DNS_DOMAIN=$(mdata-get usbkey_config | grep '^dns_domain=' | cut -d'=' -f2)
-        if [[ -z "${DNS_DOMAIN}" ]]; then
-            echo "error: Unable to determine 'dns_domain' from VM metadata." >&2
-            exit 1
+
+#
+# The SAPI SMF service requires 'dns_domain' to configure itself. The intent
+# is that `mdata-get sdc:dns_domain` is set (which TRITON-92 will provide).
+# However it accepts `mdata-get dns_domain` as a fallback.
+#
+# Here is where we ensure that one of those exists for all known cases of
+# old and new sdcadm, old and new SAPI images, proto and full mode.
+#
+DNS_DOMAIN=
+
+_VM_DNS_DOMAIN=$(mdata-get sdc:dns_domain)
+_METADATA_DNS_DOMAIN=$(mdata-get dns_domain)
+
+if [[ -n "$_VM_DNS_DOMAIN" && "$_VM_DNS_DOMAIN" != "local" ]]; then
+    echo "dns_domain: using value set on VM: $_VM_DNS_DOMAIN"
+    DNS_DOMAIN=$_VM_DNS_DOMAIN
+
+    # Remove the dns_domain in metadata to avoid potential confusion.
+    if mdata-get dns_domain 2>/dev/null >/dev/null; then
+        echo "dns_domain: remove value set on metadata"
+        mdata-delete dns_domain
+    fi
+fi
+
+if [[ -z "$DNS_DOMAIN" && -n "$_METADATA_DNS_DOMAIN" ]]; then
+    echo "dns_domain: using value set on metadata: $_METADATA_DNS_DOMAIN"
+    DNS_DOMAIN="$_METADATA_DNS_DOMAIN"
+fi
+
+# Try extracting from 'usbkey_config' metadata added for bootstrapping
+# the "sdc" SAPI app.
+if [[ -z "$DNS_DOMAIN" ]]; then
+    _USBKEY_CONFIG=$(mdata-get usbkey_config)
+    if [[ -n "$_USBKEY_CONFIG" ]]; then
+        DNS_DOMAIN=$(echo "$_USBKEY_CONFIG" | grep '^dns_domain=' | cut -d'=' -f2)
+        if [[ -n "$DNS_DOMAIN" ]]; then
+            echo "dns_domain: using value from usbkey_config metadata: $DNS_DOMAIN"
+            mdata-put dns_domain "$DNS_DOMAIN"
         else
-            mdata-put dns_domain $DNS_DOMAIN
+            echo "warning: have 'usbkey_config' metadata but unexpectedly 'dns_domain' was not in it"
         fi
     fi
 fi
 
-#XXX Haven't we dropped the need for this?
-echo "Updating SMF manifest"
-$(/opt/local/bin/gsed -i"" -e "s/@@PREFIX@@/\/opt\/smartdc\/sapi/g" /opt/smartdc/sapi/smf/manifests/sapi.xml)
+# Before TOOLS-1896, 'sdcadm up sapi' would provision a 'sapi0tmp' instance
+# to upgrade 'sapi0' to ensure there was always a running SAPI to use for
+# setting up the SAPI zone. It explicitly passed the DNS name to that running
+# SAPI via the 'sapi-url' metadata. Attempt that if our alias ends in "tmp"
+# (per https://github.com/joyent/sdcadm/blob/09a6a8757/lib/procedures/update-single-hn-sapi-v1.js#L77)
+if [[ -z "$DNS_DOMAIN" ]]; then
+    _VM_ALIAS=$(mdata-get sdc:alias)
+    _SAPI_URL=$(mdata-get sapi-url)
+    if [[ "${_VM_ALIAS: -3}" == "tmp" && -n "$_SAPI_URL" ]]; then
+        DNS_DOMAIN=$(sapi_get "$_SAPI_URL/applications?name=sdc" \
+            | json 0.metadata.dns_domain)
+        if [[ -n "$DNS_DOMAIN" ]]; then
+            echo "dns_domain: using value from given sapi-url for sapiNtmp zone: $DNS_DOMAIN"
+            mdata-put dns_domain "$DNS_DOMAIN"
+        else
+            echo "warning: looks like a sapiNtmp zone and have sapi-url, but could not get 'dns_domain' from $_SAPI_URL"
+        fi
+    fi
+fi
 
-#XXX Clarify the "as soon as". Really we are relying on download_metadata.
+if [[ -z "$DNS_DOMAIN" ]]; then
+    fatal "could not determine 'dns_domain'"
+fi
+
+
+echo "Starting sapi SMF service."
+/usr/sbin/svccfg import /opt/smartdc/sapi/smf/manifests/sapi.xml
+
+
 #
-# As soon as we import the manifest, SAPI service will be available for this
-# instance, and all the 'sdc_common_setup' requests to 'http://$ADMIN_IP' will
-# have a reply.
-echo "Importing sapi.xml"
-/usr/sbin/svccfg import /opt/smartdc/sapi/smf/manifests/sapi.xml
+# Now that the SAPI server is running (or should be soon), we can run
+# 'sdc_common_setup', which calls SAPI.
+#
+# It uses 'sapi-url' in metadata for the SAPI to talk to, so we set that
+# to *this* SAPI's admin ip to (a) ensure it finds it, it isn't yet in
+# DNS; and (b) to not have dependencies between SAPI instances.
+#
+# (Note that sdc_common_setup behavior differs when SAPI is in proto mode for
+# initial headnode setup.)
+#
+ADMIN_IP=$(mdata-get sdc:nics | json -a -c 'this.nic_tag === "admin"' | json ip)
+mdata-put sapi-url http://$ADMIN_IP
 
-#XXX Clarify
-# Wait until we have SAPI manifest imported before we attempt to setup
-# registrar and config-agent. In case the SAPI service takes some time to
-# be up and running, we rely into 'download_metadata' ability to perform
-# retries in order to have a successful setup.
+CONFIG_AGENT_LOCAL_MANIFESTS_DIRS=/opt/smartdc/sapi
+SAPI_PROTO_MODE=$(mdata-get SAPI_PROTO_MODE || true)
+
+# We rely on the "download_metadata" function internally called here to perform
+# retries on the SAPI server still starting up.
 sdc_common_setup
-
-#XXX Cruft? Bad rebase?
-/usr/sbin/svccfg import /opt/smartdc/sapi/smf/manifests/sapi.xml
 
 echo "Adding log rotation"
 sdc_log_rotation_add amon-agent /var/svc/log/*amon-agent*.log 1g
@@ -103,10 +172,6 @@ sdc_log_rotation_add config-agent /var/svc/log/*config-agent*.log 1g
 sdc_log_rotation_add registrar /var/svc/log/*registrar*.log 1g
 sdc_log_rotation_add $role /var/svc/log/*$role*.log 1g
 sdc_log_rotation_setup_end
-
-#XXX Want this before we start the SAPI service?
-# Add metadata for cmon-agent discovery
-mdata-put metricPorts 8881
 
 ##XXX I'd suggested this in the CR, but why? ... we could rely on sdcadm
 ##    serviceconfig stuff to do this for us?

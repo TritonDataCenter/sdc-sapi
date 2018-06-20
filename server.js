@@ -25,16 +25,16 @@ var log = bunyan.createLogger({
 });
 
 
-mod_config.loadConfig({ log: log }, function (cfgErr, cfg) {
+mod_config.loadConfig({ log: log }, function (configErr, config) {
 
-    if (cfgErr) {
-        log.fatal({err: cfgErr}, 'Load config error');
+    if (configErr) {
+        log.fatal({err: configErr}, 'Load config error');
         process.exit(1);
     }
 
-    log.info({ cfg: cfg }, 'loadConfig');
+    log.info({ config: config }, 'loadConfig');
 
-    var sapi = new SAPI(cfg);
+    var sapi = new SAPI(config);
 
     sapi.start(function initCb(err) {
         if (err) {

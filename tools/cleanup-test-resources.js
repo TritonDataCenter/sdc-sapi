@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+var execSync = require('child_process').execSync;
 var fs = require('fs');
 var path = require('path');
 
@@ -15,24 +16,32 @@ assert.string(testCommon.TEST_RESOURCES_NAME_PREFIX);
 assert.notEqual(testCommon.TEST_RESOURCES_NAME_PREFIX, '');
 assert.notEqual(testCommon.TEST_RESOURCES_NAME_PREFIX, '*');
 
-var CONFIG_FILE_PATH = path.resolve(__dirname, '../etc/config.json');
-var CONFIG = JSON.parse(fs.readFileSync(CONFIG_FILE_PATH));
+var configJs = path.resolve(__dirname, '../lib/config.js');
+var vmapiUrl = execSync(
+    [
+        process.execPath,
+        configJs,
+        'vmapi.url'
+    ].join(' '),
+    {encoding: 'utf8'}
+);
+var vmapiClient = testHelper.createVmapiClient(vmapiUrl);
 
-var vmapiClient = testHelper.createVmapiClient(CONFIG.vmapi.url);
-
-var log = new bunyan({
-    name: 'cleanup-test-resources',
-    level: process.env.LOG_LEVEL || CONFIG.logLevel || 'info',
+var log = bunyan.createLogger({
+    name: 'sapi-cleanup-test-resources',
+    level: process.env.LOG_LEVEL || 'info',
     serializers: bunyan.stdSerializers
 });
 
 vasync.waterfall([
     function listTestVms(next) {
-        vmapiClient.listVms({alias: testCommon.TEST_RESOURCES_NAME_PREFIX},
-            function onTestVmsListed(err, testVms) {
-                next(err, testVms);
-                return;
-            });
+        vmapiClient.listVms({
+            alias: testCommon.TEST_RESOURCES_NAME_PREFIX,
+            state: 'active'
+        }, function onTestVmsListed(err, testVms) {
+            next(err, testVms);
+            return;
+        });
     },
     function deleteTestVms(testVms, next) {
         assert.arrayOfObject(testVms, 'testVms');

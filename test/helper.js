@@ -23,9 +23,9 @@ var sdc = require('sdc-clients');
 var restify = require('restify');
 var util = require('util');
 
-var Logger = require('bunyan');
 var SAPI = require('../lib/server/sapi');
 var VMAPIPlus = require('../lib/server/vmapiplus');
+var loadConfig = require('../lib/config').loadConfig;
 
 var exec = require('child_process').exec;
 
@@ -156,55 +156,58 @@ function startSapiServer(mode, cb) {
         cb = mode;
         mode = null;
     }
-
     assert.func(cb, 'cb');
 
-    var file = path.join(__dirname, '../etc/config.json');
-    var config = JSON.parse(fs.readFileSync(file));
-
-    config.vmapi.agent = false;
-    config.cnapi.agent = false;
-    config.napi.agent = false;
-    config.imgapi.agent = false;
-    config.papi.agent = false;
-
-    /*
-     * First, check the mode argument to this function.  If that's not
-     * specified, check the environment variable's MODE.  Lastly, fallback
-     * on the mode from the configuration file.
-     */
     if (mode === 'proto') {
         process.env.TEST_SAPI_PROTO_MODE = 'true';
     } else if (mode === 'full') {
         process.env.TEST_SAPI_PROTO_MODE = undefined;
     }
 
-    var log_options = config.log_options;
-    log_options.src = true;
-    log_options.streams = [
-        {
-            level: 'debug',
-            path: path.join(__dirname, 'tests.log')
-        }
-    ];
-    log_options.serializers = restify.bunyan.serializers;
+    var log = bunyan.createLogger({
+        name: 'sapitest',
+        src: true,
+        serializers: restify.bunyan.serializers,
+        streams: [
+            {
+                level: 'debug',
+                path: path.join(__dirname, 'tests.log')
+            }
+        ]
+    });
 
-    var log = new Logger(log_options);
-    config.log = log;
-
-    config.port = SAPI_TEST_SERVER_PORT;
-    config.metricsPort = SAPI_TEST_METRICS_SERVER_PORT;
-
-    var sapi = new SAPI(config);
-
-    // Some of the tests use other SDC services, so load those URLs into
-    // environment variables.
-    process.env.VMAPI_URL = config.vmapi.url;
-    process.env.NAPI_URL = config.napi.url;
-    process.env.IMGAPI_URL = config.imgapi.url;
-    process.env.PAPI_URL = config.papi.url;
+    var config;
+    var sapi;
 
     async.series([
+        function createSapiServer(next) {
+            loadConfig({log: log}, function (configErr, config_) {
+                if (configErr) {
+                    next(configErr);
+                    return;
+                }
+
+                config = config_;
+                config.vmapi.agent = false;
+                config.cnapi.agent = false;
+                config.napi.agent = false;
+                config.imgapi.agent = false;
+                config.papi.agent = false;
+                config.port = SAPI_TEST_SERVER_PORT;
+                config.metricsPort = SAPI_TEST_METRICS_SERVER_PORT;
+                log.debug({config: config}, 'test config');
+
+                // Some of the tests use other SDC services, so load those URLs
+                // into environment variables.
+                process.env.VMAPI_URL = config.vmapi.url;
+                process.env.NAPI_URL = config.napi.url;
+                process.env.IMGAPI_URL = config.imgapi.url;
+                process.env.PAPI_URL = config.papi.url;
+
+                sapi = new SAPI(config);
+                next();
+            });
+        },
         function getServerUuid(next) {
             var cmd = '/usr/sbin/mdata-get sdc:server_uuid';
             exec(cmd, function (err, stdout) {
@@ -228,7 +231,7 @@ function startSapiServer(mode, cb) {
                           : 0);
                 });
 
-                assert.ok(pkgs.length);
+                assert.ok(pkgs.length, 'found some sample packages');
 
                 process.env.BILLING_ID = pkgs[0].uuid;
                 next();
@@ -244,9 +247,9 @@ function startSapiServer(mode, cb) {
              *
              * This is somewhat lamely "passed" around to tests via an envvar.
              */
-            var cmd = 'curl -sf $(json -f /opt/smartdc/sapi/etc/config.json ' +
-                      'imgapi.url)/images/$(mdata-get sdc:image_uuid) ' +
-                      '| json origin';
+            var cmd = 'curl -sf ' +
+                config.imgapi.url + '/images/$(mdata-get sdc:image_uuid) ' +
+                '| json origin';
             exec(cmd, function (err, stdout) {
                 if (err)
                     return (next(err));
@@ -264,8 +267,9 @@ function startSapiServer(mode, cb) {
             });
         }
     ], function done(err) {
-        if (err)
+        if (err) {
             throw (err);
+        }
         sapi.start(function () {
             cb(null, sapi);
         });

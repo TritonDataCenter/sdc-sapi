@@ -97,7 +97,7 @@ service: all $(SMF_MANIFESTS)
 	    $(TOP)/build/service/root/opt/smartdc/boot/
 	cp -R $(TOP)/boot/* \
 	    $(TOP)/build/service/root/opt/smartdc/boot/
-	cp -P smf/manifests/sapi.xml $(SVC_INSTDIR)/smf/manifests
+	cp smf/manifests/sapi.xml $(SVC_INSTDIR)/smf/manifests
 	cp -r $(TOP)/sapi_manifests $(SVC_INSTDIR)/
 	cp -r $(TOP)/test $(SVC_INSTDIR)/
 	cp -PR $(NODE_INSTALL) $(SVC_INSTDIR)/build/node

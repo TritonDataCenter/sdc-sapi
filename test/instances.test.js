@@ -5,14 +5,13 @@
  */
 
 /*
- * Copyright (c) 2015, Joyent, Inc.
+ * Copyright (c) 2018, Joyent, Inc.
  */
 
 /*
  * test/instances.test.js: test /instances endpoints
  */
 
-var async = require('async');
 var jsprim = require('jsprim');
 var node_uuid = require('node-uuid');
 var sdcClients = require('sdc-clients');
@@ -58,8 +57,10 @@ helper.before(function (cb) {
     this.sapi = helper.createSapiClient();
     this.imgapi = helper.createImgapiClient();
 
-    if (server)
-        return (cb(null));
+    if (server) {
+        cb(null);
+        return;
+    }
 
     helper.startSapiServer(function (err, res) {
         server = res;
@@ -214,7 +215,7 @@ test('put/get/del vm instance', function (t) {
             });
         },
         function (_, cb) {
-            client.get(uri_inst, function (err, req, res, obj) {
+            client.get(uri_inst, function (err, req, res) {
                 t.ok(err);
                 t.equal(res.statusCode, 404);
 
@@ -226,7 +227,7 @@ test('put/get/del vm instance', function (t) {
             var badinst = jsprim.deepCopy(inst);
             badinst.manifests = { my_service: node_uuid.v4() };
 
-            client.post(URI, badinst, function (err, req, res, obj) {
+            client.post(URI, badinst, function (err, req, res) {
                 t.ok(err);
                 t.equal(res.statusCode, 500);
 
@@ -307,14 +308,14 @@ test('put/get/del vm instance', function (t) {
             common.testUpdates.call(self, t, uri_inst, cb);
         },
         function (_, cb) {
-            self.client.del(uri_inst, function (err, req, res, obj) {
+            self.client.del(uri_inst, function (err, req, res) {
                 t.ifError(err);
                 t.equal(res.statusCode, 204);
                 cb(null);
             });
         },
         function (_, cb) {
-            self.client.get(uri_inst, function (err, req, res, obj) {
+            self.client.get(uri_inst, function (err, req, res) {
                 t.ok(err);
                 t.equal(res.statusCode, 404);
                 cb(null);
@@ -396,7 +397,7 @@ test('put/get/del agent instance', function (t) {
         var opts = { uuid: uuid, type: 'agent' };
 
         self.sapi.createService(name, the_app_uuid, opts,
-                    function (err, svc) {
+                    function (err) {
                         return (cb(err));
                     });
     };
@@ -423,7 +424,7 @@ test('put/get/del agent instance', function (t) {
             });
         },
         function (_, cb) {
-            client.get(uri_inst, function (err, req, res, obj) {
+            client.get(uri_inst, function (err, req, res) {
                 t.ok(err);
                 t.equal(res.statusCode, 404);
 
@@ -435,7 +436,7 @@ test('put/get/del agent instance', function (t) {
             var badinst = jsprim.deepCopy(inst);
             badinst.manifests = { my_service: node_uuid.v4() };
 
-            client.post(URI, badinst, function (err, req, res, obj) {
+            client.post(URI, badinst, function (err, req, res) {
                 t.ok(err);
                 t.equal(res.statusCode, 500);
 
@@ -515,14 +516,14 @@ test('put/get/del agent instance', function (t) {
             common.testUpdates.call(self, t, uri_inst, cb);
         },
         function (_, cb) {
-            self.client.del(uri_inst, function (err, req, res, obj) {
+            self.client.del(uri_inst, function (err, req, res) {
                 t.ifError(err);
                 t.equal(res.statusCode, 204);
                 cb(null);
             });
         },
         function (_, cb) {
-            self.client.get(uri_inst, function (err, req, res, obj) {
+            self.client.get(uri_inst, function (err, req, res) {
                 t.ok(err);
                 t.equal(res.statusCode, 404);
                 cb(null);
@@ -552,7 +553,7 @@ test('put/get/del agent instance', function (t) {
 function createVm(uuid, cb) {
     var vmapiplus = helper.createVmapiPlusClient();
 
-    helper.consVmParams(function (err, params) {
+    helper.consVmParams(function (_, params) {
         params.uuid = uuid;
 
         vmapiplus.createVm(params, {}, cb);
@@ -593,8 +594,10 @@ test('create instance with VM aleady existing', function (t) {
             /*
              * This check doesn't apply to proto mode.
              */
-            if (process.env.TEST_SAPI_PROTO_MODE === 'true')
-                return (cb(null));
+            if (process.env.TEST_SAPI_PROTO_MODE === 'true') {
+                cb();
+                return;
+            }
 
             createVm(inst.uuid, cb);
         },
@@ -619,7 +622,7 @@ test('create instance with VM aleady existing', function (t) {
             });
         },
         function (_, cb) {
-            self.client.del(uri_inst, function (err, req, res, obj) {
+            self.client.del(uri_inst, function (err, req, res) {
                 t.ifError(err);
                 t.equal(res.statusCode, 204);
                 cb();
@@ -698,7 +701,8 @@ test('delete instance with no VM', function (t) {
              * This check doesn't apply to proto mode.
              */
             if (process.env.TEST_SAPI_PROTO_MODE === 'true') {
-                return (cb(null));
+                cb();
+                return;
             }
 
             var url = process.env.VMAPI_URL || 'http://10.2.206.23';
@@ -724,7 +728,7 @@ test('delete instance with no VM', function (t) {
             });
         },
         function (_, cb) {
-            self.client.del(uri_inst, function (err, req, res, obj) {
+            self.client.del(uri_inst, function (err, req, res) {
                 t.ifError(err);
                 t.equal(res.statusCode, 204);
                 cb();
@@ -779,7 +783,7 @@ test('invalid zone parameters', function (t) {
             common.createService.call(self, app_uuid, svc_uuid, cb);
         },
         function (_, cb) {
-            client.post(URI, inst, function (err, req, res, obj) {
+            client.post(URI, inst, function (_err, req, res) {
                 if (process.env.TEST_SAPI_PROTO_MODE === 'true')
                     t.equal(res.statusCode, 200);
                 else
@@ -788,7 +792,7 @@ test('invalid zone parameters', function (t) {
             });
         },
         function (_, cb) {
-            client.get(uri_inst, function (err, req, res, obj) {
+            client.get(uri_inst, function (_err, req, res) {
                 if (process.env.TEST_SAPI_PROTO_MODE === 'true')
                     t.equal(res.statusCode, 200);
                 else
@@ -835,8 +839,10 @@ test('upgrading a zone', function (t) {
     vasync.pipeline({funcs: [
         function (_, cb) {
             // Before the test starts, download both images.
-            if (process.env.TEST_SAPI_PROTO_MODE === 'true')
-                return (cb());
+            if (process.env.TEST_SAPI_PROTO_MODE === 'true') {
+                cb();
+                return;
+            }
 
             var images = [ oldImage, NEW_IMAGE ];
 
@@ -849,7 +855,7 @@ test('upgrading a zone', function (t) {
                         subcb);
                 },
                 inputs: images
-            }, function (err) {
+            }, function (_err) {
                 // This sucks. An `err` here could be either "already have it"
                 // or some real error in attempting to import it.
                 cb();
@@ -861,15 +867,17 @@ test('upgrading a zone', function (t) {
             var opts = {};
             opts.image_uuid = NEW_IMAGE;
 
-            client.put(uri, opts, function (err, req, res, obj) {
+            client.put(uri, opts, function (_err, req, res) {
                 t.equal(res.statusCode, 404);
                 cb();
             });
         },
         function (_, cb) {
             helper.consVmParams(function (err, params) {
-                if (err)
-                    return (cb(err));
+                if (err) {
+                    cb(err);
+                    return;
+                }
 
                 params.networks = [ 'admin' ];
                 params.image_uuid = oldImage;
@@ -906,19 +914,21 @@ test('upgrading a zone', function (t) {
                 t.equal(res.statusCode, 200);
 
                 /*
-                 * This call shouldn't actually change
+                 * This call should actually change
                  * params.image_uuid.
                  */
                 if (obj && obj.params) {
-                    t.equal(obj.params.image_uuid, oldImage);
+                    t.equal(obj.params.image_uuid, NEW_IMAGE);
                 }
 
                 cb();
             });
         },
         function (_, cb) {
-            if (process.env.TEST_SAPI_PROTO_MODE === 'true')
-                return (cb());
+            if (process.env.TEST_SAPI_PROTO_MODE === 'true') {
+                cb();
+                return;
+            }
 
             vmapi.getVm({ uuid: inst.uuid }, function (err, vm) {
                 t.ifError(err);
@@ -982,14 +992,14 @@ test('create instance with NAPI networks', function (t) {
                 cb(null);
             },
             function (_, cb) {
-                client.post(URI, inst, function (err, req, res, obj) {
+                client.post(URI, inst, function (err, req, res) {
                     t.ifError(err);
                     t.equal(res.statusCode, 200);
                     cb(err);
                 });
             },
             function (_, cb) {
-                self.client.del(uri_inst, function (err, req, res, obj) {
+                self.client.del(uri_inst, function (err, req, res) {
                     t.ifError(err);
                     t.equal(res.statusCode, 204);
                     cb(err);
@@ -1056,6 +1066,151 @@ test('create instance with NAPI networks', function (t) {
 });
 
 
+// -- Test list and search instances
+test('list instances', function (t) {
+    if (process.env.TEST_SAPI_PROTO_MODE !== 'true') {
+        t.end();
+        return;
+    }
+    // These tests will run only when in proto mode, due to obvious
+    // performance constraints if we try to create a lot of instances
+    // for real. Given we're just trying to perform some searches, there's
+    // no need for that. We just want the moray records
+    const self = this;
+    const app_uuid = node_uuid.v4();
+    var svcs = [];
+    var svcInsts = {};
+    const servers = [
+        node_uuid.v4(),
+        node_uuid.v4(),
+        node_uuid.v4(),
+        node_uuid.v4(),
+        node_uuid.v4()
+    ];
+    vasync.pipeline({
+        funcs: [
+            function createApp(_, cb) {
+                common.createApplication({
+                    sapi: self.sapi,
+                    uuid: app_uuid
+                }, cb);
+            },
+            function createSvcs(_, cb) {
+                vasync.whilst(function testFunc() {
+                    return svcs.length < 5;
+                }, function iterateFunc(subcb) {
+                    var svc = {};
+                    svc.name = '5services_' +
+                        node_uuid.v4().substr(0, 8);
+                    svc.application_uuid = app_uuid;
+                    svc.type = 'agent';
+
+                    function onPost(err, req, res, obj) {
+                        t.ifError(err);
+                        t.equal(res.statusCode, 200);
+                        svcs.push(obj);
+                        subcb();
+                    }
+
+                    self.client.post('/services', svc, onPost);
+                }, cb);
+            },
+            function createInstances(_, cb) {
+                vasync.forEachParallel({
+                    inputs: svcs,
+                    func: function createSvcInstances(svc, nextSvc) {
+                        if (!svcInsts[svc.uuid]) {
+                            svcInsts[svc.uuid] = [];
+                        }
+                        vasync.whilst(function testFunc() {
+                            return svcInsts[svc.uuid].length < 5;
+                        }, function iterateFunc(subcb) {
+                            var sId = servers[svcInsts[svc.uuid].length];
+                            var inst = {};
+                            inst.name = '5insts_' +
+                                node_uuid.v4().substr(0, 8);
+                            inst.service_uuid = svc.uuid;
+                            inst.type = 'agent';
+                            inst.params = {
+                                server_uuid: sId
+                            };
+                            function onPost(err, req, res, obj) {
+                                t.ifError(err);
+                                t.equal(res.statusCode, 200);
+                                svcInsts[svc.uuid].push(obj);
+                                subcb();
+                            }
+
+                            self.client.post('/instances', inst, onPost);
+                        }, nextSvc);
+                    }
+                }, cb);
+            },
+            function listAllInstances(_, cb) {
+                const uri = '/instances';
+                self.client.get(uri, function lAllCb(lErr, _req, _res, lInst) {
+                    t.ifError(lErr, 'list instances error');
+                    t.ok(lInst.length > 25, 'list instances length');
+                    cb();
+                });
+            },
+            function listInstancesByService(_, cb) {
+                const uri = '/instances?service_uuid=' + svcs[0].uuid;
+                self.client.get(uri, function lCb(lErr, _req, _res, lInst) {
+                    t.ifError(lErr, 'list instances error');
+                    t.equal(lInst.length, 5, 'instances by service');
+                    lInst.forEach(function checkInstSvc(inst) {
+                        t.equal(inst.service_uuid, svcs[0].uuid,
+                            'instance service');
+                    });
+                    cb();
+                });
+            },
+            function listInstancesByServer(_, cb) {
+                const uri = '/instances?server_uuid=' + servers[0];
+                self.client.get(uri, function lAllCb(lErr, _req, _res, lInst) {
+                    t.ifError(lErr, 'list instances error');
+                    t.equal(lInst.length, 5, 'instances by server');
+                    lInst.forEach(function checkInstServer(inst) {
+                        t.ok(inst.params, 'instance params');
+                        t.ok(inst.params.server_uuid, 'instance server');
+                        t.equal(inst.params.server_uuid, servers[0],
+                            'instance server equality');
+                    });
+                    cb();
+                });
+            },
+            function removeTestItems(_, cb) {
+                vasync.forEachParallel({
+                    inputs: svcs,
+                    func: function removeInstances(svc, nextSvc) {
+                        vasync.forEachPipeline({
+                            inputs: svcInsts[svc.uuid],
+                            func: function removeInstance(inst, nextInst) {
+                                self.client.del('/instances/' + inst.uuid,
+                                    function delInstCb(instErr, _iReq, iRes) {
+                                    t.ifError(instErr);
+                                    t.equal(iRes.statusCode, 204);
+                                    nextInst();
+                                });
+                            }
+                        }, function removeInstsCb(removeInstsErr) {
+                            t.ifError(removeInstsErr);
+                            self.client.del('/services/' + svc.uuid,
+                                function delSvcCb(svcErr, _svcReq, svcRes) {
+                                t.ifError(svcErr);
+                                t.equal(svcRes.statusCode, 204);
+                                nextSvc();
+                            });
+                        });
+                    }
+                }, cb);
+            }
+    ] }, function pipeCb(_pipeErr) {
+        t.end();
+    });
+});
+
 // -- Test teardown hooks
 
 test('teardown hooks', function (t) {
@@ -1095,7 +1250,7 @@ test('teardown hooks', function (t) {
             common.createService.call(self, app_uuid, svc_uuid, cb);
         },
         function (_, cb) {
-            client.post(URI, inst, function (err, req, res, obj) {
+            client.post(URI, inst, function (err, req, res) {
                 t.ifError(err);
                 t.equal(res.statusCode, 200);
                 cb(null);
@@ -1106,7 +1261,7 @@ test('teardown hooks', function (t) {
              * Both destroying and reprovisioning an instance should
              * fail when the teardown-hook fails.
              */
-            self.client.del(uri_inst, function (err, req, res, obj) {
+            self.client.del(uri_inst, function (err, req, res) {
                 t.ok(err);
                 t.equal(res.statusCode, 500);
                 cb(null);
@@ -1118,14 +1273,14 @@ test('teardown hooks', function (t) {
             var opts = {};
             opts.image_uuid = NEW_IMAGE;
 
-            client.put(uri, opts, function (err, req, res, obj) {
+            client.put(uri, opts, function (err, req, res) {
                 t.ok(err);
                 t.equal(res.statusCode, 500);
                 cb(null);
             });
         },
         function (_, cb) {
-            self.client.get(uri_inst, function (err, req, res, obj) {
+            self.client.get(uri_inst, function (err, req, res) {
                 t.ifError(err);
                 t.equal(res.statusCode, 200);
                 cb(null);
@@ -1148,7 +1303,7 @@ test('teardown hooks', function (t) {
         function (_, cb) {
             delete inst.params['teardown-hook'];
 
-            client.post(URI, inst, function (err, req, res, obj) {
+            client.post(URI, inst, function (err, req, res) {
                 t.ifError(err);
                 t.equal(res.statusCode, 200);
                 cb(null);
@@ -1174,7 +1329,7 @@ test('teardown hooks', function (t) {
              * case, the instance is inheriting its teardown-hook
              * from the service.
              */
-            self.client.del(uri_inst, function (err, req, res, obj) {
+            self.client.del(uri_inst, function (err, req, res) {
                 t.ok(err);
                 t.equal(res.statusCode, 500);
                 cb(null);
@@ -1186,7 +1341,7 @@ test('teardown hooks', function (t) {
             var opts = {};
             opts.image_uuid = NEW_IMAGE;
 
-            client.put(uri, opts, function (err, req, res, obj) {
+            client.put(uri, opts, function (err, req, res) {
                 t.ok(err);
                 t.equal(res.statusCode, 500);
                 cb(null);
@@ -1211,14 +1366,14 @@ test('teardown hooks', function (t) {
             var opts = {};
             opts.image_uuid = NEW_IMAGE;
 
-            client.put(uri, opts, function (err, req, res, obj) {
+            client.put(uri, opts, function (err, req, res) {
                 t.ifError(err);
                 t.equal(res.statusCode, 200);
                 cb(null);
             });
         },
         function (_, cb) {
-            self.client.del(uri_inst, function (err, req, res, obj) {
+            self.client.del(uri_inst, function (err, req, res) {
                 t.ifError(err);
                 t.equal(res.statusCode, 204);
                 cb(null);

@@ -1,5 +1,10 @@
 # sdc-sapi changelog
 
+# 2.1.1
+
+- TRITON-1035, TRITON-1203: Fixing the SAPI test suite to work when there
+  are mockcloud CNs in play.
+
 # 2.1.0
 
 - SAPI-294 This is a significant change to SAPI zone setup and config handling.

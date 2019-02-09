@@ -762,12 +762,12 @@ test('invalid zone parameters', function (t) {
     inst.params = {};
 
     /*
-     * This setting for the instance's RAM will pass initial VMAPI
-     * validation but ultimately cause VMAPI.createVm() to fail.
+     * To test VMAPI CreateVm failure in server allocation (aka DAPI) we
+     * can use `internal_metadata.force_designation_failure = true`.
      */
-    inst.params.ram = 10 * 1024 * 1024 * 1024 * 1024;  // 10 TB
-    inst.params.networks = [ { name: 'admin', ip: '192.168.1.1'} ];
-    inst.params.alias = common.getUniqueTestResourceName('sapitest-invalidram');
+    inst.params.internal_metadata = {force_designation_failure: true};
+    inst.params.networks = [ { name: 'admin' } ];
+    inst.params.alias = common.getUniqueTestResourceName('invalid-zone-params');
 
     var uri_inst = '/instances/' + inst.uuid;
 
@@ -780,19 +780,24 @@ test('invalid zone parameters', function (t) {
         },
         function (_, cb) {
             client.post(URI, inst, function (err, req, res, obj) {
-                if (process.env.TEST_SAPI_PROTO_MODE === 'true')
+                if (process.env.TEST_SAPI_PROTO_MODE === 'true') {
                     t.equal(res.statusCode, 200);
-                else
-                    t.equal(res.statusCode, 500);
+                } else {
+                    t.equal(res.statusCode, 500,
+                        sprintf('expected 500 status code from SAPI ' +
+                            'CreateInstance: got %s, instance uuid %s',
+                            res.statusCode, inst.uuid));
+                }
                 cb();
             });
         },
         function (_, cb) {
             client.get(uri_inst, function (err, req, res, obj) {
-                if (process.env.TEST_SAPI_PROTO_MODE === 'true')
+                if (process.env.TEST_SAPI_PROTO_MODE === 'true') {
                     t.equal(res.statusCode, 200);
-                else
+                } else {
                     t.equal(res.statusCode, 404);
+                }
                 cb();
             });
         },

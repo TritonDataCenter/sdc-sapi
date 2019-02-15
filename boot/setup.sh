@@ -155,6 +155,7 @@ echo "Starting sapi SMF service."
 # (Note that sdc_common_setup behavior differs when SAPI is in proto mode for
 # initial headnode setup.)
 #
+# TODO: make RANish
 ADMIN_IP=$(mdata-get sdc:nics | json -a -c 'this.nic_tag === "admin"' | json ip)
 mdata-put sapi-url http://$ADMIN_IP
 

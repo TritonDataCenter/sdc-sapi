@@ -5,12 +5,14 @@
 #
 
 #
-# Copyright (c) 2018, Joyent, Inc.
+# Copyright (c) 2019, Joyent, Inc.
 #
 
 #
 # Makefile: builds Services API
 #
+
+NAME = sapi
 
 #
 # Tools
@@ -37,22 +39,26 @@ ifeq ($(shell uname -s),SunOS)
 	NODE_PREBUILT_IMAGE=18b094b0-eb01-11e5-80c1-175dac7ddf02
 endif
 
+ENGBLD_USE_BUILDIMAGE	= true
+ENGBLD_REQUIRE		:= $(shell git submodule update --init deps/eng)
+include ./deps/eng/tools/mk/Makefile.defs
+TOP ?= $(error Unable to access eng.git submodule Makefiles.)
 
-include ./tools/mk/Makefile.defs
 ifeq ($(shell uname -s),SunOS)
-	include ./tools/mk/Makefile.node_prebuilt.defs
+	include ./deps/eng/tools/mk/Makefile.node_prebuilt.defs
+	include ./deps/eng/tools/mk/Makefile.agent_prebuilt.defs
 else
 	NPM := $(shell which npm)
 	NPM_EXEC=$(NPM)
 endif
-include ./tools/mk/Makefile.smf.defs
+include ./deps/eng/tools/mk/Makefile.smf.defs
 
 
 #
 # Repo-specific targets
 #
 .PHONY: all
-all: $(SMF_MANIFESTS) | $(NODEUNIT) $(REPO_DEPS) sdc-scripts
+all: $(SMF_MANIFESTS) | $(NODEUNIT) sdc-scripts
 	$(NPM) install
 
 $(NODEUNIT): | $(NPM_EXEC)
@@ -60,16 +66,18 @@ $(NODEUNIT): | $(NPM_EXEC)
 
 CLEAN_FILES += ./node_modules
 
-
 #
 # Packaging targets
 #
-
-TOP             := $(shell pwd)
-
-SVC_TARBALL 	:= sapi-pkg-$(STAMP).tar.bz2
+SVC_TARBALL 	:= $(NAME)-pkg-$(STAMP).tar.gz
 SVC_PKGDIR	:= $(TOP)/$(BUILD)/service
 SVC_INSTDIR	:= $(SVC_PKGDIR)/root/opt/smartdc/sapi
+
+BASE_IMAGE_UUID = 04a48d7d-6bb5-4e83-8c3b-e60a99e0f48f
+BUILDIMAGE_NAME = $(NAME)
+BUILDIMAGE_DESC	= SDC SAPI
+BUILDIMAGE_PKG	= $(PWD)/$(SVC_TARBALL)
+AGENTS		= amon config registrar
 
 .PHONY: release
 release: $(SVC_TARBALL)
@@ -104,22 +112,19 @@ service: all $(SMF_MANIFESTS)
 
 
 $(SVC_TARBALL): service
-	(cd $(SVC_PKGDIR) && $(TAR) -jcf $(TOP)/$(SVC_TARBALL) root site)
+	(cd $(SVC_PKGDIR) && $(TAR) -I pigz -cf $(TOP)/$(SVC_TARBALL) root site)
 
 .PHONY: publish
 publish: release
-	@if [[ -z "$(BITS_DIR)" ]]; then \
-    echo "error: 'BITS_DIR' must be set for 'publish' target"; \
-    exit 1; \
-  fi
-	mkdir -p $(BITS_DIR)/sapi
-	cp $(TOP)/$(SVC_TARBALL) $(BITS_DIR)/sapi/$(SVC_TARBALL)
+	mkdir -p $(ENGBLD_BITS_DIR)/sapi
+	cp $(TOP)/$(SVC_TARBALL) $(ENGBLD_BITS_DIR)/sapi/$(SVC_TARBALL)
 
-include ./tools/mk/Makefile.deps
+include ./deps/eng/tools/mk/Makefile.deps
 ifeq ($(shell uname -s),SunOS)
-	include ./tools/mk/Makefile.node_prebuilt.targ
+	include ./deps/eng/tools/mk/Makefile.node_prebuilt.targ
+	include ./deps/eng/tools/mk/Makefile.agent_prebuilt.targ
 endif
-include ./tools/mk/Makefile.smf.targ
-include ./tools/mk/Makefile.targ
+include ./deps/eng/tools/mk/Makefile.smf.targ
+include ./deps/eng/tools/mk/Makefile.targ
 
 sdc-scripts: deps/sdc-scripts/.git

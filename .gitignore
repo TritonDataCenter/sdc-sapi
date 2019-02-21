@@ -1,5 +1,7 @@
+/make_stamps
 /node_modules
 /tmp
+bits
 build
 docs/*.json
 docs/*.html
@@ -8,8 +10,7 @@ cscope.po.out
 cscope.out
 smf/manifests/*.xml
 *.swp
-sapi-pkg-master-*.tar.bz2
-config-agent-*.tar.bz2
+sapi-pkg-*.tar.gz
 test/tests.log
 abandoned
 *.vim

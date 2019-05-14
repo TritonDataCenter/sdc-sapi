@@ -13,6 +13,7 @@
 #
 
 NAME = sapi
+AGENT_PREBUILT_AGENT_BRANCH=ndp
 
 #
 # Tools

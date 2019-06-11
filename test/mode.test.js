@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright (c) 2014, Joyent, Inc.
+ * Copyright 2019 Joyent, Inc.
  */
 
 /*
@@ -50,11 +50,8 @@ helper.before(function (cb) {
                 '/sapi/sapi_services'
             ];
 
-            async.forEach(dirs, function (dir, scb) {
-                // Remove any previous objects
-                rimraf(dir, function (err) {
-                    scb(err);
-                });
+            async.forEach(dirs, rimraf, function (err) {
+                subcb(err);
             });
         },
         function (subcb) {
@@ -161,120 +158,6 @@ test('in full mode', function (t) {
     });
 });
 
-// -- Test failed upgrade
-
-test('upgrade to full mode with bogus image_uuid should fail', function (t) {
-    var self = this;
-
-    var man_uuid = node_uuid.v4();
-    var app_uuid = node_uuid.v4();
-    var svc_uuid = node_uuid.v4();
-    var inst_uuid = node_uuid.v4();
-
-    async.waterfall([
-        function (cb) {
-            // Should start in proto mode
-            self.client.get(URI, function (err, req, res, obj) {
-                t.ifError(err);
-                t.equal(res.statusCode, 200);
-                t.equal(obj, 'proto');
-                cb();
-            });
-        },
-        function (cb) {
-            // Create an application, service, instance, and
-            // manifest.
-            common.createManifest.call(self, man_uuid,
-                function (err) {
-                cb(err);
-            });
-        },
-        function (cb) {
-            /*
-             * This UUID is a known bogus image, so the SAPI.setMode() call
-             * later will fail.
-             */
-            common.createApplication({
-                sapi: self.sapi,
-                uuid: app_uuid,
-                image_uuid: '0ee75f7e-b5d8-11e2-8c16-bb0d1acfb63d'
-            }, function (err) {
-                cb(err);
-            });
-        },
-        function (cb) {
-            common.createService.call(self, app_uuid, svc_uuid,
-                function (err) {
-                cb(err);
-            });
-        },
-        function (cb) {
-            common.createInstance.call(self, svc_uuid, inst_uuid,
-                function (err) {
-                cb(err);
-            });
-        },
-        function (cb) {
-            // Create an actual zone
-            var vmapiplus = helper.createVmapiPlusClient();
-
-            helper.consVmParams(function (err, params) {
-                params.uuid = inst_uuid;
-                vmapiplus.createVm(params, cb);
-            });
-        },
-        function (cb) {
-            // Attempt upgrade to full mode, which should fail
-            var uri_mode = URI + '?mode=full';
-
-            self.client.post(uri_mode,
-                function (err, req, res, obj) {
-                t.ok(err);
-                if (res) {
-                    t.equal(res.statusCode, 500);
-                } else {
-                    t.fail('res is null');
-                }
-                cb();
-            });
-        },
-        function (cb) {
-            // Should remain in proto mode
-            self.client.get(URI, function (err, req, res, obj) {
-                t.ifError(err);
-                t.equal(res.statusCode, 200);
-                t.equal(obj, 'proto');
-                cb();
-            });
-        },
-        function (cb) {
-            /*
-             * Even after the failed setMode() above, all the
-             * objects must remain available.
-             */
-            var uris = [
-                '/manifests/' + man_uuid,
-                '/applications/' + app_uuid,
-                '/services/' + svc_uuid,
-                '/instances/' + inst_uuid
-            ];
-
-            async.forEach(uris, function (uri, subcb) {
-                self.client.get(uri,
-                    function (err, req, res, obj) {
-                    t.ifError(err);
-                    t.ok(obj);
-                    t.equal(obj.uuid, path.basename(uri));
-                    subcb();
-                });
-            }, cb);
-        }
-    ], function (err) {
-        t.ifError(err);
-        t.end();
-    });
-});
-
 
 // -- Test upgrade proto -> full
 
@@ -329,7 +212,7 @@ test('upgrade to full mode', function (t) {
 
             helper.consVmParams(function (err, params) {
                 params.uuid = inst_uuid;
-                vmapiplus.createVm(params, cb);
+                vmapiplus.createVm(params, {}, cb);
             });
         },
         function (cb) {

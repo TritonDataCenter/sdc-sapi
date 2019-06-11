@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright (c) 2019, Joyent, Inc.
+ * Copyright 2019 Joyent, Inc.
  */
 
 /*
@@ -783,8 +783,8 @@ test('invalid zone parameters', function (t) {
                 if (process.env.TEST_SAPI_PROTO_MODE === 'true') {
                     t.equal(res.statusCode, 200);
                 } else {
-                    t.equal(res.statusCode, 500,
-                        sprintf('expected 500 status code from SAPI ' +
+                    t.equal(res.statusCode, 409,
+                        sprintf('expected 409 status code from SAPI ' +
                             'CreateInstance: got %s, instance uuid %s',
                             res.statusCode, inst.uuid));
                 }

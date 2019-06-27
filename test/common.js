@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright (c) 2015, Joyent, Inc.
+ * Copyright 2019 Joyent, Inc.
  */
 
 /*
@@ -53,6 +53,7 @@ function createService(app_uuid, uuid, cb) {
     var opts = {};
     opts.params = {};
     opts.params.ram = 256;
+    opts.params.cpu_cap = 100;
     opts.params.networks = [ 'admin' ];
     assert.string(process.env.SAPI_TEST_IMAGE_UUID,
         'process.env.SAPI_TEST_IMAGE_UUID');

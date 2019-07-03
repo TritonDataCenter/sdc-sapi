@@ -14,6 +14,7 @@
 
 
 var bunyan = require('bunyan');
+var tritonTracer = require('triton-tracer');
 
 var SAPI = require('./lib/server/sapi');
 var mod_config = require('./lib/config');
@@ -24,6 +25,7 @@ var log = bunyan.createLogger({
     serializers: bunyan.stdSerializers
 });
 
+tritonTracer.init({log: log});
 
 mod_config.loadConfig({ log: log }, function (configErr, config) {
 

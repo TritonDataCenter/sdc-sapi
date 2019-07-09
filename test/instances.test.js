@@ -12,6 +12,7 @@
  * test/instances.test.js: test /instances endpoints
  */
 
+var assert = require('assert-plus');
 var async = require('async');
 var jsprim = require('jsprim');
 var node_uuid = require('node-uuid');
@@ -549,13 +550,19 @@ test('put/get/del agent instance', function (t) {
     });
 });
 
-function createVm(uuid, cb) {
+function createVm(inst, cb) {
+    assert.object(inst, 'inst');
+    assert.string(inst.uuid, 'inst.uuid');
+    assert.optionalObject(inst.params, 'inst.params');
+
     var vmapiplus = helper.createVmapiPlusClient();
 
     helper.consVmParams(function (err, params) {
-        params.uuid = uuid;
 
-        vmapiplus.createVm(params, {}, cb);
+        var vmParams = jsprim.mergeObjects(params, inst.params);
+        vmParams.uuid = inst.uuid;
+
+        vmapiplus.createVm(vmParams, {}, cb);
     });
 }
 
@@ -596,7 +603,7 @@ test('create instance with VM aleady existing', function (t) {
             if (process.env.TEST_SAPI_PROTO_MODE === 'true')
                 return (cb(null));
 
-            createVm(inst.uuid, cb);
+            createVm(inst, cb);
         },
         function (_, cb) {
             client.post(URI, inst, function (err, req, res, obj) {
@@ -984,6 +991,7 @@ test('create instance with NAPI networks', function (t) {
                 inst.params.alias =
                     common.getUniqueTestResourceName('napi-nets-' + inst.uuid);
                 inst.params.networks = net;
+                inst.params.cpu_cap = 100;
                 cb(null);
             },
             function (_, cb) {

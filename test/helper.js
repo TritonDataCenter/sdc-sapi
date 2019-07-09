@@ -298,6 +298,7 @@ function consVmParams(cb) {
     params.owner_uuid = process.env.ADMIN_UUID;
     params.server_uuid = process.env.SERVER_UUID;
     params.ram = 256;
+    params.cpu_cap = 100;
 
     async.waterfall([
         function (subcb) {

@@ -3,6 +3,7 @@ title: Services API
 apisections: Service Configuration, Amon Configuration, Applications, Services, Instances, Manifests, Images, Modes, Configs, Cache
 markdown2extras: tables, code-friendly
 ---
+
 <!--
     This Source Code Form is subject to the terms of the Mozilla Public
     License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,8 +11,10 @@ markdown2extras: tables, code-friendly
 -->
 
 <!--
-    Copyright (c) 2015, Joyent, Inc.
+    Copyright 2021 Joyent, Inc.
 -->
+
+<!-- markdownlint-disable MD024 -->
 
 # Services API
 
@@ -25,14 +28,12 @@ It has several goals:
 * Enable dynamic configuration of SDC and manta services
 * Provide an API for an operator portal
 
-
-# Overview
+## Overview
 
 SAPI has two main components: the API itself and the associated config-agent.
 There's also a SAPI client delivered with the rest of the SDC clients.
 
-
-## SAPI
+### SAPI
 
 Each datacenter has a single SAPI zone.  That zone is stateless and writes
 objects into its datacenter's moray database.  In addition to storing its
@@ -65,8 +66,7 @@ Creating applications and service have no effect on running zones.  When an
 instance is created, a zone is provisioned using the above information from its
 associated application, service, and instance.
 
-
-## Example Usage
+### Example Usage
 
 For example, given this application (some fields omitted for clarity):
 
@@ -141,8 +141,7 @@ Finally, that zone would use the following configuration manifests:
 The configuration manifests would be processed by the config-agent, as described
 below.
 
-
-## Configuration Agent
+### Configuration Agent
 
 Each zone deployed with SAPI contains an agent which is responsible for
 maintaining configuration inside that zone.  The config-agent queries SAPI
@@ -212,9 +211,7 @@ SMF service.
       "interval": 5000
     }
 
-
-
-# Proto Mode
+## Proto Mode
 
 SAPI has two modes: proto and full mode.  Full mode is the normal operation
 covered by other sections in this document.
@@ -241,10 +238,9 @@ proto mode.
 
 Once SAPI is in full mode, downgrading to proto mode is not supported.
 
+## Applications
 
-# Applications
-
-## Application Schema Validation
+### Application Schema Validation
 
 An application may have a schema associated with it which covers its metadata or
 some portion of it. A schema is described based on [JSON
@@ -273,7 +269,7 @@ set of valid fields in the schema change. In addition, one must consider that
 historically many of the applications have no schema associated with them, and
 therefore we need to move slowly to allow SAPI applications to be updated.
 
-### Schema Checking Limitations
+#### Schema Checking Limitations
 
 At this time, we only support and validate a schema for the metadata of an
 application. Instances and services can override that metadata; however, those
@@ -281,13 +277,13 @@ changes are not checked against it at this time. In the future, we would like to
 allow a service or instance to override or add additions to the schema such that
 this checking can be extended to all services and instances.
 
-## CreateApplication (POST /applications)
+### CreateApplication (POST /applications)
 
 Creates a new application.  An application must have a name and an
 owner_uuid.  If an application specifies any schema for it's metadata, the
 metadata must honor that schema.
 
-### Inputs
+#### Inputs
 
 | Param           | Type           | Description                    | Required? |
 | --------------- | -------------- | ------------------------------ | --------- |
@@ -298,14 +294,14 @@ metadata must honor that schema.
 | metadata_schema | object         | validation schema for metadata | no        |
 | manifests       | array of UUIDs | configuration manifests        | no        |
 
-### Responses
+#### Responses
 
 | Code | Description                      | Response                       |
 | ---- | -------------------------------- | ------------------------------ |
 | 204  | Application successfully created | Application object             |
 | 409  | Conflict Detected                | Metadata does not match schema |
 
-### Example
+#### Example
 
     POST /applications -d '{
       "name": "sdc",
@@ -315,26 +311,25 @@ metadata must honor that schema.
       }
     }'
 
-
-## ListApplications (GET /applications)
+### ListApplications (GET /applications)
 
 Returns a list of all applications.
 
-### Inputs
+#### Inputs
 
 | Param      | Type   | Description         | Required? |
 | ---------- | ------ | ------------------- | --------- |
 | name       | string | Name of application | no        |
 | owner_uuid | UUID   | Owner's UUID        | no        |
 
-### Responses
+#### Responses
 
 | Code | Description                    | Response                    |
 | ---- | ------------------------------ | --------------------------- |
 | 200  | Found one or more applications | List of application objects |
 | 404  | No applications found          | none                        |
 
-### Example
+#### Example
 
     GET /applications?name=manta
     [
@@ -356,34 +351,32 @@ Returns a list of all applications.
       }
     ]
 
-
-## GetApplication (GET /applications/:uuid)
+### GetApplication (GET /applications/:uuid)
 
 Get an application by UUID.
 
-### Inputs
+#### Inputs
 
 | Param | Type | Description         | Required? |
 | ----- | ---- | ------------------- | --------- |
 | uuid  | UUID | UUID of application | yes       |
 
-### Responses
+#### Responses
 
 | Code | Description           | Response           |
 | ---- | --------------------- | ------------------ |
 | 200  | Application found     | Application object |
 | 404  | No applications found | none               |
 
-### Example
+#### Example
 
 See the example for ListApplications above.
 
-
-## UpdateApplication (PUT /applications/:uuid)
+### UpdateApplication (PUT /applications/:uuid)
 
 Updates an application.
 
-### Inputs
+#### Inputs
 
 | Param           | Type           | Description                                              | Required? |
 | --------------- | -------------- | -------------------------------------------------------- | --------- |
@@ -395,7 +388,7 @@ Updates an application.
 | manifests       | array of UUIDs | configuration manifests                                  | no        |
 | owner_uuid      | UUID           | application's new owner                                  | no        |
 
-### Responses
+#### Responses
 
 | Code | Description          | Response                       |
 | ---- | -------------------- | ------------------------------ |
@@ -403,7 +396,7 @@ Updates an application.
 | 404  | No application found | none                           |
 | 409  | Conflict Detected    | Metadata does not match schema |
 
-### Example
+#### Example
 
     PUT /applications/b0d2f944-7fa3-11e2-a53c-3f3c7a8e7341 -d '{
       "action": "update",
@@ -412,32 +405,29 @@ Updates an application.
       }
     }'
 
-
-## DeleteApplication (DELETE /application/:uuid)
+### DeleteApplication (DELETE /application/:uuid)
 
 Deletes an application.
 
-### Inputs
+#### Inputs
 
 | Param | Type | Description         | Required? |
 | ----- | ---- | ------------------- | --------- |
 | uuid  | UUID | UUID of application | yes       |
 
-### Responses
+#### Responses
 
 | Code | Description             | Response |
 | ---- | ----------------------- | -------- |
 | 204  | Application was deleted | none     |
 
+## Services
 
-
-# Services
-
-## CreateService (POST /services)
+### CreateService (POST /services)
 
 Create a service.
 
-### Inputs
+#### Inputs
 
 | Param            | Type           | Description             | Required? |
 | ---------------- | -------------- | ----------------------- | --------- |
@@ -447,8 +437,7 @@ Create a service.
 | metadata         | object         | zone metadata           | no        |
 | manifests        | array of UUIDs | configuration manifests | no        |
 
-
-## ListServices (GET /services)
+### ListServices (GET /services)
 
 Returns the list of all services.
 
@@ -457,15 +446,14 @@ Returns the list of all services.
 | name             | string | Name of service    | no        |
 | application_uuid | UUID   | Application's UUID | no        |
 
-### Responses
+#### Responses
 
 | Code | Description                | Response                |
 | ---- | -------------------------- | ----------------------- |
 | 200  | Found one or more services | List of service objects |
 | 404  | No services found          | none                    |
 
-### Example
-
+#### Example
 
     GET /services?name=storage
     [
@@ -486,34 +474,32 @@ Returns the list of all services.
       }
     ]
 
-
-## GetService (GET /services/:uuid)
+### GetService (GET /services/:uuid)
 
 Return a particular service.
 
-### Inputs
+#### Inputs
 
 | Param | Type | Description     | Required? |
 | ----- | ---- | --------------- | --------- |
 | uuid  | UUID | UUID of service | yes       |
 
-### Responses
+#### Responses
 
 | Code | Description      | Response       |
 | ---- | ---------------- | -------------- |
 | 200  | Service found    | Service object |
 | 404  | No service found | none           |
 
-### Example
+#### Example
 
 See the example for ListServices above.
 
-
-## UpdateService (PUT /services/:uuid)
+### UpdateService (PUT /services/:uuid)
 
 Updates an service.
 
-### Inputs
+#### Inputs
 
 | Param     | Type           | Description                                              | Required? |
 | --------- | -------------- | -------------------------------------------------------- | --------- |
@@ -523,14 +509,14 @@ Updates an service.
 | metadata  | object         | zone metadata                                            | no        |
 | manifests | array of UUIDs | configuration manifests                                  | no        |
 
-### Responses
+#### Responses
 
 | Code | Description       | Response               |
 | ---- | ----------------- | ---------------------- |
 | 200  | Updates completed | Updated service object |
 | 404  | No service found  | none                   |
 
-### Example
+#### Example
 
     PUT /services/09a5da9f-db2a-42d8-99ac-1263cc5751b2 -d '{
       "action": "update",
@@ -539,32 +525,29 @@ Updates an service.
       }
     }'
 
-
-## DeleteService (DELETE /services/:uuid)
+### DeleteService (DELETE /services/:uuid)
 
 Delete a particular service.
 
-### Inputs
+#### Inputs
 
 | Param | Type | Description     | Required? |
 | ----- | ---- | --------------- | --------- |
 | uuid  | UUID | UUID of service | yes       |
 
-### Responses
+#### Responses
 
 | Code | Description         | Response |
 | ---- | ------------------- | -------- |
 | 204  | Service was deleted | none     |
 
+## Instances
 
-
-# Instances
-
-## CreateInstance (POST /instances)
+### CreateInstance (POST /instances)
 
 Create and deploy an instance.
 
-### Inputs
+#### Inputs
 
 | Param        | Type           | Description                      | Required? |
 | ------------ | -------------- | -------------------------------- | --------- |
@@ -574,13 +557,13 @@ Create and deploy an instance.
 | metadata     | object         | zone metadata                    | no        |
 | manifests    | array of UUIDs | configuration manifests          | no        |
 
-### Responses
+#### Responses
 
 | Code | Description                   | Response        |
 | ---- | ----------------------------- | --------------- |
 | 204  | Instance successfully created | Instance object |
 
-### Example
+#### Example
 
     POST /instances -d '{
       "name": "sdc",
@@ -590,24 +573,22 @@ Create and deploy an instance.
       }
     }'
 
-
-### Customer metadata
+#### Customer metadata
 
 By default, SAPI removes all keys from the `customer_metadata` parameters
 passed to VMAPI for zone creation, other than the following:
 
-- SAPI_URL
-- sapi_url
-- SAPI-URL
-- sapi-url
-- user-script
-- assets-ip
+* *SAPI_URL
+* *sapi_url
+* *SAPI-URL
+* *sapi-url
+* *user-script
+* *assets-ip
 
 To allow other customer metadata keys to be passed to VMAPI, set the
 `pass_vmapi_metadata_keys` array in the `metadata` object, as in this example,
 where `com.joyent:ipnat_subnet` will be added to the VMAPI VM object's
 customer metadata:
-
 
     POST /instances -d '{
       "name": "nat",
@@ -618,26 +599,24 @@ customer metadata:
       }
     }'
 
-
-## CreateInstanceAsync (POST /instances?async=true)
+### CreateInstanceAsync (POST /instances?async=true)
 
 Create and deploy an instance asynchronously. This accepts the same parameters
 as [CreateInstance](#CreateInstance), but does not wait to return the final
 created instance object. It instead returns th
 
-### Inputs
+#### Inputs
 
 See [CreateInstance](#CreateInstance) above.
 
-### Responses
+#### Responses
 
 See [CreateInstance](#CreateInstance) above.  The created instance object has
 one additional field: `job_uuid`, which is the
 [Workflow API](https://github.com/joyent/sdc-workflow) job for the created
 instance.
 
-
-### Example
+#### Example
 
     POST /instances?async=true -d '{
       "name": "sdc",
@@ -647,8 +626,7 @@ instance.
       }
     }'
 
-
-## AdoptInstance (POST /instances)
+### AdoptInstance (POST /instances)
 
 Existing instances can be added to SAPI by adding `"exists": true` to the
 payload given to [CreateInstance](#CreateInstance). In this case, the `uuid`
@@ -658,15 +636,15 @@ When SAPI isn't in [Proto Mode](#proto-mode), the existence of the provided
 instance `uuid` will be verified through `VMAPI`. In case the instance cannot
 be found, an `Invalid Argument` error will be returned (`409` Status Code).
 
-### Inputs
+#### Inputs
 
 See [CreateInstance](#CreateInstance) above.
 
-### Responses
+#### Responses
 
 See [CreateInstance](#CreateInstance) above.
 
-### Example
+#### Example
 
     POST /instances -d '{
       "name": "papi",
@@ -677,18 +655,17 @@ See [CreateInstance](#CreateInstance) above.
       "exists": true
     }'
 
-
-## ListInstances (GET /instances)
+### ListInstances (GET /instances)
 
 List all instances, with an optional service_uuid filter.
 
-### Inputs
+#### Inputs
 
 | Param        | Type | Description               | Required? |
 | ------------ | ---- | ------------------------- | --------- |
 | service_uuid | UUID | service_uuid to filter by | no        |
 
-### Responses
+#### Responses
 
 | Code | Description                                    | Response                                   |
 | ---- | ---------------------------------------------- | ------------------------------------------ |
@@ -700,7 +677,7 @@ endpoint will still return 200, only with an empty array.
 If additional filters beyond service_uuid are required, they must be implemented
 on the client side.
 
-### Example
+#### Example
 
     GET /instances?service_uuid=5081a5d6-6bd0-11e2-bafb-a735b6c6ccb6
     [
@@ -718,26 +695,24 @@ on the client side.
       ...
     ]
 
-
-
-## GetInstance (GET /instances/:uuid)
+### GetInstance (GET /instances/:uuid)
 
 Get a particular instance by UUID.
 
-### Inputs
+#### Inputs
 
 | Param | Type | Description      | Required? |
 | ----- | ---- | ---------------- | --------- |
 | uuid  | UUID | UUID of instance | yes       |
 
-### Responses
+#### Responses
 
 | Code | Description        | Response        |
 | ---- | ------------------ | --------------- |
 | 200  | Instance found     | Instance object |
 | 404  | Instance not found | none            |
 
-### Example
+#### Example
 
     GET /instances/b63c3b56-6bd1-11e2-af0a-836066bbb42e
     {
@@ -752,25 +727,24 @@ Get a particular instance by UUID.
       "manifests": [ ]
     }
 
-
-## GetInstancePayload (GET /instances/:uuid/payload)
+### GetInstancePayload (GET /instances/:uuid/payload)
 
 Get the actual payload passed to VMAPI.createVm() for this instance.
 
-### Inputs
+#### Inputs
 
 | Param | Type | Description      | Required? |
 | ----- | ---- | ---------------- | --------- |
 | uuid  | UUID | UUID of instance | yes       |
 
-### Responses
+#### Responses
 
 | Code | Description                          | Response       |
 | ---- | ------------------------------------ | -------------- |
 | 200  | Payload provided to VMAPI.createVm() | Payload object |
 | 404  | Instance not found                   | none           |
 
-### Example
+#### Example
 
     GET instances/18e7dbc9-0f2b-421b-ba39-d1701c55a1f5/payload
     {
@@ -789,12 +763,11 @@ Get the actual payload passed to VMAPI.createVm() for this instance.
       }
     }
 
-
-## UpdateInstance (PUT /instances/:uuid)
+### UpdateInstance (PUT /instances/:uuid)
 
 Updates an instance.
 
-### Inputs
+#### Inputs
 
 | Param     | Type           | Description                                              | Required? |
 | --------- | -------------- | -------------------------------------------------------- | --------- |
@@ -804,14 +777,14 @@ Updates an instance.
 | metadata  | object         | zone metadata                                            | no        |
 | manifests | array of UUIDs | configuration manifests                                  | no        |
 
-### Responses
+#### Responses
 
 | Code | Description       | Response                |
 | ---- | ----------------- | ----------------------- |
 | 200  | Updates completed | Updated instance object |
 | 404  | No instance found | none                    |
 
-### Example
+#### Example
 
     PUT /instances/b0d2f944-7fa3-11e2-a53c-3f3c7a8e7341 -d '{
       "action": "update",
@@ -820,87 +793,76 @@ Updates an instance.
       }
     }'
 
-
-## UpgradeInstance (PUT /instances/:uuid/upgrade)
+### UpgradeInstance (PUT /instances/:uuid/upgrade)
 
 Upgrades an instance to a newer image version.  This endpoint uses the
 VMAPI.reprovisionVm() endpoint.
 
-### Inputs
+#### Inputs
 
 | Param      | Type | Description       | Required? |
 | ---------- | ---- | ----------------- | --------- |
 | uuid       | UUID | UUID of instance  | yes       |
 | image_uuid | UUID | UUID of new image | yes       |
 
-### Responses
+#### Responses
 
 | Code | Description       | Response                |
 | ---- | ----------------- | ----------------------- |
 | 200  | Updates completed | Updated instance object |
 | 404  | No instance found | none                    |
 
-### Example
+#### Example
 
     PUT /instances/b0d2f944-7fa3-11e2-a53c-3f3c7a8e7341 -d '{
       "image_uuid": "01df6bd2-b132-11e2-b6df-ef5e1316b487"
     }'
 
+### DeleteInstance (DELETE /instances/:instance_uuid)
 
-## DeleteInstance (DELETE /instances/:instance_uuid)
-
-### Inputs
+#### Inputs
 
 | Param | Type | Description      | Required? |
 | ----- | ---- | ---------------- | --------- |
 | uuid  | UUID | UUID of instance | yes       |
 
-### Responses
+#### Responses
 
 | Code | Description          | Response |
 | ---- | -------------------- | -------- |
 | 204  | Instance was deleted | none     |
 
+## Manifests
 
-
-# Manifests
-
-## CreateManifest (POST /manifests)
+### CreateManifest (POST /manifests)
 
 Create a configuration manifest.
 
-
-## ListManifests (GET /manifests)
+### ListManifests (GET /manifests)
 
 Get all configuration manifests.
 
-
-## GetManifest (GET /manifests/:uuid)
+### GetManifest (GET /manifests/:uuid)
 
 Get a particular configuration manifest.
 
-
-## DeleteManifest (DELETE /manifests/:uuid)
+### DeleteManifest (DELETE /manifests/:uuid)
 
 Delete this configuration manifest.
 
+## Modes
 
-
-# Modes
-
-## GetMode (GET /mode)
+### GetMode (GET /mode)
 
 Gets the current SAPI mode.
 
-## SetMode (POST /mode?mode=full)
+### SetMode (POST /mode?mode=full)
 
 Changes the current mode to the specified one.
 
+## Configs
 
-
-# Configs
-
-## GetConfig (GET /configs/:uuid)
+### GetConfig (GET /configs/:uuid)
 
 Gets the full set of metadata and manifests for a given instance.  This set is
 determined by taking the union of the application's, service's, and instance's
@@ -911,12 +873,12 @@ Note: As of [SAPI-248] **these are all deprecated.** Do not use them in new
 code.
 
 | Key           | Description |
+| ------------- | ----------- |
 | ZONE_UUID     | The zonename of that instance. New SAPI templates should use `{{{auto.ZONENAME}}}`. |
 | SERVER_UUID   | The server (CN) UUID on which the instance is running. New SAPI templates should use `{{{auto.SERVER_UUID}}}`. |
 | INSTANCE_UUID | The instance UUID (same as the zonename). New SAPI templates should use `{{{auto.ZONENAME}}}`. |
 
-
-### Example
+#### Example
 
     $ sdc-sapi /configs/$(vmadm lookup -1 alias=vmapi0)
     HTTP/1.1 200 OK
@@ -945,10 +907,9 @@ code.
       }
     }
 
+## Cache
 
-# Cache
-
-## SyncCache (POST /cache)
+### SyncCache (POST /cache)
 
 With the introduction of a local cache in SAPI to offset the problems that occur
 in SAPI when Moray is down, there may be times when an operator wants to ensure
@@ -962,8 +923,7 @@ that they all have the most up-to-date objects.
 
     sdc-sapi /cache -X POST
 
-
-# Multi DC mode
+## Multi DC mode
 
 SAPI supports a cross-DC configuration mode. This is intended to support
 multi-DC applications like Manta.
@@ -980,18 +940,18 @@ sapi.
 
 Prerequisites:
 
-- Set up a multi-DC Triton deployment (with linked UFDS and inter-datacenter
+* Set up a multi-DC Triton deployment (with linked UFDS and inter-datacenter
   routes) inside a single region.
-- Pick one of the DCs within the region to be the SAPI master. (The same
+* Pick one of the DCs within the region to be the SAPI master. (The same
   DC with the UFDS master if any; otherwise any of them)
-- Ensure cross-DC "admin" network routes are available, at least among the
+* Ensure cross-DC "admin" network routes are available, at least among the
   SAPI zones and the Moray zones in the master's DC.
-- Ensure that cross-DC nameservices are working. This should happen
+* Ensure that cross-DC nameservices are working. This should happen
   automatically with UFDS replication and routes set up.
 
 The steps needed to set this up are:
 
-- In the two non-master DCs, update the SAPI service's metadata so that
+* In the two non-master DCs, update the SAPI service's metadata so that
   `MASTER_MORAY_IP` refers to the DNS domain of the Moray instance in the
   master DC, and `MASTER_MORAY_PORT` should likely be `2020`.
 
@@ -1003,7 +963,7 @@ The steps needed to set this up are:
   now it's recommended to use DNS names in order to prevent possible errors
   in case the IP address of the SAPI master changes. (Either way, IP
   addresses are still supported for backwards compatibility).
-- After that, you can proceed with the "manta-init" phases of Manta setup.
+* After that, you can proceed with the "manta-init" phases of Manta setup.
 
 Client `GET` requests to [List Applications](#ListApplications),
 [List Instances](#ListInstances), [List Manifests](#ListManifests) and
@@ -1022,27 +982,25 @@ found there, will attempt the deletion from its master's moray.
 
 Option `include_master` has no effect when requesting from the master.
 
-
-# Metrics
+## Metrics
 
 SAPI exposes metrics via [node-triton-metrics](https://github.com/joyent/node-triton-metrics) on `http://<ADMIN_IP>:8881/metrics`
 
+## API Versions
 
-# API Versions
-
-## 1.0.0
+### 1.0.0
 
 Original SAPI version, including:
 
-- [Applications](#applications)
-- [Services](#services)
-- [Instances](#instances)
-- [Manifests](#manifests)
-- [Modes](#modes)
-- [Configs](#configs)
-- [Cache](#cache)
+* [Applications](#applications)
+* [Services](#services)
+* [Instances](#instances)
+* [Manifests](#manifests)
+* [Modes](#modes)
+* [Configs](#configs)
+* [Cache](#cache)
 
-## 2.0.0
+### 2.0.0
 
-- Added support for `type` field on SAPI instances. Added `type` as a supported
+* Added support for `type` field on SAPI instances. Added `type` as a supported
   search filter for instances.

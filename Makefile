@@ -44,7 +44,7 @@ ENGBLD_REQUIRE		:= $(shell git submodule update --init deps/eng)
 include ./deps/eng/tools/mk/Makefile.defs
 TOP ?= $(error Unable to access eng.git submodule Makefiles.)
 
-BUILD_PLATFORM	= 20210825T002459Z
+BUILD_PLATFORM	= 20210826T002459Z
 
 ifeq ($(shell uname -s),SunOS)
 	include ./deps/eng/tools/mk/Makefile.node_prebuilt.defs

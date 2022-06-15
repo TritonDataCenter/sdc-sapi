@@ -119,7 +119,7 @@ fi
 # to upgrade 'sapi0' to ensure there was always a running SAPI to use for
 # setting up the SAPI zone. It explicitly passed the DNS name to that running
 # SAPI via the 'sapi-url' metadata. Attempt that if our alias ends in "tmp"
-# (per https://github.com/joyent/sdcadm/blob/09a6a8757/lib/procedures/update-single-hn-sapi-v1.js#L77)
+# (per https://github.com/TritonDataCenter/sdcadm/blob/09a6a8757/lib/procedures/update-single-hn-sapi-v1.js#L77)
 if [[ -z "$DNS_DOMAIN" ]]; then
     _VM_ALIAS=$(mdata-get sdc:alias)
     _SAPI_URL=$(mdata-get sapi-url)

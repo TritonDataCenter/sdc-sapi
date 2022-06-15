@@ -613,7 +613,7 @@ See [CreateInstance](#CreateInstance) above.
 
 See [CreateInstance](#CreateInstance) above.  The created instance object has
 one additional field: `job_uuid`, which is the
-[Workflow API](https://github.com/joyent/sdc-workflow) job for the created
+[Workflow API](https://github.com/TritonDataCenter/sdc-workflow) job for the created
 instance.
 
 #### Example
@@ -984,7 +984,7 @@ Option `include_master` has no effect when requesting from the master.
 
 ## Metrics
 
-SAPI exposes metrics via [node-triton-metrics](https://github.com/joyent/node-triton-metrics) on `http://<ADMIN_IP>:8881/metrics`
+SAPI exposes metrics via [node-triton-metrics](https://github.com/TritonDataCenter/node-triton-metrics) on `http://<ADMIN_IP>:8881/metrics`
 
 ## API Versions
 

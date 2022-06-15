@@ -19,15 +19,15 @@ Triton DataCenter was initially known as SmartDataCenter (SDC).
 See [the SAPI docs](docs/index.md).
 
 Note: This repository is part of the Joyent Triton project. See the [contribution
-guidelines](https://github.com/joyent/triton/blob/master/CONTRIBUTING.md)
+guidelines](https://github.com/TritonDataCenter/triton/blob/master/CONTRIBUTING.md)
 and general documentation at the main
-[Triton project](https://github.com/joyent/triton) page.
+[Triton project](https://github.com/TritonDataCenter/triton) page.
 
 
 # Development
 
 Typically, development of SAPI is done in
-[COAL](https://github.com/joyent/triton#getting-started) (a
+[COAL](https://github.com/TritonDataCenter/triton#getting-started) (a
 Triton-in-a-local-VMware-VM). It should be possible to run a SAPI server
 locally, but that's not well supported.
 
@@ -61,11 +61,11 @@ Warning: "./tools/rsync-to" is not a fully faithful build.
 
 The more "correct" dev cycle, at least for final testing, is to create a new
 SAPI image for your changes. This can be done by following the procedure for
-building Triton component images defined [here](https://github.com/joyent/mountain-gorilla/blob/master/README.md).
+building Triton component images defined [here](https://github.com/TritonDataCenter/mountain-gorilla/blob/master/README.md).
 Or, for Joyent employees, you can use our Jenkins and the `TRY_BRANCH` build
 option:
 
-1. Push your change to a feature branch of https://github.com/joyent/sdc-sapi
+1. Push your change to a feature branch of https://github.com/TritonDataCenter/sdc-sapi
 
 2. Build the "sapi" Jenkins job with `TRY_BRANCH=<your feature branch name>`.
 

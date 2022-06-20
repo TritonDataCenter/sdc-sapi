@@ -6,6 +6,7 @@
 
 #
 # Copyright (c) 2019, Joyent, Inc.
+# Copyright 2022 MNX Cloud, Inc.
 #
 
 #
@@ -23,25 +24,27 @@ NODEUNIT	:= ./node_modules/.bin/nodeunit
 # Files
 #
 DOC_FILES	 = index.md
-RESTDOWN_FLAGS   = --brand-dir=deps/restdown-brand-remora
-EXTRA_DOC_DEPS += deps/restdown-brand-remora/.git
+RESTDOWN_FLAGS	 = --brand-dir=deps/restdown-brand-remora
+EXTRA_DOC_DEPS	+= deps/restdown-brand-remora/.git
 JS_FILES	:= $(shell ls *.js) $(shell find lib test tools -name '*.js')
-JSL_CONF_NODE	 = tools/jsl.node.conf
-JSL_FILES_NODE   = $(JS_FILES)
+ESLINT_FILES	 = $(JS_FILES)
 JSSTYLE_FILES	 = $(JS_FILES)
-JSSTYLE_FLAGS    = -o indent=4,doxygen,unparenthesized-return=0
+JSSTYLE_FLAGS	 = -o indent=4,doxygen,unparenthesized-return=0
 SMF_MANIFESTS	 = smf/manifests/sapi.xml
 
-NODE_PREBUILT_VERSION=v6.17.0
+NODE_PREBUILT_VERSION=v6.17.1
 ifeq ($(shell uname -s),SunOS)
 	NODE_PREBUILT_TAG=zone64
-	NODE_PREBUILT_IMAGE=c2c31b00-1d60-11e9-9a77-ff9f06554b0f
+	# minimal-64-lts@21.4.0
+	NODE_PREBUILT_IMAGE=a7199134-7e94-11ec-be67-db6f482136c2
 endif
 
 ENGBLD_USE_BUILDIMAGE	= true
 ENGBLD_REQUIRE		:= $(shell git submodule update --init deps/eng)
 include ./deps/eng/tools/mk/Makefile.defs
 TOP ?= $(error Unable to access eng.git submodule Makefiles.)
+
+BUILD_PLATFORM	= 20210826T002459Z
 
 ifeq ($(shell uname -s),SunOS)
 	include ./deps/eng/tools/mk/Makefile.node_prebuilt.defs
@@ -72,8 +75,8 @@ SVC_TARBALL 	:= $(NAME)-pkg-$(STAMP).tar.gz
 SVC_PKGDIR	:= $(TOP)/$(BUILD)/service
 SVC_INSTDIR	:= $(SVC_PKGDIR)/root/opt/smartdc/sapi
 
-# our base image is triton-origin-x86_64-18.4.0
-BASE_IMAGE_UUID = a9368831-958e-432d-a031-f8ce6768d190
+# our base image is triton-origin-x86_64-21.4.0
+BASE_IMAGE_UUID = 502eeef2-8267-489f-b19c-a206906f57ef
 BUILDIMAGE_NAME = $(NAME)
 BUILDIMAGE_DESC	= SDC SAPI
 BUILDIMAGE_PKG	= $(PWD)/$(SVC_TARBALL)
